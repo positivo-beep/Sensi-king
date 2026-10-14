@@ -32,6 +32,90 @@ private struct NXCategory: Identifiable {
     var id: String { title }
 }
 
+// NEXORA V12: paquetes suministrados por el usuario, incluidos en Assets.xcassets.
+// No altera el gestor original 3105 ni el sistema de keys.
+private struct NXBundledOption: Identifiable {
+    let id: UUID
+    let title: String
+    let category: String
+    let dataAsset: String
+    let targetPath: String
+    let filename: String
+
+    static let all: [NXBundledOption] = [
+        NXBundledOption(id: UUID(uuidString: "5B9C2FC1-54FC-5145-9F96-F379556F9D23")!, title: "AIMDRAG", category: "AIMBOT", dataAsset: "NXModAimDrag", targetPath: "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D", filename: "assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D"),
+        NXBundledOption(id: UUID(uuidString: "0DF7E99C-276C-5FD6-AC99-250A2283430A")!, title: "AIMBOT CABEZA", category: "AIMBOT", dataAsset: "NXModAimCabeza", targetPath: "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D", filename: "assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D"),
+        NXBundledOption(id: UUID(uuidString: "B1BEA509-3487-538D-9A72-653AD31BA1E9")!, title: "AIMBOT CUELLO", category: "AIMBOT", dataAsset: "NXModAimCuello", targetPath: "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D", filename: "assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D"),
+        NXBundledOption(id: UUID(uuidString: "AF7FFFAF-EEB3-5BF8-AEBA-1B6FF3B7C538")!, title: "AIMBOT PECHO", category: "AIMBOT", dataAsset: "NXModAimPecho", targetPath: "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D", filename: "assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D"),
+        NXBundledOption(id: UUID(uuidString: "7E4E6CED-F65A-538A-9924-3D17AED6D957")!, title: "AIM DRAG ANTENA", category: "AIMBOT CON ANTENA", dataAsset: "NXModAntenaDrag", targetPath: "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D", filename: "assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D"),
+        NXBundledOption(id: UUID(uuidString: "D152E8C1-1866-5D39-AB06-334558C45E4A")!, title: "AIM CUELLO ANTENA", category: "AIMBOT CON ANTENA", dataAsset: "NXModAntenaCuello", targetPath: "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D", filename: "assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D"),
+        NXBundledOption(id: UUID(uuidString: "9DAE3BC4-B812-5C6A-87D9-BCD8FAE69498")!, title: "AIM PECHO ANTENA", category: "AIMBOT CON ANTENA", dataAsset: "NXModAntenaPecho", targetPath: "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D", filename: "assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D"),
+        NXBundledOption(id: UUID(uuidString: "1F01CB76-4465-5BB9-89D4-EE24BB006D94")!, title: "AZUL CON VERDE", category: "HOLO ARM", dataAsset: "NXModHoloAzul", targetPath: "Documents/contentcache/Optional/ios/gameassetbundles/shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D", filename: "shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D"),
+        NXBundledOption(id: UUID(uuidString: "1F6E508C-660E-5236-9DCF-524AC4D4B54A")!, title: "ROJO CON VERDE", category: "HOLO ARM", dataAsset: "NXModHoloRojo", targetPath: "Documents/contentcache/Optional/ios/gameassetbundles/shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D", filename: "shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D"),
+        NXBundledOption(id: UUID(uuidString: "6A2759B8-35AD-55D2-93F8-0961B712026D")!, title: "HOLOGRAMA PERSONAJE AMARILLO", category: "HOLO PJ", dataAsset: "NXModHoloPjAmarillo", targetPath: "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D", filename: "optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D"),
+    ]
+
+    // Cada boton usa su NSDataAsset (archivo modificado) y su targetPath.
+    // No inventamos archivos originales: PatchTransaction crea el respaldo al activar.
+    // Varios AIMBOT usan el mismo destino: son alternativas, NO acumulables.
+    // Las opciones futuras permanecen visibles pero apagadas mientras no haya
+    // un paquete válido. Al importar un .3105 con el mismo nombre, la fila
+    // pendiente se sustituye por la fila conectada al motor original.
+    static let pendingByCategory: [String: [String]] = [
+        "AIMBOT": ["BALAS MÁGICAS"],
+        "AIMBOT CON ANTENA": ["AIM CABEZA ANTENA"],
+        "HOLO ARM": ["HOLO ARM PERSONALIZADO 1", "HOLO ARM PERSONALIZADO 2"],
+        "HOLO PJ": ["HOLOGRAMA PERSONAJE AZUL", "HOLOGRAMA PERSONAJE ROJO", "HOLOGRAMA PERSONAJE VERDE"],
+        "TEXTURA": ["TEXTURA PERSONALIZADA", "TEXTURA CLARA", "TEXTURA OSCURA"],
+        "WALK HACK": ["WALK HACK"]
+    ]
+
+    /// Una sola opcion puede ocupar cada archivo original. Las coincidencias
+    /// se buscan tambien entre categorias distintas (AIMBOT / ANTENA).
+    func activeOptionForSameTarget() -> NXBundledOption? {
+        Self.all.first { other in
+            other.id != id && other.targetPath == targetPath &&
+                DevicePatchService.latestReceipt(projectID: other.id) != nil
+        }
+    }
+
+    /// En V12 Azul/Verde y Rojo/Verde llegaron con bytes identicos. No
+    /// anunciamos efectos distintos hasta que haya un binario distinto.
+    var isDuplicateHoloPayload: Bool {
+        guard dataAsset == "NXModHoloRojo",
+              let red = NSDataAsset(name: dataAsset)?.data,
+              let blue = NSDataAsset(name: "NXModHoloAzul")?.data else { return false }
+        return red == blue
+    }
+
+    // El nombre del recurso es fijo y Xcode lo incorpora a Assets.car.
+    // Sin archivo correspondiente se impide el reemplazo, no se finge éxito.
+    func makeProject() throws -> PatchProject {
+        guard let payload = NSDataAsset(name: dataAsset)?.data else {
+            throw NSError(domain: "NEXORA", code: 1, userInfo: [NSLocalizedDescriptionKey: "Falta el archivo de esta opción en la IPA."])
+        }
+        let appID = "com.dts.freefireth"
+        let rule = PatchRule(bundleID: appID, relativePath: targetPath,
+                             replacementFilename: filename, replacementData: payload)
+        return PatchProject(id: id, name: title, author: "NEXORA SYSTEM 2026",
+                            bundleIdentifiers: [appID], rules: [rule])
+    }
+
+    // No se debe crear un destino vacío: al hacerlo se perdería la posibilidad
+    // de restaurar los bytes originales. Requiere archivo original existente.
+    func checkOriginalExists() throws {
+        let appID = "com.dts.freefireth"
+        guard let root = ContainerStore.resolveAppContainerPath(bundleID: appID),
+              ContainerStore.isApplicationContainerPath(root) else {
+            throw NSError(domain: "NEXORA", code: 2, userInfo: [NSLocalizedDescriptionKey: "No hay acceso verificable al contenedor de la aplicación. No se modificó ningún archivo."])
+        }
+        let target = URL(fileURLWithPath: root, isDirectory: true).appendingPathComponent(targetPath)
+        guard FileManager.default.fileExists(atPath: target.path) else {
+            throw NSError(domain: "NEXORA", code: 3, userInfo: [NSLocalizedDescriptionKey: "No se encontró el archivo original esperado. El reemplazo se canceló para evitar pérdida de datos."])
+        }
+    }
+}
+
 struct ContentView: View {
     @EnvironmentObject private var store: PatchProjectStore
     @EnvironmentObject private var appState: AppState
@@ -303,42 +387,113 @@ struct ContentView: View {
 
     @ViewBuilder
     private var installedPatchSection: some View {
-        if selectedCategory == "AIMBOT" {
-            LazyVStack(spacing: 10) {
-                ForEach(defaultAimbotNames, id: \.self) { name in
-                    if let item = itemForDefault(name) {
-                        patchRow(item)
-                    } else {
-                        missingPackageRow(name)
+        let builtIn = NXBundledOption.all.filter { $0.category == selectedCategory }
+        LazyVStack(spacing: 10) {
+            ForEach(builtIn) { option in
+                builtInPatchRow(option)
+            }
+            // Los paquetes .3105 importados por el usuario siguen funcionando.
+            ForEach(filteredPackages) { item in
+                patchRow(item)
+            }
+            // Las filas pendientes se sustituyen al importar un paquete .3105
+            // con el nombre correspondiente; no se anuncian como activadas antes.
+            ForEach(NXBundledOption.pendingByCategory[selectedCategory] ?? [], id: \.self) { title in
+                if itemForDefault(title) == nil {
+                    missingPackageRow(title)
+                }
+            }
+            if builtIn.isEmpty && filteredPackages.isEmpty &&
+               (NXBundledOption.pendingByCategory[selectedCategory] ?? []).isEmpty {
+                Text("Aún no hay opciones con archivos verificados.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(NXColors.muted)
+                    .padding(.vertical, 24)
+            }
+        }
+    }
+
+    private func builtInPatchRow(_ option: NXBundledOption) -> some View {
+        let loading = busyProject == option.id
+        let applied = DevicePatchService.latestReceipt(projectID: option.id) != nil
+        let duplicate = option.isDuplicateHoloPayload
+        return HStack(spacing: 14) {
+            Image(systemName: "scope")
+                .font(.system(size: 17, weight: .medium))
+                .foregroundStyle(NXColors.cyan)
+                .frame(width: 25)
+            Text(option.title)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(duplicate ? NXColors.muted : .white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .layoutPriority(1)
+            Spacer(minLength: 1)
+            if loading { ProgressView().tint(NXColors.cyan) }
+            Toggle(option.title, isOn: Binding(
+                get: { DevicePatchService.latestReceipt(projectID: option.id) != nil },
+                set: { enabled in toggleBuiltIn(option, enabled: enabled) }
+            ))
+            .labelsHidden()
+            .tint(NXColors.cyan)
+            .disabled(loading || busyProject != nil || store.isBusy || !appState.isSupported || duplicate)
+            .scaleEffect(0.78, anchor: .trailing)
+            .frame(width: 48, height: 38, alignment: .trailing)
+            .accessibilityValue(duplicate ? "Pendiente de archivo diferente" :
+                                (applied ? "Modificado activo" : "Original restaurado"))
+        }
+        .padding(.horizontal, 16)
+        .frame(height: 64)
+        .frame(maxWidth: .infinity)
+        .background(NXColors.surface.opacity(0.84), in: RoundedRectangle(cornerRadius: 21))
+        .overlay(RoundedRectangle(cornerRadius: 21).stroke(NXColors.border.opacity(0.65), lineWidth: 1))
+    }
+
+    // Protege el mismo destino cuando unas opciones usan recursos incorporados
+    // y otras se han agregado más tarde con paquetes .3105.
+    private func activeConflict(bundleID: String, path: String, excluding: UUID) -> String? {
+        if bundleID == "com.dts.freefireth" {
+            for option in NXBundledOption.all where option.id != excluding && option.targetPath == path {
+                if DevicePatchService.latestReceipt(projectID: option.id) != nil { return option.title }
+            }
+        }
+        for item in store.items where item.id != excluding {
+            guard DevicePatchService.latestReceipt(projectID: item.id) != nil,
+                  let project = item.project else { continue }
+            if project.rules.contains(where: { $0.bundleID == bundleID && $0.relativePath == path }) {
+                return project.name
+            }
+        }
+        return nil
+    }
+
+    private func toggleBuiltIn(_ option: NXBundledOption, enabled: Bool) {
+        guard busyProject == nil else { return }
+        if enabled {
+            if option.isDuplicateHoloPayload {
+                feedback = NXFeedback(message: "Las opciones Azul/Verde y Rojo/Verde tienen el mismo archivo. Agrega un modificado diferente para habilitar esta variante.")
+                return
+            }
+            if let activeName = activeConflict(bundleID: "com.dts.freefireth", path: option.targetPath, excluding: option.id) {
+                feedback = NXFeedback(message: "El archivo de destino ya lo utiliza \(activeName). Desactiva esa opción antes de activar \(option.title).")
+                return
+            }
+            busyProject = option.id
+            Task.detached(priority: .userInitiated) {
+                do {
+                    try option.checkOriginalExists()
+                    let project = try option.makeProject()
+                    _ = try DevicePatchService.apply(project: project)
+                    await MainActor.run { busyProject = nil; store.reload() }
+                } catch {
+                    await MainActor.run {
+                        busyProject = nil
+                        feedback = NXFeedback(message: "No se aplicó \(option.title): \(error.localizedDescription)")
                     }
                 }
-                ForEach(filteredPackages.filter { item in
-                    !defaultAimbotNames.contains(where: { name in
-                        canonical(item.project?.name ?? item.packageURL.deletingPathExtension().lastPathComponent)
-                            .contains(canonical(name))
-                    })
-                }) { item in
-                    patchRow(item)
-                }
             }
-        } else if filteredPackages.isEmpty {
-            VStack(spacing: 8) {
-                Image(systemName: "square.stack.3d.up.slash")
-                    .font(.system(size: 19))
-                    .foregroundStyle(NXColors.cyan)
-                Text("Sin paquetes en esta categoría")
-                    .font(.system(size: 13, weight: .semibold))
-                Text("Puedes importar archivos .3105 desde Configuración cuando los tengas.")
-                    .font(.system(size: 11))
-                    .foregroundStyle(NXColors.muted)
-                    .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 23)
-        } else {
-            LazyVStack(spacing: 10) {
-                ForEach(filteredPackages) { item in patchRow(item) }
-            }
+        } else if let receipt = DevicePatchService.latestReceipt(projectID: option.id) {
+            restore(receipt: receipt)
         }
     }
 
@@ -350,19 +505,24 @@ struct ContentView: View {
                 .font(.system(size: 17, weight: .medium))
                 .foregroundStyle(NXColors.cyan.opacity(0.55))
                 .frame(width: 25)
-            Text(name)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(Color.white.opacity(0.60))
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
-                .layoutPriority(1)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(name)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Color.white.opacity(0.67))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+                Text("Pendiente de archivo")
+                    .font(.system(size: 10))
+                    .foregroundStyle(NXColors.muted)
+            }
+            .layoutPriority(1)
             Spacer(minLength: 1)
             Toggle(name, isOn: .constant(false))
                 .labelsHidden()
                 .disabled(true)
                 .scaleEffect(0.78, anchor: .trailing)
                 .frame(width: 48, height: 38, alignment: .trailing)
-                .accessibilityHint("Sin paquete importado")
+                .accessibilityHint("No disponible. Se habilitará cuando exista un paquete válido con archivo y destino.")
         }
         .padding(.horizontal, 16)
         .frame(height: 64)
@@ -525,6 +685,12 @@ struct ContentView: View {
             guard let baseProject = item.project, appState.isSupported else {
                 feedback = NXFeedback(message: "El paquete o la versión de iOS no están verificados.")
                 return
+            }
+            for rule in baseProject.rules {
+                if let conflict = activeConflict(bundleID: rule.bundleID, path: rule.relativePath, excluding: item.id) {
+                    feedback = NXFeedback(message: "El archivo ya está ocupado por \(conflict). Primero restaura esa opción para conservar el respaldo original.")
+                    return
+                }
             }
             busyProject = item.id
             Task.detached(priority: .userInitiated) {

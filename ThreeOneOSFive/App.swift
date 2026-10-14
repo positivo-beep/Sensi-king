@@ -445,14 +445,11 @@ private struct NexoraKeyScreen: View {
                         Spacer(minLength: max(48, geometry.size.height * 0.118))
                         Image("NexoraBanner")
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(height: min(160, max(110, (min(geometry.size.width, 465) - 50) * 0.35)))
+                            .scaledToFit() // Nunca recortar ni estirar el logotipo.
+                            .frame(width: min(geometry.size.width - 26, 520))
                             .frame(maxWidth: .infinity)
-                            .clipShape(RoundedRectangle(cornerRadius: 23))
-                            .overlay(RoundedRectangle(cornerRadius: 23)
-                                .stroke(NexoraPalette.purple.opacity(0.47), lineWidth: 1))
-                            .shadow(color: NexoraPalette.purple.opacity(0.20), radius: 26, y: 12)
-                            .padding(.bottom, 26)
+                            .shadow(color: NexoraPalette.purple.opacity(0.30), radius: 24, y: 10)
+                            .padding(.bottom, 20)
 
                         Text("NEXORA SYSTEM")
                             .font(.system(size: 30, weight: .black, design: .rounded))

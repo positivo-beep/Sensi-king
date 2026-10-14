@@ -14,6 +14,7 @@ jobs:
         run: |
           python3 scripts/verificar_nexora.py
           python3 scripts/verificar_integracion_nexora.py
+          python3 scripts/verificar_opciones_v14.py
           xcodebuild -version
           xcodebuild -list -project ThreeOneOSFive.xcodeproj
       - name: Compilar para iOS sin firmar
