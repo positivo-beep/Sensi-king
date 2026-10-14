@@ -80,14 +80,14 @@
     "nota": "Alternativa exclusiva para este destino; requiere respaldo original."
   },
   {
-    "opcion": "ROJO CON VERDE",
+    "opcion": "HOLO ARM RAINBOW",
     "categoria": "HOLO ARM",
-    "recurso": "NXModHoloRojo",
+    "recurso": "NXModHoloRainbow",
     "destino_relativo": "Documents/contentcache/Optional/ios/gameassetbundles/shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D",
-    "sha256": "6e3b078e669dd6c3d607850a3c61aba67fff54383a762c5cb84f80aad6c4123f",
+    "sha256": "b458cfb979409d28b0e15ed3d74afec71e49dccba1952710e678668bace8cfa7",
     "tamano_bytes": 1486274,
-    "estado": "pendiente_de_archivo_distinto",
-    "nota": "Los bytes suministrados para HOLO Azul y Rojo son idénticos; esta opción se deshabilita para evitar una diferencia ficticia."
+    "estado": "incluido",
+    "nota": "Variante Rainbow del recurso ya integrado; sustituye la opción Rojo con Verde."
   },
   {
     "opcion": "HOLOGRAMA PERSONAJE AMARILLO",
