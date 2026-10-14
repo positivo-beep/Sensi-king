@@ -1,0 +1,34 @@
+NEXORA SYSTEM 2026 — ACTUALIZACIÓN V15 HOLO ARM RAINBOW
+
+Base: Proyecto completo V14 con logo grande y la pantalla de keys aprobada.
+
+Novedad:
+- Categoría HOLO ARM: nuevo interruptor HOLO ARM RAINBOW.
+- Recurso: ThreeOneOSFive/Assets.xcassets/NXModHoloRainbow.dataset/shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D
+- Tipo de archivo: UnityFS, cabecera 2018.4.12f1.
+- Tamaño: 1486274 bytes.
+- SHA-256: b458cfb979409d28b0e15ed3d74afec71e49dccba1952710e678668bace8cfa7
+- Ruta de destino configurada: misma que AZUL CON VERDE y ROJO CON VERDE.
+- Por seguridad, el código existente impide aplicar dos variantes simultáneamente
+  si tienen el mismo destino; al desactivar usa el recibo de respaldo de 3105.
+
+Se mantienen:
+- UI NEXORA y pantalla de key/Cloudflare, sin cambios.
+- Motor original 3105, sin cambios.
+- Las demás opciones y archivos existentes, sin cambios.
+
+PRUEBAS Y LIMITACIONES:
+- La identidad del archivo se comprobó por tamaño, cabecera y SHA-256.
+- Su contenido es distinto al de los recursos anteriores.
+- No se ha ejecutado ni comprobado el efecto Rainbow dentro de Free Fire.
+- La ejecución en GitHub/Xcode, los permisos de iOS, el reemplazo y la restauración
+  de esta nueva variante no han sido verificados en un iPhone.
+- Se requiere recompilar la IPA, volver a firmar y comprobar el resultado.
+
+ACTUALIZAR CON GITHUB DESKTOP:
+1. Descargar y extraer el ZIP COMPLETO.
+2. Copiar todo su contenido, NO la carpeta contenedora, a Documents\GitHub\Sensi-king.
+3. Confirmar reemplazo de archivos; no borrar .git.
+4. GitHub Desktop: Commit to main -> Push origin.
+5. GitHub Actions: descargar la IPA del nuevo build si finaliza en verde.
+6. ESign: firmar e instalar la nueva IPA.

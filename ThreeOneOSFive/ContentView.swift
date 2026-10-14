@@ -51,7 +51,7 @@ private struct NXBundledOption: Identifiable {
         NXBundledOption(id: UUID(uuidString: "D152E8C1-1866-5D39-AB06-334558C45E4A")!, title: "AIM CUELLO ANTENA", category: "AIMBOT CON ANTENA", dataAsset: "NXModAntenaCuello", targetPath: "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D", filename: "assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D"),
         NXBundledOption(id: UUID(uuidString: "9DAE3BC4-B812-5C6A-87D9-BCD8FAE69498")!, title: "AIM PECHO ANTENA", category: "AIMBOT CON ANTENA", dataAsset: "NXModAntenaPecho", targetPath: "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D", filename: "assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D"),
         NXBundledOption(id: UUID(uuidString: "1F01CB76-4465-5BB9-89D4-EE24BB006D94")!, title: "AZUL CON VERDE", category: "HOLO ARM", dataAsset: "NXModHoloAzul", targetPath: "Documents/contentcache/Optional/ios/gameassetbundles/shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D", filename: "shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D"),
-        NXBundledOption(id: UUID(uuidString: "1F6E508C-660E-5236-9DCF-524AC4D4B54A")!, title: "ROJO CON VERDE", category: "HOLO ARM", dataAsset: "NXModHoloRojo", targetPath: "Documents/contentcache/Optional/ios/gameassetbundles/shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D", filename: "shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D"),
+        NXBundledOption(id: UUID(uuidString: "1F6E508C-660E-5236-9DCF-524AC4D4B54A")!, title: "HOLO ARM RAINBOW", category: "HOLO ARM", dataAsset: "NXModHoloRainbow", targetPath: "Documents/contentcache/Optional/ios/gameassetbundles/shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D", filename: "shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D"),
         NXBundledOption(id: UUID(uuidString: "6A2759B8-35AD-55D2-93F8-0961B712026D")!, title: "HOLOGRAMA PERSONAJE AMARILLO", category: "HOLO PJ", dataAsset: "NXModHoloPjAmarillo", targetPath: "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D", filename: "optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D"),
     ]
 
@@ -77,15 +77,6 @@ private struct NXBundledOption: Identifiable {
             other.id != id && other.targetPath == targetPath &&
                 DevicePatchService.latestReceipt(projectID: other.id) != nil
         }
-    }
-
-    /// En V12 Azul/Verde y Rojo/Verde llegaron con bytes identicos. No
-    /// anunciamos efectos distintos hasta que haya un binario distinto.
-    var isDuplicateHoloPayload: Bool {
-        guard dataAsset == "NXModHoloRojo",
-              let red = NSDataAsset(name: dataAsset)?.data,
-              let blue = NSDataAsset(name: "NXModHoloAzul")?.data else { return false }
-        return red == blue
     }
 
     // El nombre del recurso es fijo y Xcode lo incorpora a Assets.car.
@@ -416,7 +407,6 @@ struct ContentView: View {
     private func builtInPatchRow(_ option: NXBundledOption) -> some View {
         let loading = busyProject == option.id
         let applied = DevicePatchService.latestReceipt(projectID: option.id) != nil
-        let duplicate = option.isDuplicateHoloPayload
         return HStack(spacing: 14) {
             Image(systemName: "scope")
                 .font(.system(size: 17, weight: .medium))
@@ -424,7 +414,7 @@ struct ContentView: View {
                 .frame(width: 25)
             Text(option.title)
                 .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(duplicate ? NXColors.muted : .white)
+                .foregroundStyle(.white)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .layoutPriority(1)
@@ -436,11 +426,10 @@ struct ContentView: View {
             ))
             .labelsHidden()
             .tint(NXColors.cyan)
-            .disabled(loading || busyProject != nil || store.isBusy || !appState.isSupported || duplicate)
+            .disabled(loading || busyProject != nil || store.isBusy || !appState.isSupported )
             .scaleEffect(0.78, anchor: .trailing)
             .frame(width: 48, height: 38, alignment: .trailing)
-            .accessibilityValue(duplicate ? "Pendiente de archivo diferente" :
-                                (applied ? "Modificado activo" : "Original restaurado"))
+            .accessibilityValue(applied ? "Modificado activo" : "Original restaurado")
         }
         .padding(.horizontal, 16)
         .frame(height: 64)
@@ -470,10 +459,6 @@ struct ContentView: View {
     private func toggleBuiltIn(_ option: NXBundledOption, enabled: Bool) {
         guard busyProject == nil else { return }
         if enabled {
-            if option.isDuplicateHoloPayload {
-                feedback = NXFeedback(message: "Las opciones Azul/Verde y Rojo/Verde tienen el mismo archivo. Agrega un modificado diferente para habilitar esta variante.")
-                return
-            }
             if let activeName = activeConflict(bundleID: "com.dts.freefireth", path: option.targetPath, excluding: option.id) {
                 feedback = NXFeedback(message: "El archivo de destino ya lo utiliza \(activeName). Desactiva esa opción antes de activar \(option.title).")
                 return
