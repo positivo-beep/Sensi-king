@@ -1,0 +1,30 @@
+NEXORA SYSTEM 2026 - PRUEBA SEGURA DEL MOTOR DE 3105
+
+OBJETIVO:
+Comprobar en el iPhone el ciclo aplicar/resguardar/restaurar que maneja
+PatchTransaction, con DOS archivos de texto de prueba incluidos en la IPA.
+No pretende modificar juegos ni acceso a contenedores ajenos.
+
+LOS ARCHIVOS DENTRO DE LA APP:
+- ThreeOneOSFive/Assets.xcassets/NXMotorOriginal.dataset/original.txt
+- ThreeOneOSFive/Assets.xcassets/NXMotorModificado.dataset/modificado.txt
+
+DONDE PROBAR:
+1. Compilar con el workflow .github/workflows/build-nexora-ios.yml.
+2. Instalar con tu certificado, abrir e introducir la key.
+3. En el panel interior ir a «PRUEBA DEL MOTOR 3105».
+4. Encender: debe informar reemplazo aplicado y respaldo creado.
+5. Apagar: debe informar original restaurado byte por byte.
+
+El interruptor usa PatchTransaction.apply/inspectRestore/restore,
+que forman parte del motor 3105; el destino de prueba está en el sandbox
+privado de NEXORA para proteger la integridad de otros archivos.
+
+NO INCLUYE:
+- Paquetes aimbot/holograma ni contenido de HyperSex. Los 45 .r7v
+  encontrados en HyperSexNew.ipa no son paquetes .3105 verificables.
+- Permisos adicionales ni garantía de acceso al sandbox de otros juegos.
+- Una IPA ya compilada: requiere Xcode/macOS/GitHub Actions.
+
+Si el test local pasa, SOLO demuestra respaldo y restauración dentro de
+NEXORA. No demuestra acceso a otras apps o funcionamiento de modificaciones.

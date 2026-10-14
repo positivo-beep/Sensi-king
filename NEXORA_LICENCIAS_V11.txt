@@ -1,0 +1,22 @@
+NEXORA SYSTEM 2026 — Actualización de licencias V11
+
+Se conservaron el motor fuente abierto de 3105 y la interfaz NEXORA de la revisión anterior.
+
+CAMBIOS
+- Las licencias de Cloudflare se validan en cada inicio de la aplicación.
+- Al volver del segundo plano, el panel se bloquea hasta que Cloudflare revalida la key.
+- Si Cloudflare indica que está vencida, revocada o inactiva, se borra la sesión local y aparece nuevamente la pantalla de keys.
+- Si el servidor no responde, no se muestra el panel sin verificar; el usuario puede introducir o reintentar su key.
+- Si el servidor envía expires_at ISO-8601, se muestra cuenta atrás en días, horas, minutos y segundos, y se cierra al llegar a cero.
+- Si el servidor informa duration_days o duration_seconds, aparece la duración nominal (por ejemplo, 30 días). Sin esos campos no se inventa un plan.
+
+IMPORTANTE — Cloudflare:
+El Worker de licencias debe devolver ok, active y expires_at (ISO-8601) para mostrar un contador real. Para mostrar además la duración del plan, incluir duration_days: 30 como número, por ejemplo.
+La suspensión o revocación remota se detecta cuando la aplicación se vuelve a activar, o al pulsar Comprobar key. Una pantalla abierta continuamente no recibe push de revocación, pero sí vence según expires_at.
+
+INSTALACIÓN:
+Para mantener el repositorio actual, reemplazar solo ThreeOneOSFive/App.swift y ThreeOneOSFive/ContentView.swift.
+Para un nuevo repositorio, subir el contenido de este ZIP completo conservando carpetas.
+La compilación con Xcode en macOS y el uso real en iPhone/iPad están pendientes de prueba.
+
+Este proyecto usa código 3105 GPLv3. Conservar los avisos y la licencia.

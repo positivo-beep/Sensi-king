@@ -1,0 +1,46 @@
+NEXORA SYSTEM 2026 + MOTOR 3105 — EDICIÓN DE INTEGRACIÓN (FUENTE)
+
+ESTADO REAL (14 de octubre de 2026)
+===================================
+- Proyecto original de 3105 con motor de reemplazo/restauración incluido SIN MODIFICAR en
+  DevicePatchService.swift, PatchTransaction.swift y ContainerStore.swift.
+- Interfaz NEXORA rediseñada para respetar la última captura RX7 MODZ aportada:
+  marca centrada, título, subtítulo, estado, pestañas horizontales, cinco filas AIMBOT,
+  reproductor fijo abajo, configuración desde la rueda.
+- Pantalla de entrada NEXORA con key y Worker Cloudflare.
+- Sin paquetes de modificaciones ajenos incorporados. Las cinco filas son referencias
+  visuales, DESHABILITADAS hasta importar un paquete .3105 con nombre correspondiente.
+- Las filas importadas llaman DevicePatchService.apply / DevicePatchService.restore.
+- Configuración incluye estado real del soporte 3105, key y tiempo restante (si Worker
+  aporta expires_at), importar paquetes y prueba local reversible con archivos propios.
+
+LÍMITES (NO OCULTAR)
+===================
+- Esta entrega es CÓDIGO FUENTE, no un .ipa compilado.
+- No hay Xcode ni ejecución de SwiftUI/iOS disponible en este entorno, así que NO está
+  confirmada la compilación iOS, la visualización exacta en iPhone ni los permisos.
+- La compilación previa con swiftc -frontend -parse comprueba sintaxis, NO tipos iOS.
+- El identificador de bundle original de 3105 se conserva. Las firmas y restricciones
+  de iOS podrían impedir la instalación o el acceso a otros contenedores.
+- No contiene archivos de AIMBOT/HOLO funcionales ni modifica otros juegos.
+- La duración CONTRATADA solo puede mostrarse si Cloudflare entrega duration_days o
+  duration_seconds. El tiempo RESTANTE depende de expires_at.
+- Discord y WhatsApp requieren enlaces reales que todavía no se han indicado.
+
+CUANDO DISPONGAS DE COMPILADOR macOS
+===================================
+1. Extrae el ZIP en una carpeta. Su raíz debe contener ThreeOneOSFive.xcodeproj.
+2. Ejecuta en macOS: python3 scripts/verificar_nexora.py
+3. Abre ThreeOneOSFive.xcodeproj y selecciona el esquema NEXORA_SYSTEM_2026.
+4. Compila en destino iOS, verifica errores y empaqueta/firmar según tu certificado.
+5. Prueba en el iPhone: key válida, key falsa, revocación, fecha, pantalla/interfaz,
+   motor de prueba local original -> modificado -> original.
+6. Solo con permiso y dentro de las capacidades del dispositivo, verifica los accesos
+   de 3105; la pantalla no concede permisos de sistema por sí misma.
+
+REFERENCIAS Y CRÉDITOS
+======================
+- Fuente original 3105: https://github.com/YangJiiii/3105
+- Licencia de fuente original: GPLv3; se conserva LICENSE y avisos de terceros.
+- UI: inspirada en la captura suministrada; no reutiliza assets comerciales de HyperSex.
+- Recursos NEXORA locales provienen de las iteraciones previas del proyecto.
