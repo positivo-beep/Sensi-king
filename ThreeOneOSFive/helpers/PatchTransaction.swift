@@ -399,6 +399,9 @@ enum PatchTransaction {
                         try fileManager.removeItem(at: item.target)
                     }
                 }
+                // Confirmar la restauración ANTES de marcar la transacción como cerrada.
+                // Si la comprobación falla, withCurrentStateRecovery revierte la operación.
+                try verifyRestoredContent(resolved, fileManager: fileManager)
                 journal.status = .restored
                 try writeJournal(journal, to: receipt.journalURL)
             }
@@ -655,6 +658,26 @@ enum PatchTransaction {
                 relativePath: item.record.relativePath,
                 kind: .modified
             )
+        }
+    }
+
+    /// Comprueba el resultado real: los archivos anteriores deben coincidir byte a byte
+    /// con su respaldo SHA-256 y los archivos creados por la opción deben desaparecer.
+    /// Se ejecuta antes de registrar una restauración como exitosa.
+    private static func verifyRestoredContent(
+        _ records: [ResolvedRecord],
+        fileManager: FileManager
+    ) throws {
+        for item in records {
+            if item.record.originalExisted {
+                guard let expected = item.record.originalDigest,
+                      fileManager.fileExists(atPath: item.target.path),
+                      try digestFile(item.target) == expected else {
+                    throw PatchPackageError.restoreFailed
+                }
+            } else if fileManager.fileExists(atPath: item.target.path) {
+                throw PatchPackageError.restoreFailed
+            }
         }
     }
 

@@ -113,6 +113,7 @@ struct ContentView: View {
     @EnvironmentObject private var license: NexoraLicenseModel
     @Environment(\.appLanguage) private var language
     @StateObject private var music = NXMusicPlayer()
+    @StateObject private var activationFeedback = NXActivationFeedback()
     @State private var selectedCategory = "AIMBOT"
     @State private var showSettings = false
     @State private var showImporter = false
@@ -469,7 +470,11 @@ struct ContentView: View {
                     try option.checkOriginalExists()
                     let project = try option.makeProject()
                     _ = try DevicePatchService.apply(project: project)
-                    await MainActor.run { busyProject = nil; store.reload() }
+                    await MainActor.run {
+                        busyProject = nil
+                        store.reload()
+                        activationFeedback.play()
+                    }
                 } catch {
                     await MainActor.run {
                         busyProject = nil
@@ -623,6 +628,7 @@ struct ContentView: View {
                     nxMotorDemoIsApplied = NXLocalMotorDemo.isApplied
                     nxMotorDemoResult = message
                     nxMotorDemoBusy = false
+                    if enabled { activationFeedback.play() }
                 }
             } catch {
                 await MainActor.run {
@@ -687,6 +693,7 @@ struct ContentView: View {
                     await MainActor.run {
                         busyProject = nil
                         store.reload()
+                        activationFeedback.play()
                     }
                 } catch {
                     await MainActor.run {
@@ -727,6 +734,36 @@ struct ContentView: View {
                 }
             }
         }
+    }
+}
+
+// Aviso sonoro de activación. Usa un recurso opcional o la voz del sistema.
+// No modifica archivos de terceros ni registros de seguridad.
+@MainActor
+private final class NXActivationFeedback: ObservableObject {
+    private let synthesizer = AVSpeechSynthesizer()
+    private var player: AVAudioPlayer?
+
+    func play() {
+        // Evita avisos superpuestos si se activan opciones consecutivas.
+        synthesizer.stopSpeaking(at: .immediate)
+        player?.stop()
+
+        // Reproduce la grabación personalizada incluida en Assets.xcassets.
+        // La voz del sistema queda como respaldo si no se puede reproducir.
+        if let data = NSDataAsset(name: "NexoraActivation")?.data,
+           let audio = try? AVAudioPlayer(data: data) {
+            player = audio
+            audio.numberOfLoops = 0
+            audio.prepareToPlay()
+            if audio.play() { return }
+            player = nil
+        }
+
+        let message = AVSpeechUtterance(string: "Opción activada")
+        message.voice = AVSpeechSynthesisVoice(language: "es-ES")
+        message.rate = 0.47
+        synthesizer.speak(message)
     }
 }
 

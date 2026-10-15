@@ -1,3 +1,9 @@
+## V21.1 — Comprobación real de restauración (2026-10-15)
+- Verificación SHA-256 de todos los archivos recuperados antes de declarar la restauración exitosa.
+- Comprobación de ausencia de archivos creados por una opción desactivada.
+- Ante discrepancia, error explícito y recuperación del estado previo cuando sea posible.
+- Mantiene el sonido de activación de V21.
+
 # Changelog
 
 All notable user-facing changes are documented in this file.
