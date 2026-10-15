@@ -219,6 +219,16 @@ private enum NexoraSecureStorage {
     }
 }
 
+private final class NexoraNoRedirectDelegate: NSObject, URLSessionTaskDelegate {
+    // No seguir redirecciones: la key debe enviarse exclusivamente a nuestro Worker.
+    func urlSession(_ session: URLSession, task: URLSessionTask,
+                    willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest,
+                    completionHandler: @escaping (URLRequest?) -> Void) {
+        completionHandler(nil)
+    }
+}
+
 @MainActor
 final class NexoraLicenseModel: ObservableObject {
     enum State { case checking, locked, allowed }
@@ -256,6 +266,18 @@ final class NexoraLicenseModel: ObservableObject {
     }
 
     private let endpoint = URL(string: "https://hypersex-licencias-propias.nexora-system26.workers.dev")!
+    // Sesión efímera: evita guardar respuestas, cookies o caché de validación en disco.
+    // No sustituye la autenticación del servidor ni protege una IPA alterada.
+    private let licenseSession: URLSession = {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.urlCache = nil
+        configuration.httpCookieStorage = nil
+        configuration.httpShouldSetCookies = false
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        configuration.timeoutIntervalForRequest = 20
+        configuration.timeoutIntervalForResource = 30
+        return URLSession(configuration: configuration, delegate: NexoraNoRedirectDelegate(), delegateQueue: nil)
+    }()
     private let licenseAccount = "license"
     private let deviceAccount = "installation-id"
     private var hasStarted = false
@@ -319,25 +341,52 @@ final class NexoraLicenseModel: ObservableObject {
         isBusy = true
         defer { isBusy = false }
         errorMessage = ""
-        // Cada apertura requiere comprobación online. El ADMIN_TOKEN nunca se envía al cliente.
+        // La autoridad es Cloudflare, no una bandera local; no incluir secretos de administración.
+        // La clave se envía solo al endpoint HTTPS definido por el propietario.
+        guard endpoint.scheme == "https", endpoint.host != nil else {
+            state = .locked
+            errorMessage = "El servidor de licencias no está configurado de forma segura."
+            return
+        }
         var request = URLRequest(url: endpoint.appendingPathComponent(String(path.dropFirst())))
         request.httpMethod = "POST"
         request.timeoutInterval = 20
         request.cachePolicy = .reloadIgnoringLocalCacheData
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("no-store", forHTTPHeaderField: "Cache-Control")
         do {
             request.httpBody = try JSONEncoder().encode(NexoraWirePayload(key: formatted, device_id: deviceID))
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard let http = response as? HTTPURLResponse, (200...499).contains(http.statusCode) else {
+            let (data, response) = try await licenseSession.data(for: request)
+            // Ni redirecciones a otros hosts, ni respuestas anómalas, ni errores HTTP
+            // pueden autorizar una licencia.
+            guard let http = response as? HTTPURLResponse,
+                  http.url?.scheme == "https",
+                  http.url?.host == endpoint.host,
+                  data.count <= 16_384 else {
+                throw URLError(.badServerResponse)
+            }
+            if http.statusCode == 429 {
+                state = .locked
+                errorMessage = "Demasiados intentos. Espera un poco y vuelve a intentarlo."
+                return
+            }
+            guard (200...499).contains(http.statusCode) else {
                 throw URLError(.badServerResponse)
             }
             let result = try JSONDecoder().decode(NexoraWireResult.self, from: data)
-            guard result.ok && result.active else {
-                // Desactivación, revocación o vencimiento: elimina la sesión persistida.
+            guard (200...299).contains(http.statusCode), result.ok && result.active else {
+                // Ni una respuesta HTTP de error ni una key revocada abre el panel.
                 invalidateAndRequireNewKey(Self.errorText(result.reason ?? result.error))
                 return
             }
+            // Rechazar fechas de vencimiento inválidas en vez de aceptarlas
+            // silenciosamente como si fueran licencias sin vencimiento.
             expiration = result.expires_at
+            if let rawExpiry = result.expires_at, !rawExpiry.isEmpty, expirationDate == nil {
+                invalidateAndRequireNewKey("El servidor devolvió un vencimiento no válido.")
+                return
+            }
             // El servidor es la fuente de verdad; nunca deducir un plan de 30 días.
             if let days = result.duration_days, days > 0 {
                 planDurationDays = days
@@ -357,8 +406,9 @@ final class NexoraLicenseModel: ObservableObject {
             }
             state = .allowed
         } catch {
+            // No mostrar detalles de red o del servidor en la interfaz pública.
             state = .locked
-            errorMessage = "Error al consultar Cloudflare: \(error.localizedDescription)"
+            errorMessage = "No se pudo verificar tu licencia. Comprueba la conexión e inténtalo de nuevo."
         }
     }
 

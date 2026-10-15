@@ -16,9 +16,9 @@ private enum NXColors {
 }
 
 private enum NexoraSocialLinks {
-    // Dejar vacíos hasta que el propietario proporcione los enlaces reales.
-    static let discord = ""
-    static let whatsapp = ""
+    // Enlaces oficiales proporcionados por el propietario de NEXORA.
+    static let discord = "https://discord.gg/RyAu7yrhE"
+    static let whatsapp = "https://chat.whatsapp.com/KKHuqvBtbnH45JNuIVBJVB?mode=gi_t"
 }
 
 private struct NXFeedback: Identifiable {
@@ -778,7 +778,7 @@ private struct NXSettingsView: View {
                     card("MIS REDES", icon: "person.2.fill") {
                         social("Servidor de Discord", systemImage: "bubble.left.and.bubble.right.fill", url: NexoraSocialLinks.discord)
                         Divider().overlay(NXColors.border)
-                        social("Canal de WhatsApp", systemImage: "message.fill", url: NexoraSocialLinks.whatsapp)
+                        social("Grupo de WhatsApp", systemImage: "message.fill", url: NexoraSocialLinks.whatsapp)
                     }
                     card("COMPATIBILIDAD DE 3105", icon: "iphone") {
                         settingsDetail("Dispositivo", value: AppInfo.machineName)
@@ -795,37 +795,30 @@ private struct NXSettingsView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     card("MI LICENCIA", icon: "key.fill") {
-                        HStack(spacing: 8) {
-                            Circle().fill(Color.green).frame(width: 7, height: 7)
-                            Text("Key validada en Cloudflare")
-                                .font(.system(size: 13, weight: .semibold))
-                        }
-                        if let duration = license.planDurationText {
-                            settingsDetail("Duración de la key", value: duration)
-                        } else {
-                            Text("El servidor no informó la duración contratada. Mostramos el vencimiento real cuando esté disponible.")
-                                .font(.system(size: 11)).foregroundStyle(NXColors.muted)
-                        }
+                        // El usuario solo consulta el tiempo restante. Las keys
+                        // se administran desde el panel privado del propietario.
                         if let expiresAt = license.expirationDate {
                             TimelineView(.periodic(from: .now, by: 1)) { context in
-                                VStack(alignment: .leading, spacing: 5) {
-                                    Text("Tiempo restante")
-                                        .font(.system(size: 11)).foregroundStyle(NXColors.muted)
+                                VStack(alignment: .leading, spacing: 7) {
+                                    Text("Tiempo restante de tu key")
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundStyle(NXColors.muted)
                                     Text(Self.remaining(to: expiresAt, now: context.date))
                                         .monospacedDigit()
-                                        .font(.system(size: 20, weight: .heavy, design: .monospaced))
+                                        .font(.system(size: 23, weight: .heavy, design: .monospaced))
                                         .foregroundStyle(NXColors.cyan)
-                                        .lineLimit(1).minimumScaleFactor(0.7)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.65)
+                                        .accessibilityLabel("Tiempo restante de la licencia")
                                 }
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             }
-                            settingsDetail("Vencimiento", value: expiresAt.formatted(date: .abbreviated, time: .shortened))
                         } else {
-                            Text("Cloudflare no devolvió la fecha de vencimiento. No se puede calcular el tiempo restante sin ella.")
-                                .font(.system(size: 12)).foregroundStyle(NXColors.muted)
+                            Text("Tiempo restante no disponible: el servidor todavía no informó una fecha de vencimiento.")
+                                .font(.system(size: 12))
+                                .foregroundStyle(NXColors.muted)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
-                        Button("Comprobar key") { Task { await license.revalidate() } }
-                            .disabled(license.isBusy)
-                        Button("Cerrar sesión", role: .destructive) { license.signOut(); dismiss() }
                     }
                     DisclosureGroup("Diagnóstico técnico del motor 3105") {
                         VStack(alignment: .leading, spacing: 10) {
