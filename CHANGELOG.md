@@ -1,3 +1,36 @@
+## NEXORA 2026 V21.6 — Conservación de archivos que cambiaron después de activar una opción
+
+- Si un archivo modificado por NEXORA fue reemplazado externamente mientras la opción estaba activa, se conserva ese contenido en vez de sobrescribirlo con una copia antigua.
+- Los archivos que siguen modificados por NEXORA sí vuelven a sus originales respaldados.
+- Si un archivo desaparece, se interrumpe la restauración para evitar daños.
+- Se conserva la advertencia de integridad para la próxima activación; los cambios externos no se confirman como oficiales sin una fuente confiable.
+- Conserva audio personalizado, limpieza propia, Cloudflare, Discord y WhatsApp.
+- No incluye ocultación de cambios ni eliminación de registros de seguridad.
+
+## V21.5 — Avisos de versión del original
+- Inspección del tamaño y SHA-256 del original antes de activar una opción, comparándolos con respaldos válidos anteriores.
+- Al detectar un cambio, se bloquea la activación hasta confirmar de forma explícita que se revisó el archivo actual.
+- Tras confirmar, se respalda el archivo actual para permitir una restauración coherente, sin reutilizar silenciosamente copias antiguas.
+- Si el archivo desapareció, se cancela la operación.
+- Conserva la advertencia de restauración cuando se modifica el destino durante una activación.
+- Ninguna garantía de actualización oficial automática ni de eliminación de rastros externos.
+
+## NEXORA V21.4 (2026-10-15) — Limpieza propia reforzada
+
+- Recuperación en segundo plano al arrancar de espacios temporales NEXORA abandonados durante 48 horas o más, aislados de respaldos y otras apps.
+- Limpieza de espacio temporal propio cuando falla la activación, sin alterar el error original.
+- Nuevas pruebas reales: temporales recientes, limpieza repetida y enlaces simbólicos.
+- Se conservan audio personalizado V21.2, restauración verificada V21.1, opciones V19 y licencia Cloudflare V20.
+- **No** contiene funciones para ocultar modificaciones ni borrar registros de seguridad.
+
+## NEXORA V21.3 — limpieza comprobable de temporales propios
+
+- Nuevo `NXOwnedTemporaryWorkspaces.swift`: cada opción tiene un área temporal aislada por UUID dentro de Caches de la propia IPA.
+- Las operaciones de limpieza se limitan a las carpetas creadas por NEXORA; no alcanzan registros, backups de transacciones ni archivos de otras apps.
+- Nueva prueba accesible en Configuración > Diagnóstico técnico: comprueba dos opciones, limpia A sin afectar B y después limpia B, verificando que ambas carpetas desaparecen.
+- La compilación de GitHub ejecuta la prueba real en Swift antes de generar la IPA.
+- No se implementan ni se prometen funciones de ocultación de cambios o supresión de registros de seguridad.
+
 ## V21.1 — Comprobación real de restauración (2026-10-15)
 - Verificación SHA-256 de todos los archivos recuperados antes de declarar la restauración exitosa.
 - Comprobación de ausencia de archivos creados por una opción desactivada.

@@ -1,3 +1,7 @@
+# NOTA V21.6
+
+Esta es la versión para compilar. Copia el contenido **dentro** de tu repositorio Sensi-king, conserva la carpeta `.git` y publica con GitHub Desktop. Revisa GitHub Actions y prueba primero con archivos de demostración propios. V21.6 preserva cambios externos sin identificarlos como oficiales. No modifica Cloudflare.
+
 # NEXORA SYSTEM 2026 — Compilar para iPhone
 
 **Estado:** código fuente preparado, no una IPA ya compilada. Solo la ejecución en Xcode de GitHub Actions confirma la compilación iOS.

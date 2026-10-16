@@ -183,6 +183,7 @@ enum PatchPackageError: Error, Equatable {
     case targetOccupied(String)
     case projectAlreadyApplied
     case restoreTargetsChanged([String])
+    case originalVersionChanged([String])
     case activePatchCannotBeDeleted
     case privatePatchRequiresPassword
     case privateOperationFailed
@@ -209,6 +210,7 @@ extension PatchPackageError: LocalizedError {
         case .targetOccupied: return "patch.error.target_occupied"
         case .projectAlreadyApplied: return "patch.error.already_applied"
         case .restoreTargetsChanged: return "patch.error.restore_targets_changed"
+        case .originalVersionChanged: return "patch.error.original_version_changed"
         case .activePatchCannotBeDeleted: return "patch.error.active_delete"
         case .symbolicLinkUnsupported: return "patch.error.symlink"
         case .privatePatchRequiresPassword: return "patch.error.private_password"
@@ -233,7 +235,7 @@ extension PatchPackageError: LocalizedError {
         switch self {
         case .targetAppUnavailable(let bundleID), .targetOccupied(let bundleID):
             return bundleID
-        case .restoreTargetsChanged(let paths):
+        case .restoreTargetsChanged(let paths), .originalVersionChanged(let paths):
             return paths.joined(separator: "\n")
         default:
             return nil

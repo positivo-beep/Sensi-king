@@ -15,11 +15,25 @@ jobs:
           python3 scripts/verificar_nexora.py
           python3 scripts/verificar_integracion_nexora.py
           python3 scripts/verificar_opciones_v14.py
+          python3 scripts/verificar_catalogo_completo_nexora.py
           python3 scripts/verificar_seguridad_licencias.py
           python3 scripts/verificar_restauracion_v21_1.py
           python3 scripts/verificar_audio_personalizado_v21_2.py
+          python3 scripts/verificar_temporales_nexora_v21_3.py
+          python3 scripts/verificar_version_original_v21_5.py
+          python3 scripts/verificar_conservacion_actualizaciones_v21_6.py
           xcodebuild -version
           xcodebuild -list -project ThreeOneOSFive.xcodeproj
+      - name: Pruebas funcionales de respaldo, restauración y actualización (11 casos)
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -o "$RUNNER_TEMP/nexora-motor-tests" \
+            ThreeOneOSFive/helpers/PatchProjectModels.swift \
+            ThreeOneOSFive/helpers/PatchTransaction.swift \
+            scripts/PruebaMotorTransacciones.swift
+          "$RUNNER_TEMP/nexora-motor-tests" | tee motor-transacciones-test.log
+          grep -q 'RESULTADO FUNCIONAL: 11/11 casos correctos' motor-transacciones-test.log
       - name: Compilar para iOS sin firmar
         shell: bash
         run: |
@@ -57,6 +71,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: NEXORA_LOG_COMPILACION
-          path: xcodebuild.log
+          path: |
+            xcodebuild.log
+            motor-transacciones-test.log
           if-no-files-found: ignore
           retention-days: 7

@@ -1,0 +1,55 @@
+NEXORA SYSTEM 2026 V21.6 — AUDITORÍA FUNCIONAL PREVIA A COMPILACIÓN
+Fecha: 2026-10-16
+Estado: MOTOR PROBADO CON ARCHIVOS DE ENSAYO; TODAVÍA NO CERTIFICADO EN iPHONE
+
+1. RESULTADO FUNCIONAL: 11/11 PRUEBAS CORRECTAS
+
+1) Crear respaldo y restaurar byte a byte.
+2) Detectar una modificación externa, rechazar restauración insegura y preservar el cambio.
+3) Avisar de nueva versión antes de aplicar; con confirmación, guardar el original nuevo y restaurarlo.
+4) Detener la restauración ante un archivo desaparecido.
+5) Detectar cambio de igual tamaño mediante SHA-256.
+6) Bloquear doble activación de la misma opción.
+7) Impedir que dos opciones compartan simultáneamente el mismo archivo de destino.
+8) Revertir una aplicación parcialmente fallida.
+9) Revertir una restauración parcialmente fallida y permitir un segundo intento.
+10) Rechazar la restauración con copia de seguridad alterada.
+11) Eliminar en la restauración un archivo nuevo que no existía originalmente.
+
+2. OTRAS COMPROBACIONES
+- Limpieza de temporales propios de NEXORA: pruebas de borrado por opción, preservación de otros
+  espacios, symlinks inseguros y archivos recientes: correctas.
+- Integridad de recursos: 11 datasets activos validados con SHA-256 (incluido personaje azul).
+- Compilador Swift: 55 archivos Swift analizados sintácticamente sin errores.
+- Catálogo: 21 opciones, 11 con archivo configurado y 10 pendientes/deshabilitadas.
+
+3. PLATAFORMA DE LAS PRUEBAS
+- Las 11 pruebas se ejecutaron localmente con el núcleo de PatchTransaction y modelos reales,
+  adaptados únicamente para Linux (sustitución del módulo CryptoKit por SHA-256 vía OpenSSL,
+  Darwin por Glibc, y el texto de localización no disponible en Linux). La lógica transaccional
+  de aplicación y restauración NO se alteró en la ejecución.
+- Añadido scripts/PruebaMotorTransacciones.swift con las mismas pruebas, sin adaptaciones,
+  para ejecutarlas nativamente en el runner macOS de GitHub Actions con CryptoKit antes del build.
+- El flujo .github/workflows/build-nexora-ios.yml ahora detiene la compilación si una prueba falla.
+- Ese nuevo flujo todavía NO se ha ejecutado en GitHub. No se ha compilado ni instalado una nueva IPA.
+
+4. CORRECCIONES/REFUERZOS EN ESTA ENTREGA
+- Se añadió un conjunto de pruebas funcionales de regresión del motor, que antes no existía.
+- Se añadió una etapa obligatoria de pruebas al flujo de compilación, con log conservado.
+- En los 11 escenarios probados no se identificó ningún fallo del motor que requiriera cambiar
+  el código de producción; no se afirma ausencia de errores en casos no probados.
+
+5. LIMITACIONES IMPORTANTES
+- Estas pruebas NO demuestran que NEXORA tenga permiso para escribir en los archivos de otros
+  procesos o aplicaciones en iOS; el sandbox, los permisos y la versión de iOS lo condicionan.
+- Tampoco demuestran que los archivos de reemplazo sean compatibles con una versión concreta
+  del juego ni que funcionen las 11 opciones con recursos sobre un dispositivo real.
+- Los archivos pendientes (10) siguen sin funcionalidad porque no tienen recursos configurados.
+- NEXORA detecta cambios de contenido; NO puede determinar su procedencia oficial.
+- Evitar pruebas con datos valiosos; usar copias y carpetas propias autorizadas.
+
+6. SIGUIENTE ETAPA
+- Subir esta revisión a GitHub, ejecutar el workflow y comprobar que termina las pruebas
+  nativas macOS antes de compilar la IPA.
+- Después, ejecutar el diagnóstico aislado de protección de actualización en el iPhone.
+- Verificar accesos y compatibilidad de destinos con autorización antes de utilizar archivos reales.

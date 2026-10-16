@@ -10,7 +10,7 @@ assert len(catalog) == 21, f'El catálogo esperaba 21 opciones: {len(catalog)}'
 assert len({entry['opcion'] for entry in catalog})==len(catalog), 'Nombres duplicados'
 assert 'private func activeConflict(' in ui, 'Falta exclusión mutua de destinos'
 assert 'DevicePatchService.apply(project:' in ui
-assert 'DevicePatchService.restore(receipt:' in ui
+assert 'DevicePatchService.restore(' in ui
 assert 'Toggle(name, isOn: .constant(false))' in ui, 'Las opciones pendientes no deben habilitarse'
 for e in catalog:
     assert e['opcion'] in ui, e['opcion']

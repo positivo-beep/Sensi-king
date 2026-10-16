@@ -120,11 +120,12 @@
   {
     "opcion": "HOLOGRAMA PERSONAJE AZUL",
     "categoria": "HOLO PJ",
-    "recurso": null,
-    "destino_relativo": null,
-    "sha256": null,
-    "estado": "pendiente",
-    "nota": "Botón visible, deshabilitado: necesita archivo y ruta validados."
+    "recurso": "NXModHoloPjAzul",
+    "destino_relativo": "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D",
+    "sha256": "711375e0b39aed9ea18e6956bbc8ebda82e902925842b8202a1b34a86f88805d",
+    "estado": "incluido",
+    "nota": "Recurso incorporado y conectado en ContentView; alternativa exclusiva del amarillo. Compatibilidad real pendiente de validar en iPhone y destino.",
+    "tamano_bytes": 381140
   },
   {
     "opcion": "HOLOGRAMA PERSONAJE ROJO",
