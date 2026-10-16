@@ -1,3 +1,11 @@
+## NEXORA V21.6 — RAINBOW COLOR ROJO
+
+- Nuevo holograma de arma: RAINBOW COLOR ROJO (anteriormente HOLO ARM PERSONALIZADO 1, pendiente).
+- Recurso extraído y verificado del paquete aportado `FREE HOLO SHADER.3105`, sin incorporar ni guardar su contraseña.
+- Se mantienen el holograma Rainbow anterior, Azul con Verde y las variantes de personaje.
+- Los tres hologramas de arma comparten el mismo destino y no deben activarse simultáneamente; se conserva el control existente de conflictos, respaldo y restauración.
+- Esta integración se verifica estáticamente y no demuestra permisos sobre datos de otras apps ni compatibilidad visual en iPhone.
+
 ## NEXORA 2026 V21.6 — Conservación de archivos que cambiaron después de activar una opción
 
 - Si un archivo modificado por NEXORA fue reemplazado externamente mientras la opción estaba activa, se conserva ese contenido en vez de sobrescribirlo con una copia antigua.

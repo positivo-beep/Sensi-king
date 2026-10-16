@@ -59,6 +59,7 @@ private struct NXBundledOption: Identifiable {
         NXBundledOption(id: UUID(uuidString: "9DAE3BC4-B812-5C6A-87D9-BCD8FAE69498")!, title: "AIM PECHO ANTENA", category: "AIMBOT CON ANTENA", dataAsset: "NXModAntenaPecho", targetPath: "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D", filename: "assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D"),
         NXBundledOption(id: UUID(uuidString: "1F01CB76-4465-5BB9-89D4-EE24BB006D94")!, title: "AZUL CON VERDE", category: "HOLO ARM", dataAsset: "NXModHoloAzul", targetPath: "Documents/contentcache/Optional/ios/gameassetbundles/shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D", filename: "shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D"),
         NXBundledOption(id: UUID(uuidString: "1F6E508C-660E-5236-9DCF-524AC4D4B54A")!, title: "HOLO ARM RAINBOW", category: "HOLO ARM", dataAsset: "NXModHoloRainbow", targetPath: "Documents/contentcache/Optional/ios/gameassetbundles/shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D", filename: "shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D"),
+        NXBundledOption(id: UUID(uuidString: "D9B35EA9-DE70-5016-8424-37403118CF6D")!, title: "RAINBOW COLOR ROJO", category: "HOLO ARM", dataAsset: "NXModHoloRainbowRojo", targetPath: "Documents/contentcache/Optional/ios/gameassetbundles/shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D", filename: "shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D"),
         NXBundledOption(id: UUID(uuidString: "BC2E6E51-5EA3-4F1E-89BD-DB6B23C2071A")!, title: "HOLOGRAMA PERSONAJE AZUL", category: "HOLO PJ", dataAsset: "NXModHoloPjAzul", targetPath: "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D", filename: "optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D"),
         NXBundledOption(id: UUID(uuidString: "6A2759B8-35AD-55D2-93F8-0961B712026D")!, title: "HOLOGRAMA PERSONAJE AMARILLO", category: "HOLO PJ", dataAsset: "NXModHoloPjAmarillo", targetPath: "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D", filename: "optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D"),
     ]
@@ -72,7 +73,7 @@ private struct NXBundledOption: Identifiable {
     static let pendingByCategory: [String: [String]] = [
         "AIMBOT": ["BALAS MÁGICAS"],
         "AIMBOT CON ANTENA": ["AIM CABEZA ANTENA"],
-        "HOLO ARM": ["HOLO ARM PERSONALIZADO 1", "HOLO ARM PERSONALIZADO 2"],
+        "HOLO ARM": ["HOLO ARM PERSONALIZADO 2"],
         "HOLO PJ": ["HOLOGRAMA PERSONAJE ROJO", "HOLOGRAMA PERSONAJE VERDE"],
         "TEXTURA": ["TEXTURA PERSONALIZADA", "TEXTURA CLARA", "TEXTURA OSCURA"],
         "WALK HACK": ["WALK HACK"]

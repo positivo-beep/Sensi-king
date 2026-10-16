@@ -155,13 +155,14 @@
     "nota": "Botón visible, deshabilitado: necesita archivo y ruta validados."
   },
   {
-    "opcion": "HOLO ARM PERSONALIZADO 1",
+    "opcion": "RAINBOW COLOR ROJO",
     "categoria": "HOLO ARM",
-    "recurso": null,
-    "destino_relativo": null,
-    "sha256": null,
-    "estado": "pendiente",
-    "nota": "Opción visible y apagada hasta incorporar su paquete validado."
+    "recurso": "NXModHoloRainbowRojo",
+    "destino_relativo": "Documents/contentcache/Optional/ios/gameassetbundles/shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D",
+    "sha256": "e07f18950b44d635a8deb5812725ab394ea446e41993f8c84f544a4f2b13a11b",
+    "tamano_bytes": 1486274,
+    "estado": "incluido",
+    "nota": "Archivo verificado del paquete FREE HOLO SHADER.3105 proporcionado por el usuario; opción exclusiva para el mismo destino de los otros HOLO ARM."
   },
   {
     "opcion": "HOLO ARM PERSONALIZADO 2",
