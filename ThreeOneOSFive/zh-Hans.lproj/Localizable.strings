@@ -667,3 +667,5 @@
 "settings.developer_mode_footer" = "开发者模式会在主导航中添加“文件”。“文件”可以浏览和修改应用容器。";
 "wallpaper.package_details" = "软件包详情";
 "wallpaper.package_files" = "%lld 个文件";
+
+"patch.error.original_version_changed" = "自上次启用后，原文件已发生变化（大小或 SHA-256）。应用前请确认兼容性：\n%@";

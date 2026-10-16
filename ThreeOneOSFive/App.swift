@@ -13,7 +13,18 @@ struct ThreeOneOSFiveApp: App {
     @AppStorage(AppLanguage.storageKey) private var languageCode = AppLanguage.english.rawValue
     @Environment(\.scenePhase) private var scenePhase
 
-    init() { setupLogCapture() }
+    init() {
+        setupLogCapture()
+        // Mantenimiento en segundo plano: solo cachés temporales propios de NEXORA
+        // abandonados durante al menos 48 horas. Respaldos y diarios intactos.
+        DispatchQueue.global(qos: .utility).async {
+            do {
+                _ = try NXOwnedTemporaryWorkspaces.cleanAbandoned()
+            } catch {
+                log("nexora: mantenimiento de caché propia pendiente: \(error.localizedDescription)")
+            }
+        }
+    }
 
     private var language: AppLanguage {
         AppLanguage(rawValue: languageCode) ?? .english

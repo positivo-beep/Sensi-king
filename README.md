@@ -1,3 +1,7 @@
+> Mejora V21.4: ver `NEXORA_V21_4_LIMPIEZA_REFORZADA.md`. Limpieza limitada a temporales propios; no oculta cambios ni elimina registros externos.
+
+> Actualización V21.3: módulo comprobable de limpieza de temporales propios. Lee `NEXORA_V21_3_LIMPIEZA_PROPIA.md` para alcance y limitaciones.
+
 <p align="center">
   <img src="docs/images/app-icon.png" width="132" alt="3105 app icon">
 </p>

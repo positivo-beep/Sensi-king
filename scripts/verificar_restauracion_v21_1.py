@@ -5,8 +5,8 @@ src = Path(__file__).resolve().parents[1] / 'ThreeOneOSFive/helpers/PatchTransac
 s = src.read_text()
 restore = s.split('static func restore(', 1)[1].split('static func resetToAppliedState(', 1)[0]
 verify = s.split('private static func verifyRestoredContent(', 1)[1].split('private static func resolvedCreatedDirectories(', 1)[0]
-assert 'try verifyRestoredContent(resolved, fileManager: fileManager)' in restore
-assert restore.index('try verifyRestoredContent(') < restore.index('journal.status = .restored')
+assert 'try verifyRestoredContent(' in restore
+assert restore.index('try verifyRestoredContent(') < restore.index('journal.status = preservedDigests.isEmpty ? .restored : .externalUpdatePreserved')
 assert 'try digestFile(item.target) == expected' in verify
 assert 'if fileManager.fileExists(atPath: item.target.path)' in verify
 assert 'throw PatchPackageError.restoreFailed' in verify

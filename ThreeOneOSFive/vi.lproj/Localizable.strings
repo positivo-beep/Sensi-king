@@ -667,3 +667,5 @@
 "settings.developer_mode_footer" = "Chế độ nhà phát triển thêm mục Tệp vào thanh điều hướng chính. Tệp có thể duyệt và chỉnh sửa container ứng dụng.";
 "wallpaper.package_details" = "Chi tiết gói";
 "wallpaper.package_files" = "%lld tệp";
+
+"patch.error.original_version_changed" = "Tệp gốc đã thay đổi kể từ lần kích hoạt trước (kích thước hoặc SHA-256). Kiểm tra tính tương thích trước khi áp dụng:\n%@";

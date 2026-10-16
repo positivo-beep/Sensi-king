@@ -667,3 +667,5 @@
 "settings.developer_mode_footer" = "Developer Mode adds Files to the main navigation. Files can browse and modify application containers.";
 "wallpaper.package_details" = "Package Details";
 "wallpaper.package_files" = "%lld files";
+
+"patch.error.original_version_changed" = "The original file changed since the last activation (size or SHA-256). Review compatibility before applying; NEXORA cannot confirm that the new file is official:\n%@";

@@ -18,6 +18,9 @@ jobs:
           python3 scripts/verificar_seguridad_licencias.py
           python3 scripts/verificar_restauracion_v21_1.py
           python3 scripts/verificar_audio_personalizado_v21_2.py
+          python3 scripts/verificar_temporales_nexora_v21_3.py
+          python3 scripts/verificar_version_original_v21_5.py
+          python3 scripts/verificar_conservacion_actualizaciones_v21_6.py
           xcodebuild -version
           xcodebuild -list -project ThreeOneOSFive.xcodeproj
       - name: Compilar para iOS sin firmar
