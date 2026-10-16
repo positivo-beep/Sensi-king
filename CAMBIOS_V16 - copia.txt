@@ -1,1 +1,0 @@
-NEXORA V16: Se reemplazó la opción ROJO CON VERDE por HOLO ARM RAINBOW, usando el recurso NXModHoloRainbow ya incluido. No aparece un botón adicional duplicado. El interruptor permanece habilitable y el respaldo/restauración sigue conectado al motor 3105. Debes desactivar otras variantes HOLO ARM antes de activarla. Compilación real en Xcode pendiente.
