@@ -1,0 +1,15 @@
+NEXORA SYSTEM 2026 — V19: enlaces de redes
+
+- Discord: https://discord.gg/RyAu7yrhE
+- Grupo de WhatsApp: https://chat.whatsapp.com/KKHuqvBtbnH45JNuIVBJVB?mode=gi_t
+- Los botones se encuentran en Configuración → Mis redes.
+- El enlace de WhatsApp corresponde a un GRUPO, no a un canal.
+- Se conserva la lógica de licencia, interfaz, opciones y motor 3105 de V18.
+- Esta modificación no está compilada en Xcode ni verificada en un iPhone.
+
+ACTUALIZAR CON GITHUB DESKTOP:
+1. Descargar NEXORA_V19_SOLO_CAMBIOS_REDES.zip y extraerlo.
+2. Copiar la carpeta ThreeOneOSFive a Documents\GitHub\Sensi-king.
+3. Aceptar reemplazar ThreeOneOSFive\ContentView.swift.
+4. GitHub Desktop: Commit to main y Push origin.
+5. Verificar compilación verde en GitHub Actions, descargar IPA y firmar con ESign.
