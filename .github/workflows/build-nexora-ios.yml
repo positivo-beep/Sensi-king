@@ -75,6 +75,21 @@ jobs:
           "$RUNNER_TEMP/nexora-motor-tests" | tee motor-transacciones-test.log
           grep -q 'RESULTADO FUNCIONAL: 11/11 casos correctos' motor-transacciones-test.log
 
+      - name: Pruebas funcionales de limpieza de temporales propios
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Ejecutar como herramienta independiente. NO agregar @main a Sources de la app.
+          swiftc -o "$RUNNER_TEMP/nexora-temporales-tests" \
+            ThreeOneOSFive/helpers/NXOwnedTemporaryWorkspaces.swift \
+            scripts/PruebaTemporalesNX.swift
+          "$RUNNER_TEMP/nexora-temporales-tests" | tee temporales-nexora-test.log
+          grep -Fq 'Limpieza OK: 2 temporales propios eliminados' temporales-nexora-test.log
+          grep -Fq 'Ruta no permitida: bloqueada correctamente.' temporales-nexora-test.log
+          grep -Fq 'Limpieza repetida: segura.' temporales-nexora-test.log
+          grep -Fq 'Temporales antiguos: eliminados; los recientes permanecen intactos.' temporales-nexora-test.log
+          grep -Fq 'Enlace simbólico externo: protegido.' temporales-nexora-test.log
+
       - name: Compilar para iOS sin firmar
         shell: bash
         run: |
@@ -118,5 +133,6 @@ jobs:
           path: |
             ThreeOneOSFive/xcodebuild.log
             ThreeOneOSFive/motor-transacciones-test.log
+            ThreeOneOSFive/temporales-nexora-test.log
           if-no-files-found: ignore
           retention-days: 7
