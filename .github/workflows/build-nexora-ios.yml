@@ -3,15 +3,54 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+
 jobs:
   build:
     runs-on: macos-15
     timeout-minutes: 45
+    defaults:
+      run:
+        # El commit anterior subió la versión nueva en este subdirectorio.
+        # Compilar desde él evita mezclar el proyecto viejo con el actualizado.
+        working-directory: ThreeOneOSFive
     steps:
       - name: Obtener proyecto
         uses: actions/checkout@v4
-      - name: Verificación previa
+
+      - name: Validar estructura y preparar Xcode
+        shell: bash
         run: |
+          set -euo pipefail
+          test -f ThreeOneOSFive/helpers/NXAntennaOnlyUnityFS.swift
+          test -f ThreeOneOSFive/ContentView.swift
+          test -f scripts/PruebaAntenaSola.swift
+          python3 - <<'PYFIX'
+          from pathlib import Path
+          p = Path('ThreeOneOSFive.xcodeproj/project.pbxproj')
+          s = p.read_text(encoding='utf-8')
+          item = '3105N401 /* NXAntennaOnlyUnityFS.swift in Sources */'
+          ref  = '3105N402 /* NXAntennaOnlyUnityFS.swift */'
+          assert s.count(item + ' = {isa = PBXBuildFile;') == 1, 'No existe la definición del helper de ANTENA SOLA'
+          assert s.count(ref + ' = {isa = PBXFileReference;') == 1, 'No existe la referencia del helper de ANTENA SOLA'
+          # En la copia cargada, el ID del build file está indebidamente en PBXGroup.
+          s = s.replace('\t\t\t\t' + item + ',\n', '')
+          begin = s.index('/* Begin PBXSourcesBuildPhase section */')
+          end = s.index('/* End PBXSourcesBuildPhase section */', begin)
+          phase = s[begin:end]
+          if '\t\t\t\t3105N401,\n' not in phase:
+              marker = '\t\t\t\t3105B218,\n'
+              assert phase.count(marker) == 1, 'No se encontró la posición esperada en Sources'
+              phase = phase.replace(marker, marker + '\t\t\t\t3105N401,\n', 1)
+              s = s[:begin] + phase + s[end:]
+          p.write_text(s, encoding='utf-8')
+          assert '3105N401,\n' in s, 'No se agregó ANTENA SOLA a Sources'
+          print('Proyecto Xcode seleccionado: versión con ANTENA SOLA; fuente incluida en compilación.')
+          PYFIX
+
+      - name: Verificación previa
+        shell: bash
+        run: |
+          set -euo pipefail
           python3 scripts/verificar_nexora.py
           python3 scripts/verificar_integracion_nexora.py
           python3 scripts/verificar_opciones_v14.py
@@ -24,7 +63,8 @@ jobs:
           python3 scripts/verificar_conservacion_actualizaciones_v21_6.py
           xcodebuild -version
           xcodebuild -list -project ThreeOneOSFive.xcodeproj
-      - name: Pruebas funcionales de respaldo, restauración y actualización (11 casos)
+
+      - name: Pruebas funcionales de respaldo, restauración y actualización
         shell: bash
         run: |
           set -euo pipefail
@@ -34,6 +74,7 @@ jobs:
             scripts/PruebaMotorTransacciones.swift
           "$RUNNER_TEMP/nexora-motor-tests" | tee motor-transacciones-test.log
           grep -q 'RESULTADO FUNCIONAL: 11/11 casos correctos' motor-transacciones-test.log
+
       - name: Compilar para iOS sin firmar
         shell: bash
         run: |
@@ -47,6 +88,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             build 2>&1 | tee xcodebuild.log
+
       - name: Empaquetar IPA sin firma
         shell: bash
         run: |
@@ -58,21 +100,23 @@ jobs:
           mkdir -p "$PWD/package/Payload"
           cp -R "$APP" "$PWD/package/Payload/"
           (cd "$PWD/package" && zip -qr "$OLDPWD/NEXORA_SYSTEM_2026_3105_sin_firmar.ipa" Payload)
+
       - name: Entregar IPA
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: NEXORA_SYSTEM_2026_3105_sin_firmar
-          path: NEXORA_SYSTEM_2026_3105_sin_firmar.ipa
+          path: ThreeOneOSFive/NEXORA_SYSTEM_2026_3105_sin_firmar.ipa
           if-no-files-found: error
           retention-days: 7
+
       - name: Guardar informe de compilación
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: NEXORA_LOG_COMPILACION
           path: |
-            xcodebuild.log
-            motor-transacciones-test.log
+            ThreeOneOSFive/xcodebuild.log
+            ThreeOneOSFive/motor-transacciones-test.log
           if-no-files-found: ignore
           retention-days: 7
