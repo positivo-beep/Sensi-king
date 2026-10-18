@@ -1,0 +1,11 @@
+NEXORA 2026 — PARCHE PARA EXTRAER DENTRO DE ThreeOneOSFive
+
+Este paquete es especifico para la carpeta:
+/workspaces/Sensi-king/ThreeOneOSFive
+NO extraer en /workspaces/Sensi-king ni dentro de /workspaces/Sensi-king/ThreeOneOSFive/ThreeOneOSFive.
+
+Contiene archivos de SwiftUI, iconos, la limpieza propia, respaldos y verificadores.
+NO incluye el workflow raiz /workspaces/Sensi-king/.github/workflows/build-nexora-ios.yml; ese archivo requiere actualizarse desde la raiz por separado para tener las comprobaciones mas recientes.
+
+El paquete no es una IPA compilada y no garantiza funcionamiento real de ANTENA SOLA.
+NO borres archivos de la app o respaldos reales.

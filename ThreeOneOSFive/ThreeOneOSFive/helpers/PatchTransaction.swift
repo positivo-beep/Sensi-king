@@ -259,8 +259,16 @@ enum PatchTransaction {
                 var originalDigest: Data?
                 if let backupFilename {
                     let backupURL = transactionDirectory.appendingPathComponent(backupFilename)
+                    // Comprobar que la copia tiene los mismos bytes que el origen
+                    // antes y después de copiar. Nunca aplicar si hubo cambios.
+                    let originalDigestBefore = try digestFile(resolved.target)
                     try fileManager.copyItem(at: resolved.target, to: backupURL)
-                    originalDigest = try digestFile(backupURL)
+                    let backupDigest = try digestFile(backupURL)
+                    guard backupDigest == originalDigestBefore,
+                          try digestFile(resolved.target) == originalDigestBefore else {
+                        throw PatchPackageError.applyFailed
+                    }
+                    originalDigest = backupDigest
                 }
                 let replacementDigest = digest(resolved.rule.replacementData)
                 if let appliedFilename {

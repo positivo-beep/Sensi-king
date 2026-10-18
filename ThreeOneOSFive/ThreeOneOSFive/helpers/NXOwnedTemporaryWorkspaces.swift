@@ -130,6 +130,82 @@ enum NXOwnedTemporaryWorkspaces {
         return cleaned
     }
 
+    /// Resultado de una limpieza solicitada explícitamente por el usuario.
+    /// Los pendientes NO se anuncian como éxito. Esta operación no toca
+    /// respaldos, claves, registros ni archivos externos al contenedor de NEXORA.
+    struct CleanupReport {
+        let cleanedWorkspaces: Int
+        let removedEntries: Int
+        let protectedWorkspaces: Int
+        let failedWorkspaces: [String]
+        let unrecognizedEntries: Int
+
+        var isComplete: Bool {
+            failedWorkspaces.isEmpty && unrecognizedEntries == 0 && protectedWorkspaces == 0
+        }
+    }
+
+    /// Enumeración segura de identificadores para comprobar las restauraciones
+    /// pendientes incluso cuando un paquete se quitó del catálogo de la interfaz.
+    static func knownWorkspaceIDs() throws -> Set<UUID> {
+        let base = try checkedRoot(create: false)
+        guard manager.fileExists(atPath: base.path) else { return [] }
+        let names = try manager.contentsOfDirectory(atPath: base.path)
+        return Set(names.compactMap { name in
+            guard let identifier = UUID(uuidString: name),
+                  name.uppercased() == identifier.uuidString else { return nil }
+            return identifier
+        })
+    }
+
+    /// Limpia los espacios de trabajo temporales propios conocidos por UUID.
+    /// Permite preservar explícitamente opciones activas. No borra carpetas
+    /// desconocidas ni intenta seguir enlaces simbólicos.
+    static func cleanAll(keeping protectedIDs: Set<UUID> = []) throws -> CleanupReport {
+        let base = try checkedRoot(create: false)
+        guard manager.fileExists(atPath: base.path) else {
+            return CleanupReport(cleanedWorkspaces: 0, removedEntries: 0,
+                                 protectedWorkspaces: 0, failedWorkspaces: [],
+                                 unrecognizedEntries: 0)
+        }
+        let candidates = try manager.contentsOfDirectory(
+            at: base, includingPropertiesForKeys: [.isSymbolicLinkKey, .isDirectoryKey], options: []
+        )
+        var cleaned = 0
+        var removed = 0
+        var protected = 0
+        var failed: [String] = []
+        var unknown = 0
+
+        for candidate in candidates {
+            let name = candidate.lastPathComponent
+            guard let identifier = UUID(uuidString: name),
+                  name.uppercased() == identifier.uuidString,
+                  candidate.standardizedFileURL.deletingLastPathComponent() == base else {
+                unknown += 1
+                continue
+            }
+            if protectedIDs.contains(identifier) {
+                protected += 1
+                continue
+            }
+            do {
+                // clean vuelve a comprobar que la ruta no sea un enlace simbólico.
+                let count = try clean(optionID: identifier)
+                guard try isClean(optionID: identifier) else {
+                    throw CleanupError.verificationFailed
+                }
+                removed += count
+                cleaned += 1
+            } catch {
+                failed.append(identifier.uuidString)
+            }
+        }
+        return CleanupReport(cleanedWorkspaces: cleaned, removedEntries: removed,
+                             protectedWorkspaces: protected, failedWorkspaces: failed,
+                             unrecognizedEntries: unknown)
+    }
+
     /// Prueba local: elimina los temporales de una opción y confirma que otra
     /// conserva los suyos hasta que se limpie explícitamente. No usa archivos externos.
     static func selfTest() throws -> String {

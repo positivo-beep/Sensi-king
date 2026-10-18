@@ -165,10 +165,10 @@ class AppState: ObservableObject {
 // Se incorpora al final del archivo ThreeOneOSFive/App.swift con instalar.py.
 
 private enum NexoraPalette {
-    static let background = Color(red: 0.018, green: 0.026, blue: 0.042)
-    static let surface = Color(red: 0.055, green: 0.075, blue: 0.099)
-    static let cyan = Color(red: 0.18, green: 0.75, blue: 0.95)
-    static let purple = Color(red: 0.54, green: 0.28, blue: 0.87)
+    static let background = Color(red: 0.022, green: 0.002, blue: 0.006)
+    static let surface = Color(red: 0.072, green: 0.008, blue: 0.014)
+    static let cyan = Color(red: 1.00, green: 0.18, blue: 0.22)
+    static let purple = Color(red: 1.00, green: 0.10, blue: 0.14)
 }
 
 private struct NexoraWirePayload: Encodable {
@@ -483,34 +483,37 @@ private struct NexoraKeyScreen: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                Color(red: 0.022, green: 0.010, blue: 0.032).ignoresSafeArea()
-                RadialGradient(colors: [NexoraPalette.purple.opacity(0.20), .clear],
-                               center: .init(x: 0.50, y: 0.45),
-                               startRadius: 18, endRadius: 390)
-                    .ignoresSafeArea()
-                GeometryReader { dots in
-                    ForEach(0..<12, id: \.self) { index in
-                        Circle()
-                            .fill(NexoraPalette.purple.opacity(index.isMultiple(of: 3) ? 0.27 : 0.13))
-                            .frame(width: index.isMultiple(of: 4) ? 7 : 4,
-                                   height: index.isMultiple(of: 4) ? 7 : 4)
-                            .position(x: dots.size.width * Self.dotX[index],
-                                      y: dots.size.height * Self.dotY[index])
-                    }
-                }
-                .ignoresSafeArea()
-                .accessibilityHidden(true)
+                NXGothicBackdrop()
 
                 ScrollView {
                     VStack(spacing: 0) {
-                        Spacer(minLength: max(48, geometry.size.height * 0.118))
-                        Image("NexoraBanner")
-                            .resizable()
-                            .scaledToFit() // Nunca recortar ni estirar el logotipo.
-                            .frame(width: min(geometry.size.width - 26, 520))
-                            .frame(maxWidth: .infinity)
-                            .shadow(color: NexoraPalette.purple.opacity(0.30), radius: 24, y: 10)
-                            .padding(.bottom, 20)
+                        Spacer(minLength: max(28, geometry.size.height * 0.085))
+                        VStack(spacing: 10) {
+                            HStack(spacing: 0) {
+                                Text("NE").foregroundStyle(.white)
+                                Text("X").foregroundStyle(NexoraPalette.purple)
+                                Text("ORA").foregroundStyle(.white)
+                            }
+                            .font(.system(size: min(72, geometry.size.width * 0.192),
+                                          weight: .black, design: .rounded))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.72)
+                            .shadow(color: NexoraPalette.purple.opacity(0.85), radius: 16)
+                            Text("— SYSTEM 2026 —")
+                                .font(.system(size: 14, weight: .heavy))
+                                .tracking(2.5)
+                                .foregroundStyle(NexoraPalette.purple)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 28)
+                        .padding(.horizontal, 8)
+                        .background(Color.black.opacity(0.68), in: RoundedRectangle(cornerRadius: 23))
+                        .overlay(RoundedRectangle(cornerRadius: 23)
+                            .stroke(LinearGradient(colors: [NexoraPalette.purple,
+                                                           Color(red: 0.93, green: 0.12, blue: 0.29)],
+                                                   startPoint: .leading, endPoint: .trailing), lineWidth: 1.4))
+                        .shadow(color: NexoraPalette.purple.opacity(0.29), radius: 20)
+                        .padding(.bottom, 29)
 
                         Text("NEXORA SYSTEM")
                             .font(.system(size: 30, weight: .black, design: .rounded))
@@ -545,13 +548,13 @@ private struct NexoraKeyScreen: View {
                                     if let value = UIPasteboard.general.string { model.input = value }
                                 }
                                 .font(.system(size: 12, weight: .heavy))
-                                .foregroundStyle(Color(red: 0.75, green: 0.43, blue: 0.98))
+                                .foregroundStyle(NexoraPalette.cyan)
                             }
                             .padding(.horizontal, 16)
                             .frame(height: 58)
-                            .background(Color.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 17))
+                            .background(Color.black.opacity(0.74), in: RoundedRectangle(cornerRadius: 17))
                             .overlay(RoundedRectangle(cornerRadius: 17)
-                                .stroke(NexoraPalette.purple.opacity(0.53), lineWidth: 1.1))
+                                .stroke(NexoraPalette.purple.opacity(0.88), lineWidth: 1.1))
 
                             if !model.errorMessage.isEmpty {
                                 Text(model.errorMessage)
@@ -572,8 +575,8 @@ private struct NexoraKeyScreen: View {
                             .buttonStyle(.plain)
                             .foregroundStyle(.white)
                             .background(
-                                LinearGradient(colors: [Color(red: 0.34, green: 0.11, blue: 0.62),
-                                                        Color(red: 0.68, green: 0.30, blue: 0.98)],
+                                LinearGradient(colors: [Color(red: 0.48, green: 0.022, blue: 0.054),
+                                                        Color(red: 1.00, green: 0.12, blue: 0.16)],
                                                startPoint: .leading, endPoint: .trailing),
                                 in: RoundedRectangle(cornerRadius: 18)
                             )

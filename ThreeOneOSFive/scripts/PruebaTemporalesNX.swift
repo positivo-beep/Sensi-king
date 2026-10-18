@@ -76,5 +76,42 @@ struct Main {
             fatalError("La limpieza siguió un enlace simbólico")
         }
         print("Enlace simbólico externo: protegido.")
+
+        // Limpieza manual de todos los espacios propios, preservando opciones
+        // protegidas y sin tocar rutas externas ni enlaces simbólicos sospechosos.
+        let toClearA = UUID()
+        let toClearB = UUID()
+        let protectedOption = UUID()
+        _ = try NXOwnedTemporaryWorkspaces.create(
+            data: Data("a".utf8), optionID: toClearA, filename: "a.tmp"
+        )
+        _ = try NXOwnedTemporaryWorkspaces.create(
+            data: Data("b".utf8), optionID: toClearB, filename: "b.tmp"
+        )
+        let protectedFile = try NXOwnedTemporaryWorkspaces.create(
+            data: Data("protegido".utf8), optionID: protectedOption, filename: "keep.tmp"
+        )
+        defer { _ = try? NXOwnedTemporaryWorkspaces.clean(optionID: protectedOption) }
+        let unknown = root.appendingPathComponent("not-an-option.txt")
+        try Data("mantener".utf8).write(to: unknown, options: .atomic)
+        defer { try? fm.removeItem(at: unknown) }
+        let manual = try NXOwnedTemporaryWorkspaces.cleanAll(keeping: [protectedOption])
+        guard manual.cleanedWorkspaces >= 2,
+              manual.removedEntries >= 2,
+              manual.protectedWorkspaces >= 1,
+              try NXOwnedTemporaryWorkspaces.isClean(optionID: toClearA),
+              try NXOwnedTemporaryWorkspaces.isClean(optionID: toClearB),
+              fm.fileExists(atPath: protectedFile.path),
+              try Data(contentsOf: protectedFile) == Data("protegido".utf8),
+              fm.fileExists(atPath: outside.path),
+              try Data(contentsOf: outside) == Data("NO BORRAR".utf8),
+              manual.failedWorkspaces.contains(fakeOption.uuidString),
+              manual.unrecognizedEntries >= 1,
+              try Data(contentsOf: unknown) == Data("mantener".utf8),
+              !manual.isComplete else {
+            fatalError("La limpieza manual no distinguió correctamente los datos")
+        }
+        print("Limpieza manual: temporales propios borrados; protegidos y externos intactos; casos inseguros informados.")
+        print("Entradas desconocidas: no eliminadas ni presentadas como éxito.")
     }
 }

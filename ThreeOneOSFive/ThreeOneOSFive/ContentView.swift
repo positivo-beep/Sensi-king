@@ -5,15 +5,45 @@ import AVFoundation
 
 // NEXORA SYSTEM: visual personalizado; el motor GPLv3 3105 permanece separado.
 private enum NXColors {
-    static let background = Color(red: 0.017, green: 0.009, blue: 0.034)
-    static let surface = Color(red: 0.045, green: 0.027, blue: 0.065)
-    static let elevated = Color(red: 0.11, green: 0.064, blue: 0.15)
-    static let green = Color(red: 0.65, green: 0.22, blue: 0.96) // Violeta NEXORA; verde solo para estado online
-    static let cyan = Color(red: 0.65, green: 0.22, blue: 0.96)
-    static let border = Color(red: 0.26, green: 0.12, blue: 0.38)
-    static let muted = Color(red: 0.65, green: 0.61, blue: 0.70)
-    static let purple = Color(red: 0.69, green: 0.28, blue: 0.98)
+    // Diseño confirmado por el propietario: negro + rojo neón en todas las pantallas.
+    // Estos son colores reales de controles SwiftUI, no una captura pegada encima.
+    static let background = Color(red: 0.022, green: 0.002, blue: 0.006)
+    static let surface = Color(red: 0.072, green: 0.008, blue: 0.014)
+    static let elevated = Color(red: 0.18, green: 0.018, blue: 0.029)
+    static let green = Color(red: 0.13, green: 0.89, blue: 0.40) // indicador únicamente
+    static let cyan = Color(red: 1.00, green: 0.18, blue: 0.22) // rojo luminoso
+    static let border = Color(red: 0.96, green: 0.12, blue: 0.18)
+    static let muted = Color(red: 0.74, green: 0.66, blue: 0.67)
+    static let purple = Color(red: 1.00, green: 0.10, blue: 0.14) // compatibilidad nombres internos
 }
+
+// Fondo decorativo real para ambas pantallas. Los botones siguen siendo controles
+// nativos y accesibles; nunca se utiliza una captura de la UI como interfaz.
+struct NXGothicBackdrop: View {
+    var body: some View {
+        GeometryReader { geo in
+            Image("NexoraDarkCity")
+                .resizable()
+                .scaledToFill()
+                .frame(width: geo.size.width, height: geo.size.height)
+                .clipped()
+                // La ilustración de ciudad, héroe oscuro y murciélagos se tiñe rojo,
+                // como la referencia elegida; no incluye botones ni texto aplanados.
+                .colorMultiply(Color(red: 1.0, green: 0.22, blue: 0.25))
+                .overlay {
+                    LinearGradient(colors: [
+                        Color.black.opacity(0.18),
+                        Color(red: 0.026, green: 0.002, blue: 0.006).opacity(0.68),
+                        Color.black.opacity(0.87)
+                    ], startPoint: .top, endPoint: .bottom)
+                }
+                .overlay(Color(red: 0.22, green: 0.001, blue: 0.004).opacity(0.10))
+        }
+        .ignoresSafeArea()
+        .accessibilityHidden(true)
+    }
+}
+
 
 private enum NexoraSocialLinks {
     // Enlaces oficiales proporcionados por el propietario de NEXORA.
@@ -195,17 +225,7 @@ struct ContentView: View {
         NavigationStack {
             GeometryReader { geometry in
                 ZStack(alignment: .top) {
-                    NXColors.background.ignoresSafeArea()
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.018, green: 0.010, blue: 0.034),
-                            Color(red: 0.053, green: 0.012, blue: 0.078),
-                            NXColors.background
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .ignoresSafeArea()
+                    NXGothicBackdrop()
 
                     ScrollView(.vertical) {
                         VStack(spacing: 0) {
@@ -359,35 +379,41 @@ struct ContentView: View {
 
     private var brandHeader: some View {
         ZStack {
-            VStack(spacing: 0) {
-                Text("NEXORA")
-                    .font(.system(size: 30, weight: .black, design: .rounded))
-                    .italic()
-                    .tracking(1.8)
-                    .foregroundStyle(LinearGradient(
-                        colors: [.white, NXColors.purple, .white],
-                        startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .shadow(color: NXColors.purple.opacity(0.55), radius: 13)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
+            VStack(spacing: 3) {
+                HStack(spacing: 0) {
+                    Text("NE").foregroundStyle(.white)
+                    Text("X")
+                        .foregroundStyle(NXColors.cyan)
+                        .shadow(color: NXColors.cyan.opacity(0.9), radius: 12)
+                    Text("ORA").foregroundStyle(.white)
+                }
+                .font(.system(size: 49, weight: .black, design: .rounded))
+                .tracking(1.1)
+                .shadow(color: NXColors.purple.opacity(0.82), radius: 12)
+                .lineLimit(1)
+                .minimumScaleFactor(0.70)
+
                 Text("— SYSTEM 2026 —")
                     .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .tracking(2.2)
+                    .tracking(2.4)
                     .foregroundStyle(NXColors.purple)
             }
+            .padding(.trailing, 44)
             HStack {
                 Spacer()
                 Button { showSettings = true } label: {
                     Image(systemName: "gearshape.fill")
                         .font(.system(size: 18))
-                        .frame(width: 43, height: 43)
-                        .background(NXColors.surface, in: Circle())
+                        .frame(width: 45, height: 45)
+                        .background(.black.opacity(0.72), in: Circle())
+                        .overlay(Circle().stroke(NXColors.border, lineWidth: 1))
+                        .shadow(color: NXColors.cyan.opacity(0.3), radius: 10)
                 }
                 .accessibilityLabel("Configuración")
             }
             .foregroundStyle(.white)
         }
-        .frame(height: 76)
+        .frame(height: 111)
     }
 
     private var categoryTabs: some View {
@@ -405,7 +431,15 @@ struct ContentView: View {
                             .foregroundStyle(selected ? Color.white : Color.white.opacity(0.66))
                             .padding(.horizontal, 12)
                             .frame(height: 34)
-                            .background(selected ? NXColors.cyan : Color.clear, in: Capsule())
+                            .background {
+                                if selected {
+                                    Capsule()
+                                        .fill(LinearGradient(colors: [NXColors.elevated, NXColors.cyan],
+                                                             startPoint: .leading, endPoint: .trailing))
+                                        .overlay(Capsule().stroke(NXColors.cyan.opacity(0.95), lineWidth: 1.2))
+                                        .shadow(color: NXColors.cyan.opacity(0.62), radius: 11)
+                                }
+                            }
                     }
                     .buttonStyle(.plain)
                     .accessibilityAddTraits(selected ? [.isSelected] : [])
@@ -413,8 +447,8 @@ struct ContentView: View {
             }
             .padding(4)
         }
-        .background(Color(red: 0.055, green: 0.032, blue: 0.080), in: Capsule())
-        .overlay(Capsule().stroke(NXColors.cyan.opacity(0.33), lineWidth: 1))
+        .background(Color.black.opacity(0.70), in: Capsule())
+        .overlay(Capsule().stroke(NXColors.border.opacity(0.78), lineWidth: 1))
     }
 
     private var onlineStatus: some View {
@@ -500,8 +534,11 @@ struct ContentView: View {
         .padding(.horizontal, 16)
         .frame(height: 64)
         .frame(maxWidth: .infinity)
-        .background(NXColors.surface.opacity(0.84), in: RoundedRectangle(cornerRadius: 21))
-        .overlay(RoundedRectangle(cornerRadius: 21).stroke(NXColors.border.opacity(0.65), lineWidth: 1))
+        .background(Color.black.opacity(0.73), in: RoundedRectangle(cornerRadius: 21))
+        .overlay(RoundedRectangle(cornerRadius: 21).stroke(
+            LinearGradient(colors: [NXColors.cyan.opacity(0.98), NXColors.border.opacity(0.58)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1.1))
+        .shadow(color: NXColors.cyan.opacity(0.23), radius: 10, y: 2)
     }
 
     // Protege el mismo destino cuando unas opciones usan recursos incorporados
@@ -598,8 +635,11 @@ struct ContentView: View {
         .padding(.horizontal, 16)
         .frame(height: 64)
         .frame(maxWidth: .infinity)
-        .background(NXColors.surface.opacity(0.84), in: RoundedRectangle(cornerRadius: 21))
-        .overlay(RoundedRectangle(cornerRadius: 21).stroke(NXColors.border.opacity(0.65), lineWidth: 1))
+        .background(Color.black.opacity(0.73), in: RoundedRectangle(cornerRadius: 21))
+        .overlay(RoundedRectangle(cornerRadius: 21).stroke(
+            LinearGradient(colors: [NXColors.cyan.opacity(0.98), NXColors.border.opacity(0.58)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1.1))
+        .shadow(color: NXColors.cyan.opacity(0.23), radius: 10, y: 2)
     }
 
     private func patchRow(_ item: PatchLibraryItem) -> some View {
@@ -632,8 +672,11 @@ struct ContentView: View {
         .padding(.horizontal, 16)
         .frame(height: 64)
         .frame(maxWidth: .infinity)
-        .background(NXColors.surface.opacity(0.84), in: RoundedRectangle(cornerRadius: 21))
-        .overlay(RoundedRectangle(cornerRadius: 21).stroke(NXColors.border.opacity(0.65), lineWidth: 1))
+        .background(Color.black.opacity(0.73), in: RoundedRectangle(cornerRadius: 21))
+        .overlay(RoundedRectangle(cornerRadius: 21).stroke(
+            LinearGradient(colors: [NXColors.cyan.opacity(0.98), NXColors.border.opacity(0.58)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1.1))
+        .shadow(color: NXColors.cyan.opacity(0.23), radius: 10, y: 2)
         .contentShape(RoundedRectangle(cornerRadius: 21))
         .onTapGesture { if item.isLocked { store.requestUnlock(for: item) } }
     }
@@ -742,7 +785,7 @@ struct ContentView: View {
         }
         .padding(10)
         .frame(maxWidth: 440)
-        .background(Color(red: 0.055, green: 0.032, blue: 0.077), in: RoundedRectangle(cornerRadius: 18))
+        .background(Color(red: 0.070, green: 0.006, blue: 0.016), in: RoundedRectangle(cornerRadius: 18))
         .overlay(RoundedRectangle(cornerRadius: 18).stroke(NXColors.border, lineWidth: 1))
         .padding(.horizontal, 19)
         .padding(.top, 6)
@@ -928,12 +971,15 @@ private struct NXSettingsView: View {
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var license: NexoraLicenseModel
     @EnvironmentObject private var patchStore: PatchProjectStore
+    @EnvironmentObject private var fileOperationCoordinator: FileOperationCoordinator
     @State private var settingsImporter = false
     @State private var settingsError: String?
     @State private var demoIsApplied = NXLocalMotorDemo.isApplied
     @State private var demoBusy = false
     @State private var demoResult = "Sin ejecutar"
     @State private var cleanupResult = "Limpieza de temporales: sin probar"
+    @State private var showOwnedCleanupConfirmation = false
+    @State private var ownedCleanupResult = "Temporales propios: no se han limpiado"
     @State private var updateProtectionResult = "Protección de actualizaciones: sin probar"
     @State private var realFilesCheckResult = "Archivos reales: aún no comprobados"
     @Environment(\.openURL) private var openURL
@@ -1017,6 +1063,17 @@ private struct NXSettingsView: View {
                             Text(cleanupResult)
                                 .font(.system(size: 11))
                                 .foregroundStyle(NXColors.purple)
+                            Button(role: .destructive) {
+                                showOwnedCleanupConfirmation = true
+                            } label: {
+                                Label("Limpiar temporales propios ahora", systemImage: "trash")
+                                    .font(.system(size: 12, weight: .semibold))
+                            }
+                            .disabled(demoBusy || patchStore.isBusy || fileOperationCoordinator.payload != nil)
+                            Text(ownedCleanupResult)
+                                .font(.system(size: 11))
+                                .foregroundStyle(NXColors.muted)
+                                .fixedSize(horizontal: false, vertical: true)
                             Button {
                                 testExternalUpdatePreservation()
                             } label: {
@@ -1074,6 +1131,18 @@ private struct NXSettingsView: View {
         }
         .preferredColorScheme(.dark)
         .tint(NXColors.cyan)
+        .confirmationDialog(
+            "¿Limpiar los temporales propios de NEXORA?",
+            isPresented: $showOwnedCleanupConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Limpiar temporales propios", role: .destructive) {
+                cleanOwnedTemporaryWorkspaces()
+            }
+            Button("Cancelar", role: .cancel) {}
+        } message: {
+            Text("Borra áreas temporales creadas por NEXORA. No elimina respaldos, registros, licencias ni datos de otras apps. Hazlo sin operaciones activas.")
+        }
         .fileImporter(
             isPresented: $settingsImporter,
             allowedContentTypes: [UTType(filenameExtension: "3105") ?? .data, .data],
@@ -1097,6 +1166,48 @@ private struct NXSettingsView: View {
         )) {
             Button("Aceptar") { settingsError = nil }
         } message: { Text(settingsError ?? "") }
+    }
+
+    private func cleanOwnedTemporaryWorkspaces() {
+        guard !demoBusy, !patchStore.isBusy,
+              fileOperationCoordinator.payload == nil else {
+            ownedCleanupResult = "Hay una operación activa; limpieza cancelada para proteger datos."
+            return
+        }
+        // Mantener intactos los temporales de cualquier modificación que
+        // todavía posea un recibo de restauración pendiente.
+        let protectedIDs: Set<UUID>
+        do {
+            let knownIDs = try NXOwnedTemporaryWorkspaces.knownWorkspaceIDs()
+            let catalogIDs = Set(NXBundledOption.all.map(\.id) + patchStore.items.map(\.id))
+            protectedIDs = Set(knownIDs.union(catalogIDs).filter {
+                DevicePatchService.latestReceipt(projectID: $0) != nil
+            })
+        } catch {
+            ownedCleanupResult = "No se pudo verificar el estado de los temporales: \(error.localizedDescription)"
+            return
+        }
+        demoBusy = true
+        Task.detached(priority: .userInitiated) {
+            do {
+                let result = try NXOwnedTemporaryWorkspaces.cleanAll(keeping: protectedIDs)
+                let message: String
+                if result.isComplete {
+                    message = "Limpieza verificada: \(result.cleanedWorkspaces) áreas y \(result.removedEntries) entradas temporales propias eliminadas. Respaldos conservados."
+                } else {
+                    message = "Limpieza PARCIAL: \(result.cleanedWorkspaces) áreas eliminadas; \(result.protectedWorkspaces) protegidas por restauración pendiente, \(result.failedWorkspaces.count) errores y \(result.unrecognizedEntries) entradas no reconocidas. Respaldos intactos."
+                }
+                await MainActor.run {
+                    ownedCleanupResult = message
+                    demoBusy = false
+                }
+            } catch {
+                await MainActor.run {
+                    ownedCleanupResult = "No se completó la limpieza: \(error.localizedDescription)"
+                    demoBusy = false
+                }
+            }
+        }
     }
 
     private func testOwnedTemporaryCleanup() {
