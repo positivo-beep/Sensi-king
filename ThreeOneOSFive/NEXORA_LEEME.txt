@@ -1,0 +1,18 @@
+NEXORA SYSTEM 2026 / BASE 3105 2.0
+
+Este proyecto es una MODIFICACIÓN DEL CÓDIGO FUENTE, no una modificación binaria de HyperSexNew.ipa.
+
+- UI personalizada NEXORA para clave, panel y ajustes.
+- Se conserva el código 3105: DevicePatchService, PatchTransaction y ContainerStore.
+- Los interruptores operan sobre paquetes .3105 que el propietario importe, no paquetes JSON ficticios.
+- El motor realiza respaldo/restauración si el contenedor de destino es accesible legalmente.
+- El proyecto no contiene ni reconstruye mods protegidos de HyperSex o de otras apps.
+- La mera instalación NO otorga acceso a contenedores ajenos; depende del sistema, firma, permisos y condiciones documentadas por 3105.
+- Se mantiene el bundle ID original com.apple.mobile.MobileHouseArrest de acuerdo con README oficial, lo que puede exigir firma válida compatible.
+- Cloudflare: https://hypersex-licencias-propias.nexora-system26.workers.dev
+- El servidor debe responder expires_at en ISO8601 para mostrar una cuenta regresiva exacta.
+- Completar enlaces sociales reales en ContentView.swift (NexoraSocialLinks).
+- Para compilar en GitHub se requiere subir el contenido de este ZIP A LA RAÍZ de un repositorio. GitHub Actions generará una IPA sin firmar si Xcode compila sin errores.
+- No se compiló con Xcode ni se ejecutó sobre iPhone aquí. No se puede garantizar el acceso a datos de otro juego.
+
+GPLv3: conservar LICENSE y THIRD_PARTY_NOTICES.md; las modificaciones derivadas se distribuyen respetando esas licencias.

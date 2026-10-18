@@ -1,0 +1,156 @@
+[
+  {
+    "opcion": "AIMDRAG",
+    "categoria": "AIMBOT",
+    "recurso": "NXModAimDrag",
+    "destino_relativo": "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D",
+    "sha256": "f9327731cc1e40d01a8d895f216e433b7c8935a82008d8614b4f0675fde82ee4",
+    "tamano_bytes": 46096,
+    "estado": "incluido",
+    "nota": "Alternativa exclusiva para este destino; requiere respaldo original."
+  },
+  {
+    "opcion": "AIMBOT CABEZA",
+    "categoria": "AIMBOT",
+    "recurso": "NXModAimCabeza",
+    "destino_relativo": "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D",
+    "sha256": "e6389645321870fe3652a2a245ac8781d91b95d5a8f66c8178486162d60bb266",
+    "tamano_bytes": 46096,
+    "estado": "incluido",
+    "nota": "Alternativa exclusiva para este destino; requiere respaldo original."
+  },
+  {
+    "opcion": "AIMBOT CUELLO",
+    "categoria": "AIMBOT",
+    "recurso": "NXModAimCuello",
+    "destino_relativo": "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D",
+    "sha256": "73ff2c743bf6b37dccddd37cf8b465f9566e15477b61f87d4a66e4f13bcb8e2c",
+    "tamano_bytes": 46096,
+    "estado": "incluido",
+    "nota": "Alternativa exclusiva para este destino; requiere respaldo original."
+  },
+  {
+    "opcion": "AIMBOT PECHO",
+    "categoria": "AIMBOT",
+    "recurso": "NXModAimPecho",
+    "destino_relativo": "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D",
+    "sha256": "690b73b34955648c4cf7afbe1a57556012128f313c0859292c39150ba9074844",
+    "tamano_bytes": 46096,
+    "estado": "incluido",
+    "nota": "Alternativa exclusiva para este destino; requiere respaldo original."
+  },
+  {
+    "opcion": "AIM DRAG ANTENA",
+    "categoria": "AIMBOT CON ANTENA",
+    "recurso": "NXModAntenaDrag",
+    "destino_relativo": "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D",
+    "sha256": "b36393dae1ab44bb8d516eec99d65d56eb84145f2344a3f460d7c1027d82055c",
+    "tamano_bytes": 46096,
+    "estado": "incluido",
+    "nota": "Alternativa exclusiva para este destino; requiere respaldo original."
+  },
+  {
+    "opcion": "AIM CUELLO ANTENA",
+    "categoria": "AIMBOT CON ANTENA",
+    "recurso": "NXModAntenaCuello",
+    "destino_relativo": "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D",
+    "sha256": "8184553157c4f4eb6807dcaf46214202a39d3482266b5fb65c55a342315a8195",
+    "tamano_bytes": 46096,
+    "estado": "incluido",
+    "nota": "Alternativa exclusiva para este destino; requiere respaldo original."
+  },
+  {
+    "opcion": "AIM PECHO ANTENA",
+    "categoria": "AIMBOT CON ANTENA",
+    "recurso": "NXModAntenaPecho",
+    "destino_relativo": "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D",
+    "sha256": "f60c2aa796ceca28973dc3ddf9e4e0db50d273cbb95baad0395af77cd53642e4",
+    "tamano_bytes": 46096,
+    "estado": "incluido",
+    "nota": "Alternativa exclusiva para este destino; requiere respaldo original."
+  },
+  {
+    "opcion": "AZUL CON VERDE",
+    "categoria": "HOLO ARM",
+    "recurso": "NXModHoloAzul",
+    "destino_relativo": "Documents/contentcache/Optional/ios/gameassetbundles/shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D",
+    "sha256": "6e3b078e669dd6c3d607850a3c61aba67fff54383a762c5cb84f80aad6c4123f",
+    "tamano_bytes": 1486274,
+    "estado": "incluido",
+    "nota": "Alternativa exclusiva para este destino; requiere respaldo original."
+  },
+  {
+    "opcion": "ROJO CON VERDE",
+    "categoria": "HOLO ARM",
+    "recurso": "NXModHoloRojo",
+    "destino_relativo": "Documents/contentcache/Optional/ios/gameassetbundles/shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D",
+    "sha256": "6e3b078e669dd6c3d607850a3c61aba67fff54383a762c5cb84f80aad6c4123f",
+    "tamano_bytes": 1486274,
+    "estado": "pendiente_de_archivo_distinto",
+    "nota": "Los bytes suministrados para HOLO Azul y Rojo son idénticos; esta opción se deshabilita para evitar una diferencia ficticia."
+  },
+  {
+    "opcion": "HOLOGRAMA PERSONAJE AMARILLO",
+    "categoria": "HOLO PJ",
+    "recurso": "NXModHoloPjAmarillo",
+    "destino_relativo": "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D",
+    "sha256": "b38d46dbc1f230678b61bf7782fdd53556e2082d5aaff52356bb7810231bbfd0",
+    "tamano_bytes": 381140,
+    "estado": "incluido",
+    "nota": "Alternativa exclusiva para este destino; requiere respaldo original."
+  },
+  {
+    "opcion": "BALAS MÁGICAS",
+    "categoria": "AIMBOT",
+    "recurso": null,
+    "destino_relativo": null,
+    "sha256": null,
+    "estado": "pendiente",
+    "nota": "Botón visible, deshabilitado: necesita archivo y ruta validados."
+  },
+  {
+    "opcion": "AIM CABEZA ANTENA",
+    "categoria": "AIMBOT CON ANTENA",
+    "recurso": null,
+    "destino_relativo": null,
+    "sha256": null,
+    "estado": "pendiente",
+    "nota": "Botón visible, deshabilitado: necesita archivo y ruta validados."
+  },
+  {
+    "opcion": "HOLOGRAMA PERSONAJE AZUL",
+    "categoria": "HOLO PJ",
+    "recurso": null,
+    "destino_relativo": null,
+    "sha256": null,
+    "estado": "pendiente",
+    "nota": "Botón visible, deshabilitado: necesita archivo y ruta validados."
+  },
+  {
+    "opcion": "HOLOGRAMA PERSONAJE ROJO",
+    "categoria": "HOLO PJ",
+    "recurso": null,
+    "destino_relativo": null,
+    "sha256": null,
+    "estado": "pendiente",
+    "nota": "Botón visible, deshabilitado: necesita archivo y ruta validados."
+  },
+  {
+    "opcion": "TEXTURA PERSONALIZADA",
+    "categoria": "TEXTURA",
+    "recurso": null,
+    "destino_relativo": null,
+    "sha256": null,
+    "estado": "pendiente",
+    "nota": "Botón visible, deshabilitado: necesita archivo y ruta validados."
+  },
+  {
+    "opcion": "WALK HACK",
+    "categoria": "WALK HACK",
+    "recurso": null,
+    "destino_relativo": null,
+    "sha256": null,
+    "estado": "pendiente",
+    "nota": "Botón visible, deshabilitado: necesita archivo y ruta validados."
+  }
+]

@@ -1,0 +1,29 @@
+# NEXORA V13 — Asociación de archivos (basada en V12)
+
+El panel ya asocia cada opción preconfigurada con **su propio NSDataAsset** y su ruta de destino, indicada en `NEXORA_V13_MAPA_DE_OPCIONES.json`.
+
+## Cómo funciona
+- Activar: valida acceso y existencia del original. `DevicePatchService.apply` utiliza `PatchTransaction` para guardar un respaldo del estado anterior y escribir el reemplazo.
+- Desactivar: `DevicePatchService.restore` recupera los bytes originales desde el respaldo de esa operación. Si el archivo cambió después, muestra una advertencia y NO lo restaura silenciosamente.
+- Cada archivo de destino es **exclusivo**: AIMDRAG, AIMBOT CABEZA, CUELLO, PECHO y opciones con ANTENA apuntan al mismo archivo. Solo una puede estar aplicada a la vez. Desactiva una antes de activar otra; la app muestra el nombre de la opción en conflicto.
+- Las dos variantes de HOLO ARM (Azul/Verde y Rojo/Verde) tienen exactamente los mismos bytes en los datos entregados (SHA-256 igual). La variante Roja queda sin habilitar hasta incluir un archivo diferente. No afirmamos que haga algo distinto.
+
+## Opciones a las que se podrán añadir archivos después
+- AIMBOT → BALAS MÁGICAS
+- AIMBOT CON ANTENA → AIM CABEZA ANTENA
+- HOLO PJ → HOLOGRAMA PERSONAJE AZUL / ROJO
+- TEXTURA → TEXTURA PERSONALIZADA
+- WALK HACK → WALK HACK
+
+Se muestran como **pendientes**, sin interruptores utilizables ni rutas inventadas. Para activar una nueva opción hay que añadir un conjunto de datos en `ThreeOneOSFive/Assets.xcassets` e incorporar al catálogo `NXBundledOption.all` su nombre, categoría, recurso y ruta **verificada**. No basta con pegar un archivo arbitrario en la IPA. La importación de paquetes `.3105` válidos sigue siendo compatible.
+
+## Reglas de seguridad de respaldo
+- No se sobrescribe un archivo inexistente sin antes comprobar que se puede preservar el original.
+- No se permite que dos opciones integradas utilicen simultáneamente el mismo destino.
+- Los permisos reales de lectura/escritura de 3105 en contenedores ajenos dependen de iOS, firma y configuración: **no están verificados aquí**.
+- La autenticación Cloudflare y el diseño permanecen sin cambios respecto de V12.
+
+## Cómo actualizar
+Copia las carpetas/archivos desde `NEXORA_V13_SOLO_CAMBIOS.zip` dentro de `Documentos\GitHub\Sensi-king`, acepta reemplazar `ContentView.swift`, después realiza Commit/Push en GitHub Desktop y prueba la compilación en Actions.
+
+**Alcance de pruebas**: se verificaron existencia, tamaño, SHA-256 de 10 recursos y sintaxis Swift; NO se ejecutó xcodebuild ni prueba en iPhone.

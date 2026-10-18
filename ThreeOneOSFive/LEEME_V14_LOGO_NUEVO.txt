@@ -1,0 +1,16 @@
+NEXORA SYSTEM 2026 - PROYECTO COMPLETO V14 + LOGO NUEVO
+
+Este ZIP combina:
+- El proyecto completo NEXORA SYSTEM 2026 V14, incluidos sus archivos Swift, recursos, codigo de 3105, ajustes de Cloudflare y workflow de compilacion.
+- La actualizacion aprobada del logo de acceso: banner mas grande y sin lineas laterales del diseno anterior.
+
+Para subirlo con GitHub Desktop:
+1. Extrae este ZIP.
+2. Copia el CONTENIDO extraido dentro de la carpeta local de tu repositorio Sensi-king.
+3. Acepta reemplazar archivos existentes, pero no borres la carpeta .git.
+4. Abre GitHub Desktop, comprueba los cambios, haz Commit y Push origin.
+5. Revisa el resultado en Actions. Si compila, descarga la IPA sin firmar.
+
+Limitaciones: el ZIP es CODIGO FUENTE, no una IPA ya compilada. Su integridad y sintaxis pueden verificarse sin macOS, pero no se ha realizado una compilacion Xcode ni una prueba de funcionamiento de los interruptores, permisos, sustitucion y restauracion en el iPhone.
+
+Los botones que no tengan paquetes validos asociados no pueden aplicar cambios reales.

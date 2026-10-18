@@ -1,0 +1,14 @@
+NEXORA SYSTEM 2026 - HOLO ARM RAINBOW COLOR ROJO
+
+Archivo de origen: FREE HOLO SHADER.3105 (aportado por el usuario)
+Paquete protegido: autenticación correcta con la clave suministrada.
+Se extrajo solamente el shader; no se incluyó la clave dentro del proyecto.
+Opción activa en catálogo: RAINBOW COLOR ROJO
+Recurso: NXModHoloRainbowRojo
+SHA-256: e07f18950b44d635a8deb5812725ab394ea446e41993f8c84f544a4f2b13a11b
+Tamaño: 1486274 bytes
+Destino: Documents/contentcache/Optional/ios/gameassetbundles/shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D
+
+Comparten el mismo destino: AZUL CON VERDE, HOLO ARM RAINBOW, RAINBOW COLOR ROJO.
+La app debe desactivar/restaurar uno antes de aplicar otro.
+Antes de instalar: compilar en macOS y comprobar las operaciones con archivos de prueba autorizados.

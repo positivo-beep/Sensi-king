@@ -1,0 +1,22 @@
+NEXORA SYSTEM 2026 — V12 (fuente SwiftUI + 3105)
+
+CAMBIOS
+- Se incluyen 10 archivos aportados por el usuario desde HyperSex.ipa en Assets.xcassets.
+- Pestañas AIMBOT, AIMBOT CON ANTENA, HOLO ARM y HOLO PJ con opciones individuales y switches.
+- No se ha incluido ningún archivo de TEXTURA, WALK HACK ni BALAS MÁGICA porque no existían en la IPA de origen.
+- Cada opción usa DevicePatchService del motor 3105, con copia de respaldo y restauración del archivo que estaba presente en el momento de activar.
+- El sistema de keys Cloudflare y la interfaz permanecen sin cambios.
+
+PRECAUCIONES
+- Los destinos se han inferido de cadenas del ejecutable de referencia, no verificado en un dispositivo real.
+- Si el destino original no existe o no es accesible, NEXORA muestra un error y NO aplica el archivo.
+- Si otro mod ya ocupa el mismo destino, PatchTransaction rechaza el conflicto.
+- El respaldo reproduce los bytes que tenía el archivo ANTES de activar el switch, incluso si ya estaba modificado.
+- No se ha comprobado que los archivos sean compatibles con la versión instalada del juego.
+- No incluye cambios nuevos a exploits del motor 3105.
+- Compilación completa con Xcode y prueba en iPhone pendientes.
+
+PARA ACTUALIZAR GITHUB DESKTOP
+- Proyecto COMPLETO: reemplazar archivos manteniendo las carpetas.
+- Parche SOLO CAMBIOS: extraer y copiar ThreeOneOSFive dentro de la carpeta Sensi-king, confirmando los reemplazos.
+- Commit changes, Push origin, revisar Actions.
