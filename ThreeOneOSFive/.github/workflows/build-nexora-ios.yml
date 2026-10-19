@@ -22,6 +22,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/verificar_entrega_completa_nexora.py
+          python3 scripts/verificar_release_nueva_nexora.py
           test -f ThreeOneOSFive/helpers/NXAntennaOnlyUnityFS.swift
           test -f ThreeOneOSFive/helpers/NXOwnedTemporaryWorkspaces.swift
           xcodebuild -version
@@ -123,21 +124,21 @@ jobs:
             /usr/libexec/PlistBuddy -c 'Add :CFBundleDisplayName string NEXORA SYSTEM 2026' "$APP/Info.plist"
           mkdir -p "$PWD/package/Payload"
           cp -R "$APP" "$PWD/package/Payload/"
-          (cd "$PWD/package" && zip -qr "$OLDPWD/NEXORA_SYSTEM_2026_3105_sin_firmar.ipa" Payload)
+          (cd "$PWD/package" && zip -qr "$OLDPWD/NEXORA_SYSTEM_2026_V2_1_0_BUILD9_sin_firmar.ipa" Payload)
 
       - name: Verificar contenido de IPA y generar informe
         shell: bash
         run: |
           set -euo pipefail
-          python3 scripts/verificar_ipa_generada.py "$PWD/NEXORA_SYSTEM_2026_3105_sin_firmar.ipa"
+          python3 scripts/verificar_ipa_generada.py "$PWD/NEXORA_SYSTEM_2026_V2_1_0_BUILD9_sin_firmar.ipa"
           test -s NEXORA_RESULTADO_COMPILACION.json
 
       - name: Entregar IPA
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: NEXORA_SYSTEM_2026_3105_sin_firmar
-          path: ThreeOneOSFive/NEXORA_SYSTEM_2026_3105_sin_firmar.ipa
+          name: NEXORA_SYSTEM_2026_V2_1_0_BUILD9_sin_firmar
+          path: ThreeOneOSFive/NEXORA_SYSTEM_2026_V2_1_0_BUILD9_sin_firmar.ipa
           if-no-files-found: error
           retention-days: 7
 

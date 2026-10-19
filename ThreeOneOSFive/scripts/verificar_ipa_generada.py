@@ -14,6 +14,8 @@ with zipfile.ZipFile(ipa,'r') as z:
     assert plist.get('CFBundleDisplayName')=='NEXORA SYSTEM 2026', 'Nombre incorrecto'
     assert plist.get('CFBundleIdentifier')=='com.nexora.system2026', \
         'Identificador incorrecto: revisar Info.plist y PRODUCT_BUNDLE_IDENTIFIER, no editar la IPA a mano'
+    assert plist.get('CFBundleShortVersionString')=='2.1.0', 'La IPA NO es la versión nueva 2.1.0'
+    assert str(plist.get('CFBundleVersion'))=='9', 'La IPA NO es el build 9'
     icons=plist.get('CFBundleIcons',{})
     primary=icons.get('CFBundlePrimaryIcon',{})
     assert ('AppIcon' in str(primary)), 'AppIcon no se registró en Info.plist'
@@ -34,6 +36,8 @@ with zipfile.ZipFile(ipa,'r') as z:
       'ipa_sha256':hashlib.sha256(ipa.read_bytes()).hexdigest(),
       'nombre_app':plist['CFBundleDisplayName'],
       'bundle_id':plist.get('CFBundleIdentifier','no_disponible'),
+      'app_version':plist.get('CFBundleShortVersionString','no_disponible'),
+      'build_number':str(plist.get('CFBundleVersion','no_disponible')),
       'icono_registrado':primary,
       'assets_car_bytes':z.getinfo(prefix+'Assets.car').file_size,
       'recurso_externo_verificado':False,

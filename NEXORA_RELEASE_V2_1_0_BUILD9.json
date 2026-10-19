@@ -1,0 +1,16 @@
+{
+  "release": "2.1.0",
+  "build": "9",
+  "titulo": "NEXORA SYSTEM 2026 - nueva compilación diferenciada",
+  "cambios": [
+    "Version y build sincronizados entre Info.plist y los proyectos Xcode",
+    "Prerequisito CI que comprueba la corrección Array(md5)",
+    "IPA y artefacto con nombre distinto a la compilación #18/#19",
+    "Validación del número de versión dentro de la IPA y registro de GitHub SHA en el informe"
+  ],
+  "limites": [
+    "No se ha ejecutado Xcode en esta máquina",
+    "La opción ANTENA SOLA 0x243 no ha sido comprobada en el iPhone con el archivo exacto",
+    "No garantiza ausencia absoluta de errores ni compatibilidad de todos los recursos"
+  ]
+}

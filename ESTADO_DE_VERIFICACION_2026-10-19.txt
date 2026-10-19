@@ -1,0 +1,37 @@
+NEXORA SYSTEM 2026 — PAQUETE ÚNICO COMPLETO DE CÓDIGO FUENTE
+Revisión local: 2026-10-19
+
+CONTENIDO
+- Copia íntegra del repositorio fuente, preparada para usarse desde la raíz de Sensi-king.
+- 421/421 archivos del ZIP fuente original conservados; ningún archivo original ausente.
+- Los 14 archivos de BundledMods existentes en la base original conservan exactamente el mismo SHA-256.
+- Interfaz negra/roja, icono, licencias, motor de respaldo/restauración y limpieza incluidos.
+- Corrección del fallo Swift MD5 confirmada:
+  ThreeOneOSFive/ThreeOneOSFive/helpers/NXAntennaOnlyUnityFS.swift, línea 96:
+  info.replaceSubrange(0..<16, with: Array(md5))
+- Identificador del proyecto que compila el workflow: com.nexora.system2026.
+- Workflow de compilación: .github/workflows/build-nexora-ios.yml.
+
+PRUEBAS REALMENTE EJECUTADAS EN EL ENTORNO LINUX
+- 14/14 verificadores Python del workflow: sin fallos reportados.
+- 56/56 archivos Swift activos: análisis sintáctico correcto (swiftc -frontend -parse).
+- 3/3 comparaciones de perfiles UnityFS ANTENA SOLA: correctas.
+- 9/9 pruebas de estructuras sintéticas UnityFS incluidas, con rechazo de perfiles incompatibles: correctas.
+- Limpieza de temporales propios: pruebas funcionales ejecutadas correctamente, incluyendo rechazo de rutas inseguras y protección de enlaces simbólicos.
+- Integridad del ZIP fuente: correcta.
+
+NO CERTIFICADO / BLOQUEOS REALES
+- No se ejecutó xcodebuild aquí (solo macOS/Xcode), por lo que no se ha generado ni firmado una IPA de esta entrega.
+- Las pruebas completas del motor de respaldo/restauración usan CryptoKit y Darwin, no disponibles en Linux. Deben ejecutarse en el runner macOS.
+- ANTENA SOLA todavía rechaza perfiles de nodos incompatibles, aunque la cabecera tenga flags 0x243. La prueba de rechazo comprueba esa protección; NO demuestra funcionamiento con el archivo real del iPhone.
+- No se ha probado acceso a archivos externos ni efectos de modificaciones dentro del juego.
+- Algunas opciones siguen pendientes de recursos, según los verificadores del catálogo.
+- La coincidencia visual exacta con mockups no ha sido validada sobre un dispositivo.
+- No se puede prometer software 100% libre de errores ni todas las funciones activas sin esa validación.
+
+USO DEL ZIP
+1. Es código fuente COMPLETO, no un parche, no una IPA.
+2. Para Windows + GitHub Desktop, extraer al nivel raíz del repositorio Sensi-king en una copia con respaldo, sin borrar .git.
+3. Si GitHub Desktop muestra 0 cambios, los archivos extraídos podrían coincidir con los ya guardados; no se debe inventar un cambio.
+4. Asegurar que el commit que se compila en main tiene la corrección de MD5; compilar con el workflow en macOS.
+5. Consultar los registros de la ejecución y evitar instalar o reemplazar la app anterior hasta que las verificaciones terminen.

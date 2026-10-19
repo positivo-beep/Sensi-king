@@ -1,0 +1,20 @@
+NEXORA SYSTEM 2026 — VERSION NUEVA 2.1.0 (BUILD 9)
+
+ESTE ZIP CONTIENE EL PROYECTO COMPLETO. NO ES UNA IPA FINAL.
+
+1. Conservar el respaldo de Sensi-king que ya tienes.
+2. Extraer este ZIP en una carpeta temporal.
+3. Copiar su contenido (NO la carpeta contenedora) al directorio abierto por GitHub Desktop > Repository > Show in Explorer.
+4. NO borrar .git. Reemplazar archivos cuando Windows lo solicite.
+5. En GitHub Desktop, la pestaña Changes DEBE mostrar cambios de código y configuracion
+   entre ellos ThreeOneOSFive/ThreeOneOSFive.xcodeproj/project.pbxproj,
+   ThreeOneOSFive/ThreeOneOSFive/Info.plist y .github/workflows/build-nexora-ios.yml.
+6. Hacer Commit y Push origin para crear un commit DISTINTO de 6b5922f.
+7. En GitHub Actions, ejecutar la compilación solo después de ver el nuevo commit.
+8. El artefacto debe llamarse NEXORA_SYSTEM_2026_V2_1_0_BUILD9_sin_firmar.
+   El archivo NEXORA_RESULTADO_COMPILACION.json registra git_sha, version y build.
+9. No reemplazar la IPA actual hasta verificar la version, integridad y funcionamiento.
+
+Esta version incorpora un numero de version realmente nuevo, comprobaciones de entrega
+adicionales y conserva los recursos y el código existentes. NO demuestra que
+ANTENA SOLA funcione en el dispositivo; ese problema puede continuar.
