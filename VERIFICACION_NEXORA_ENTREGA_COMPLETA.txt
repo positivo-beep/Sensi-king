@@ -1,0 +1,25 @@
+NEXORA SYSTEM 2026 — ENTREGA COMPLETA PARA RAIZ DE GITHUB
+
+Archivos fuente originales presentes: 421/421
+Recursos BundledMods identicos a base original: 14
+Archivos de proyecto previos al informe: 428
+
+VERIFICACIONES EJECUTADAS:
+- 12 verificadores Python del proyecto: sin errores
+- PruebaTemporalesNX: correcta con temporales propios y protecciones
+- PruebaAntenaSola: 3/3 comparaciones de archivos incorporados, rechaza truncados
+- Swift: sintaxis individual analizada (no reemplaza compilacion Xcode)
+
+LIMITACIONES:
+- Compilacion completa de iOS con Xcode en macOS
+- Pruebas del motor de respaldo/restauracion completo con CryptoKit/macOS
+- Validacion de ANTENA SOLA con archivo real compatible y permisos del iPhone
+- No demuestra equivalencia pixel a pixel con las referencias visuales
+- No garantiza ausencia de fallos en dispositivos externos
+
+INSTRUCCIONES DE UBICACION:
+- El ZIP NO tiene carpeta contenedora Sensi-king-main.
+- Se extrae en /workspaces/Sensi-king (raiz del repositorio), NUNCA en /workspaces/Sensi-king/ThreeOneOSFive.
+- .github/workflows/build-nexora-ios.yml tiene que quedar en la raiz del repositorio.
+- Mantener copia de seguridad; preferiblemente usar una rama de prueba.
+- No borrar recursos originales ni instalar una IPA antes de probar en Xcode.

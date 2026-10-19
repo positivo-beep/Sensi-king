@@ -3,20 +3,41 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+
 jobs:
   build:
     runs-on: macos-15
     timeout-minutes: 45
+    defaults:
+      run:
+        # El commit anterior subió la versión nueva en este subdirectorio.
+        # Compilar desde él evita mezclar el proyecto viejo con el actualizado.
+        working-directory: ThreeOneOSFive
     steps:
       - name: Obtener proyecto
         uses: actions/checkout@v4
-      - name: Verificación previa
+
+      - name: Verificar proyecto completo antes de compilar
+        shell: bash
         run: |
+          set -euo pipefail
+          python3 scripts/verificar_entrega_completa_nexora.py
+          test -f ThreeOneOSFive/helpers/NXAntennaOnlyUnityFS.swift
+          test -f ThreeOneOSFive/helpers/NXOwnedTemporaryWorkspaces.swift
+          xcodebuild -version
+
+      - name: Verificación previa
+        shell: bash
+        run: |
+          set -euo pipefail
           python3 scripts/verificar_nexora.py
+          python3 scripts/verificar_interfaz_y_respaldo_final.py
+          python3 scripts/verificar_diseno_rojo_nexora.py
           python3 scripts/verificar_integracion_nexora.py
           python3 scripts/verificar_opciones_v14.py
           python3 scripts/verificar_catalogo_completo_nexora.py
           python3 scripts/verificar_seguridad_licencias.py
+          python3 scripts/verificar_seguridad_release_nexora.py
           python3 scripts/verificar_restauracion_v21_1.py
           python3 scripts/verificar_audio_personalizado_v21_2.py
           python3 scripts/verificar_temporales_nexora_v21_3.py
@@ -24,7 +45,8 @@ jobs:
           python3 scripts/verificar_conservacion_actualizaciones_v21_6.py
           xcodebuild -version
           xcodebuild -list -project ThreeOneOSFive.xcodeproj
-      - name: Pruebas funcionales de respaldo, restauración y actualización (11 casos)
+
+      - name: Pruebas funcionales de respaldo, restauración y actualización
         shell: bash
         run: |
           set -euo pipefail
@@ -34,7 +56,23 @@ jobs:
             scripts/PruebaMotorTransacciones.swift
           "$RUNNER_TEMP/nexora-motor-tests" | tee motor-transacciones-test.log
           grep -q 'RESULTADO FUNCIONAL: 11/11 casos correctos' motor-transacciones-test.log
-      - name: Verificar generador ANTENA SOLA (3 pares, sin escritura de archivos externos)
+
+      - name: Pruebas funcionales de limpieza de temporales propios
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Ejecutar como herramienta independiente. NO agregar @main a Sources de la app.
+          swiftc -o "$RUNNER_TEMP/nexora-temporales-tests" \
+            ThreeOneOSFive/helpers/NXOwnedTemporaryWorkspaces.swift \
+            scripts/PruebaTemporalesNX.swift
+          "$RUNNER_TEMP/nexora-temporales-tests" | tee temporales-nexora-test.log
+          grep -Fq 'Limpieza OK: 2 temporales propios eliminados' temporales-nexora-test.log
+          grep -Fq 'Ruta no permitida: bloqueada correctamente.' temporales-nexora-test.log
+          grep -Fq 'Limpieza repetida: segura.' temporales-nexora-test.log
+          grep -Fq 'Temporales antiguos: eliminados; los recientes permanecen intactos.' temporales-nexora-test.log
+          grep -Fq 'Enlace simbólico externo: protegido.' temporales-nexora-test.log
+
+      - name: Pruebas del formato UnityFS y ANTENA SOLA (3 pares)
         shell: bash
         run: |
           set -euo pipefail
@@ -42,12 +80,25 @@ jobs:
             ThreeOneOSFive/helpers/NXAntennaOnlyUnityFS.swift \
             scripts/PruebaAntenaSola.swift
           "$RUNNER_TEMP/nexora-antena-tests" \
-            "BundledMods/AVATAR/AIM DRAG/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D" \
-            "BundledMods/AVATAR ANTENA/AIM Drag/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D" \
-            "BundledMods/AVATAR/AIM cuello/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D" \
-            "BundledMods/AVATAR ANTENA/AIM Cuello/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D" \
-            "BundledMods/AVATAR/AIM Pecho/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D" \
-            "BundledMods/AVATAR ANTENA/AIM Pecho/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D"
+            "$PWD"/ThreeOneOSFive/Assets.xcassets/NXModAimDrag.dataset/assetindexer.* \
+            "$PWD"/ThreeOneOSFive/Assets.xcassets/NXModAntenaDrag.dataset/assetindexer.* \
+            "$PWD"/ThreeOneOSFive/Assets.xcassets/NXModAimCuello.dataset/assetindexer.* \
+            "$PWD"/ThreeOneOSFive/Assets.xcassets/NXModAntenaCuello.dataset/assetindexer.* \
+            "$PWD"/ThreeOneOSFive/Assets.xcassets/NXModAimPecho.dataset/assetindexer.* \
+            "$PWD"/ThreeOneOSFive/Assets.xcassets/NXModAntenaPecho.dataset/assetindexer.* \
+            | tee antena-unityfs-test.log
+          grep -q 'ANTENA: 3/3 comparaciones pasaron' antena-unityfs-test.log
+
+      - name: Verificar variantes UnityFS 0x243 y varios bloques
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -DANTENNA_TESTING -o "$RUNNER_TEMP/nexora-antena-243" \
+            ThreeOneOSFive/helpers/NXAntennaOnlyUnityFS.swift \
+            scripts/PruebaAntenaFormato243.swift
+          "$RUNNER_TEMP/nexora-antena-243" scripts/fixtures_antenna/*.bin | tee antena-formato243-test.log
+          grep -q 'ANTENA: 9 pruebas de estructura/integridad correctas' antena-formato243-test.log
+
       - name: Compilar para iOS sin firmar
         shell: bash
         run: |
@@ -61,6 +112,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             build 2>&1 | tee xcodebuild.log
+
       - name: Empaquetar IPA sin firma
         shell: bash
         run: |
@@ -72,21 +124,33 @@ jobs:
           mkdir -p "$PWD/package/Payload"
           cp -R "$APP" "$PWD/package/Payload/"
           (cd "$PWD/package" && zip -qr "$OLDPWD/NEXORA_SYSTEM_2026_3105_sin_firmar.ipa" Payload)
+
+      - name: Verificar contenido de IPA y generar informe
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/verificar_ipa_generada.py "$PWD/NEXORA_SYSTEM_2026_3105_sin_firmar.ipa"
+          test -s NEXORA_RESULTADO_COMPILACION.json
+
       - name: Entregar IPA
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: NEXORA_SYSTEM_2026_3105_sin_firmar
-          path: NEXORA_SYSTEM_2026_3105_sin_firmar.ipa
+          path: ThreeOneOSFive/NEXORA_SYSTEM_2026_3105_sin_firmar.ipa
           if-no-files-found: error
           retention-days: 7
+
       - name: Guardar informe de compilación
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: NEXORA_LOG_COMPILACION
           path: |
-            xcodebuild.log
-            motor-transacciones-test.log
+            ThreeOneOSFive/xcodebuild.log
+            ThreeOneOSFive/motor-transacciones-test.log
+            ThreeOneOSFive/temporales-nexora-test.log
+            ThreeOneOSFive/antena-formato243-test.log
+            ThreeOneOSFive/NEXORA_RESULTADO_COMPILACION.json
           if-no-files-found: ignore
           retention-days: 7

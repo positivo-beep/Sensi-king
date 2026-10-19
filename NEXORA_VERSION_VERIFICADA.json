@@ -1,0 +1,14 @@
+{
+  "revision": "2026-10-18 (Antena UnityFS multibloque)",
+  "description": "Versión fuente completa, con control de cambios y empaquetado IPA",
+  "sha256": {
+    "ThreeOneOSFive/ThreeOneOSFive/App.swift": "8b68b19ff6a04bfeab228f80f82ffd341c8d334c87d657456ee4d6eaa059cecc",
+    "ThreeOneOSFive/ThreeOneOSFive/ContentView.swift": "ac0e8a55aa68508b5cafdd6aaaccbd01ef2d7930883621d9ef45a3183419035a",
+    "ThreeOneOSFive/ThreeOneOSFive/helpers/PatchTransaction.swift": "69a2115cf30df07b8abe0ce2df86c11bbe19d4464853e983305e9ce3f50d3fcc",
+    "ThreeOneOSFive/ThreeOneOSFive/helpers/NXAntennaOnlyUnityFS.swift": "4aadad0bd85cee0a57421b1b87accb795ec3acb11d811751b48b338b86d45ad2",
+    "ThreeOneOSFive/ThreeOneOSFive/helpers/NXOwnedTemporaryWorkspaces.swift": "055d3b63e8d4eafdec4a59bb621e4585fc1a2eb2b0416ada898591aa12fe471d",
+    "ThreeOneOSFive/ThreeOneOSFive/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png": "02bf324683ef808545154279e85d39e183d81227176e79fb6e6b84a4adf57c0b",
+    "ThreeOneOSFive/ThreeOneOSFive/Assets.xcassets/NexoraDarkCity.imageset/NexoraDarkCity.jpg": "52372eaa37d8e53fabebeb6234362d873432d9824e48146248b21449aa9a1132",
+    "ThreeOneOSFive/ThreeOneOSFive/Assets.xcassets/NexoraMark.imageset/NexoraMark.png": "02bf324683ef808545154279e85d39e183d81227176e79fb6e6b84a4adf57c0b"
+  }
+}

@@ -1,0 +1,38 @@
+NEXORA SYSTEM 2026 — AUDITORÍA Y REVISIÓN PREVIA A COMPILACIÓN
+Fecha: 2026-10-19
+Base: NEXORA_SYSTEM_2026_COMPLETO_ANTENA_243_REPARADA.zip
+Estado: FUENTES PREPARADAS PARA COMPILAR EN GITHUB ACTIONS (NO ES UNA IPA, NO ES APROBACIÓN FINAL)
+
+PROBLEMAS CORREGIDOS EN EL CÓDIGO ACTIVO:
+1. Identificador com.apple.mobile.MobileHouseArrest: sustituido por com.nexora.system2026 en Debug/Release y corregido el Info.plist para heredar el identificador Xcode. Corregida también copia alternativa para evitar confusión al abrir el proyecto.
+2. Seguridad de licencias: ya no genera un ID nuevo para cada petición cuando falla guardar el identificador en Keychain; la activación se bloquea si la identidad no queda persistida.
+3. Seguridad de licencias: al cerrar sesión o invalidar la licencia, la respuesta de una petición HTTPS antigua no puede volver a desbloquear el panel.
+4. Información del servidor: mensajes de error de servidor desconocidos no se vuelcan textualmente en la interfaz.
+5. GitHub Actions: nuevo verificador estático previo a compilación sobre IDs, Keychain y cierre de sesiones.
+6. Artefacto IPA: validador ampliado para comprobar identificador com.nexora.system2026 y cabecera Mach-O del ejecutable, además de ejecutable, icono, Assets.car e Info.plist. Se rechaza la entrega si no cumple.
+7. Se ha sincronizado la copia secundaria del workflow con la versión principal. Solo .github/workflows/ en la RAÍZ activa GitHub Actions.
+
+VERIFICACIONES EJECUTADAS EN ENTORNO LOCAL LINUX:
+- ZIP original: estructura íntegra, sin entrada ZIP corrupta.
+- 14 verificadores de estructura, recursos, UI, licencias, limpieza, restauración y versión: 14/14 OK.
+- Swift parse: 56 fuentes Swift activas, sin errores de SINTAXIS.
+- Xcode project.pbxproj activo: plutil -lint OK.
+- Unidad limpieza NXOwnedTemporaryWorkspaces: temporales propios, caminos inseguros, symlinks, casos protegidos y repetición: OK.
+- UnityFS: 3/3 comparaciones de parejas de recursos incluidos; rechaza truncados: OK.
+- UnityFS 0x243: 9/9 escenarios de estructura/integridad sintéticos: OK.
+- Verificador IPA: ejecutado sobre IPA previa con bundle ID corregido; reconoce contenido empaquetado.
+
+LÍMITES INDISPENSABLES:
+- NO se ha ejecutado Xcode en este entorno. Solo GitHub Actions macOS puede completar la compilación y ejecutar el test completo PatchTransaction con CryptoKit/Darwin.
+- El recurso exacto que causó el error ANTENA SOLA en el iPhone NO está disponible; 0x243 por sí solo no garantiza compatibilidad. NO se fuerzan archivos que fallan verificaciones.
+- El catálogo enumera 21 opciones; 8 siguen indicadas como pendientes por falta de recurso, no están certificadas como operativas.
+- El servicio Cloudflare y el certificado ESign no han sido probados desde esta compilación.
+- Un cambio de identificador puede requerir firmar como nueva app y reintroducir la licencia. No garantiza acceso a recursos de otras aplicaciones en iOS.
+- La nueva interfaz roja está en el código fuente; coincidencia exacta de todos los píxeles con las imágenes necesita prueba visual en iPhone.
+- No se afirma que los demás sistemas funcionen al 100% ni que esta versión esté libre de errores.
+
+COMPILACIÓN RECOMENDADA:
+Extraer el contenido de este ZIP directamente en la raíz de una copia de seguridad del repositorio Sensi-king (no dentro de otra ThreeOneOSFive). Usar una rama de prueba.
+El workflow válido está en .github/workflows/build-nexora-ios.yml, con working-directory ThreeOneOSFive y proyecto ThreeOneOSFive/ThreeOneOSFive.xcodeproj.
+Después del resultado de Actions: leer NEXORA_LOG_COMPILACION y NEXORA_RESULTADO_COMPILACION.json, revisar bundle ID, firma y permisos, probar en el iPhone con recursos propios de prueba.
+NO sobreescribir la IPA anterior antes de validar respaldo y restauración.

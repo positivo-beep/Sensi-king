@@ -272,7 +272,6 @@
 				3105B116 /* PatchKeyStore.swift */,
 				3105B117 /* PatchTransaction.swift */,
 				3105B118 /* DevicePatchService.swift */,
-				3105N401 /* NXAntennaOnlyUnityFS.swift in Sources */,
 				3105N402 /* NXAntennaOnlyUnityFS.swift */,
 				3105N100 /* NXOwnedTemporaryWorkspaces.swift */,
 				3105B119 /* PatchProjectLibrary.swift */,
@@ -413,6 +412,7 @@
 				3105B216,
 				3105B217,
 				3105B218,
+				3105N401,
 				3105N200,
 				3105B219,
 				3105B220,
@@ -489,7 +489,7 @@
 				);
 				MARKETING_VERSION = 2.0;
 				OTHER_LDFLAGS = "-lz";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.apple.mobile.MobileHouseArrest";
+				PRODUCT_BUNDLE_IDENTIFIER = com.nexora.system2026;
 				PRODUCT_NAME = 3105;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "ThreeOneOSFive/ThreeOneOSFive-Bridging-Header.h";
@@ -523,7 +523,7 @@
 				);
 				MARKETING_VERSION = 2.0;
 				OTHER_LDFLAGS = "-lz";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.apple.mobile.MobileHouseArrest";
+				PRODUCT_BUNDLE_IDENTIFIER = com.nexora.system2026;
 				PRODUCT_NAME = 3105;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "ThreeOneOSFive/ThreeOneOSFive-Bridging-Header.h";

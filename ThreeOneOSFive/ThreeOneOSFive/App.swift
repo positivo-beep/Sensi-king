@@ -292,11 +292,18 @@ final class NexoraLicenseModel: ObservableObject {
     private let licenseAccount = "license"
     private let deviceAccount = "installation-id"
     private var hasStarted = false
+    // Evita que una respuesta de red anterior vuelva a abrir el panel después de salir.
+    private var authorizationGeneration: UInt64 = 0
 
-    private var deviceID: String {
-        if let id = NexoraSecureStorage.read(deviceAccount) { return id }
+    // La identidad nunca puede cambiar silenciosamente entre solicitudes.
+    // Si falla Keychain, la activación se bloquea antes de enviar la key.
+    private func persistentDeviceID() -> String? {
+        if let id = NexoraSecureStorage.read(deviceAccount) {
+            return UUID(uuidString: id) == nil ? nil : id
+        }
         let id = UUID().uuidString
-        _ = NexoraSecureStorage.save(id, deviceAccount)
+        guard NexoraSecureStorage.save(id, deviceAccount),
+              NexoraSecureStorage.read(deviceAccount) == id else { return nil }
         return id
     }
 
@@ -324,6 +331,7 @@ final class NexoraLicenseModel: ObservableObject {
     }
 
     func signOut() {
+        authorizationGeneration &+= 1
         NexoraSecureStorage.delete(licenseAccount)
         input = ""
         state = .locked
@@ -333,6 +341,7 @@ final class NexoraLicenseModel: ObservableObject {
     }
 
     private func invalidateAndRequireNewKey(_ message: String) {
+        authorizationGeneration &+= 1
         NexoraSecureStorage.delete(licenseAccount)
         input = ""
         expiration = nil
@@ -351,7 +360,13 @@ final class NexoraLicenseModel: ObservableObject {
         }
         isBusy = true
         defer { isBusy = false }
+        let currentGeneration = authorizationGeneration
         errorMessage = ""
+        guard let stableDeviceID = persistentDeviceID() else {
+            state = .locked
+            errorMessage = "No se pudo verificar la identidad local del dispositivo."
+            return
+        }
         // La autoridad es Cloudflare, no una bandera local; no incluir secretos de administración.
         // La clave se envía solo al endpoint HTTPS definido por el propietario.
         guard endpoint.scheme == "https", endpoint.host != nil else {
@@ -367,8 +382,9 @@ final class NexoraLicenseModel: ObservableObject {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("no-store", forHTTPHeaderField: "Cache-Control")
         do {
-            request.httpBody = try JSONEncoder().encode(NexoraWirePayload(key: formatted, device_id: deviceID))
+            request.httpBody = try JSONEncoder().encode(NexoraWirePayload(key: formatted, device_id: stableDeviceID))
             let (data, response) = try await licenseSession.data(for: request)
+            guard authorizationGeneration == currentGeneration else { return }
             // Ni redirecciones a otros hosts, ni respuestas anómalas, ni errores HTTP
             // pueden autorizar una licencia.
             guard let http = response as? HTTPURLResponse,
@@ -417,6 +433,7 @@ final class NexoraLicenseModel: ObservableObject {
             }
             state = .allowed
         } catch {
+            guard authorizationGeneration == currentGeneration else { return }
             // No mostrar detalles de red o del servidor en la interfaz pública.
             state = .locked
             errorMessage = "No se pudo verificar tu licencia. Comprueba la conexión e inténtalo de nuevo."
@@ -430,7 +447,7 @@ final class NexoraLicenseModel: ObservableObject {
         case "revoked": return "La key fue desactivada."
         case "device_limit": return "Se alcanzó el límite de dispositivos."
         case "device_not_activated": return "El dispositivo aún no está activado."
-        default: return "No se validó la licencia (\(reason ?? "sin información"))."
+        default: return "No se pudo validar la licencia con el servidor."
         }
     }
 }

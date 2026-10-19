@@ -1,0 +1,24 @@
+NEXORA SYSTEM 2026 — ENTREGA FUENTE COMPLETA (2026-10-18)
+
+Este ZIP incluye el proyecto completo en la raíz de Sensi-king (sin directorio extra).
+NO es la IPA firmada y NO se ha subido automáticamente a GitHub.
+
+VERIFICACIONES HECHAS EN LINUX:
+* Se eliminó la referencia inválida a NXAntennaOnlyUnityFS.swift en PBXGroup.
+* Se registró el archivo en PBXSourcesBuildPhase, donde corresponde.
+* Las comprobaciones estáticas y las pruebas Swift disponibles pasan.
+* Se conservan los recursos originales y los cambios de UI/icono/limpieza.
+
+MEJORAS EN GITHUB ACTIONS:
+* Valida antes de compilar que se está usando la versión fuente completa.
+* Ya no modifica el archivo del proyecto Xcode silenciosamente.
+* Verifica que la IPA producida contiene ejecutable, Assets.car, Info.plist e icono registrado.
+* Crea un informe de identidad y SHA256 de la IPA. Un run verde NO prueba funcionalidades en iPhone.
+
+LIMITACIONES:
+* Compilación Xcode no ejecutada aquí porque este entorno es Linux.
+* No se ha verificado la conexión al Cloudflare Worker del usuario.
+* No se ha comprobado el acceso de iOS a los archivos de otra app ni la corrección real de ANTENA SOLA.
+* La limpieza se limita a datos temporales propios autorizados. No garantiza eliminar todo rastro del sistema.
+* Requiere pasar este ZIP COMPLETO a la raíz del repositorio, y compilar con Xcode en GitHub Actions.
+* Se recomienda conservar la versión anterior de la IPA instalada hasta validar.

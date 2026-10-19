@@ -1,0 +1,15 @@
+NEXORA SYSTEM 2026 — identidad visual roja y negra
+
+Esta actualización sustituye el ícono MORADO antiguo por la versión roja de NEXORA tanto en el ícono de pantalla de inicio de iOS (AppIcon) como en la miniatura del panel (NexoraMark).
+
+Los dos diseños de pantalla de inicio de sesión y panel rojo/negro se conservan del proyecto fuente previamente revisado.
+
+Rutas activas usadas por el workflow en el repositorio Sensi-king:
+  ThreeOneOSFive/ThreeOneOSFive/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
+  ThreeOneOSFive/ThreeOneOSFive/Assets.xcassets/NexoraMark.imageset/NexoraMark.png
+
+El parche actualiza también la copia exterior para que no queden iconos antiguos por confusión de carpetas. El ZIP pequeño se descomprime en la RAÍZ del repositorio; el ZIP grande es una copia completa del proyecto fuente.
+
+Comprobaciones realizadas: archivo PNG 1024x1024 RGB sin alpha, catálogos Xcode presentes, configuración AppIcon en project.pbxproj, integridad ZIP.
+
+No es una IPA compilada. NO cambia el motor de respaldos, las keys ni repara por sí solo ANTENA SOLA. Falta compilación en macOS, revisión visual en el iPhone y prueba de funcionamiento real.

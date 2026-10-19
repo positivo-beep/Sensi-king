@@ -35,74 +35,121 @@ enum NXAntennaOnlyUnityFS {
         "effcc3f4ecbc4e15e912557d0bfb5e768b99102adcde82bc617aa02f9acb12a4"
     ]
 
-    /// Se llama solo cuando la opción está inactiva y el destino ya existe.
-    /// El argumento de test está separado para comprobar el códec con variantes
-    /// AIM conocidas; la app siempre emplea la configuración estricta.
+    /// Construye ANTENA SOLA sin suponer que UnityFS tiene un solo bloque.
+    /// Sólo se acepta un nodo del perfil conocido (45.964 bytes), con dos valores
+    /// de calibración originales. Los archivos desconocidos se dejan intactos.
     static func build(from original: Data, rejectKnownModified: Bool = true) throws -> Data {
-        let parsed = try parse(original)
+        let parsed = try parse(original, findTarget: true)
+        guard let targetOffset = parsed.targetOffset else {
+            throw Failure.unsupported("no se encontró un nodo de antena original verificable")
+        }
         if rejectKnownModified {
             #if canImport(CryptoKit)
-            // Las huellas conocidas se calcularon sobre el bloque Unity DESCOMPRIMIDO.
-            let hash = SHA256.hash(data: Data(parsed.plain)).map { String(format: "%02x", $0) }.joined()
+            let originalNode = Data(parsed.plain[targetOffset..<(targetOffset + expectedBytes)])
+            let hash = SHA256.hash(data: originalNode).map { String(format: "%02x", $0) }.joined()
             guard !knownModifiedResources.contains(hash) else {
-                throw Failure.unsupported("el archivo actual ya contiene una modificación conocida de AIMBOT")
+                throw Failure.unsupported("el archivo de origen ya incluye AIMBOT")
             }
             #else
             throw Failure.unsupported("no está disponible el verificador SHA-256")
             #endif
         }
-        guard parsed.plain.count == expectedBytes else {
-            throw Failure.unsupported("el tamaño interno no coincide con la versión analizada")
-        }
-        var plain = parsed.plain
+        var updatedPlain = parsed.plain
         for offset in profileOffsets {
-            guard Array(plain[offset..<(offset + 4)]) == cleanBits else {
-                throw Failure.unsupported("los valores de antena no están en el estado original esperado")
+            let at = targetOffset + offset
+            guard Array(updatedPlain[at..<(at + 4)]) == cleanBits else {
+                throw Failure.unsupported("la calibración original de antena no coincide")
             }
+            updatedPlain.replaceSubrange(at..<(at + 4), with: antennaBits)
         }
-        for offset in profileOffsets { plain.replaceSubrange(offset..<(offset + 4), with: antennaBits) }
 
-        // Reconstrucción del UnityFS conservando nombre de nodo y bytes adicionales.
-        // La compresión LZ4 se vuelve a generar, sin parchear bytes comprimidos a ciegas.
-        let compressedBlock = compressLZ4(plain)
+        // Conserva la cantidad de bloques y nodos, las longitudes descomprimidas,
+        // sus rutas y los flags adicionales. Sólo cambia la compresión de los
+        // bloques afectados de LZ4HC a LZ4, formato equivalente soportado por Unity.
         var info = parsed.blockInfo
-        replaceU32(&info, at: 24, value: UInt32(compressedBlock.count))
-        replaceU16(&info, at: 28, value: 2) // bloque LZ4 estándar
-        let compressedInfo = compressLZ4(info)
-        // Mantener el modo de ubicación del índice del UnityFS original.
-        // Un archivo válido puede guardar el índice al principio o al final y
-        // puede incluir o no alineación a 16 bytes. No asumir siempre 0xC3.
-        var result: [UInt8]
-        if parsed.infoAtEnd {
-            result = Array(parsed.full[0..<parsed.dataStart])
-            result.append(contentsOf: compressedBlock)
-            result.append(contentsOf: compressedInfo)
-        } else {
-            result = Array(parsed.full[0..<parsed.infoStart])
-            result.append(contentsOf: compressedInfo)
-            if parsed.dataWasAligned {
-                while result.count % 16 != 0 { result.append(0) }
+        var rebuiltBlocks = [UInt8]()
+        var offsetInPlain = 0
+        for block in parsed.blocks {
+            let next = offsetInPlain + block.unpackedSize
+            let slice = Array(updatedPlain[offsetInPlain..<next])
+            let originalSlice = Array(parsed.plain[offsetInPlain..<next])
+            let packed: [UInt8]
+            let mode: UInt16
+            if slice == originalSlice {
+                packed = Array(parsed.full[block.packedOffset..<(block.packedOffset + block.packedSize)])
+                mode = block.flags & 0x3F
+            } else {
+                packed = compressLZ4(slice)
+                mode = 2
             }
-            result.append(contentsOf: compressedBlock)
+            replaceU32(&info, at: block.infoOffset + 4, value: UInt32(packed.count))
+            replaceU16(&info, at: block.infoOffset + 8,
+                       value: (block.flags & ~UInt16(0x3F)) | mode)
+            rebuiltBlocks.append(contentsOf: packed)
+            offsetInPlain = next
         }
-        let bundleEnd = result.count
-        result.append(contentsOf: parsed.full[parsed.bundleEnd..<parsed.full.count])
-        replaceU64(&result, at: parsed.sizePosition, value: UInt64(bundleEnd))
-        replaceU32(&result, at: parsed.sizePosition + 8, value: UInt32(compressedInfo.count))
-        replaceU32(&result, at: parsed.sizePosition + 12, value: UInt32(info.count))
-        replaceU32(&result, at: parsed.sizePosition + 16, value: (parsed.flags & ~UInt32(0x3F)) | 2)
 
-        // Comprobación independiente de ida y vuelta antes de devolver el archivo.
-        let verified = try parse(Data(result))
-        guard verified.plain == plain else {
-            throw Failure.unsupported("no fue posible verificar el recurso reconstruido")
+        // El hash de la información de bloques es un campo de integridad UnityFS.
+        // CryptoKit, cuando está disponible (iPhone), permite recalcular MD5.
+        #if canImport(CryptoKit)
+        let md5 = Insecure.MD5.hash(data: Data(updatedPlain))
+        info.replaceSubrange(0..<16, with: md5)
+        #endif
+        let packedInfo = compressLZ4(info)
+        var output: [UInt8]
+        if parsed.infoAtEnd {
+            output = Array(parsed.full[0..<parsed.dataStart])
+            output.append(contentsOf: rebuiltBlocks)
+            output.append(contentsOf: parsed.originalDataTail)
+            output.append(contentsOf: packedInfo)
+        } else {
+            output = Array(parsed.full[0..<parsed.infoStart])
+            output.append(contentsOf: packedInfo)
+            if parsed.dataWasAligned || (parsed.flags & 0x200) != 0 {
+                while output.count % 16 != 0 { output.append(0) }
+            }
+            output.append(contentsOf: rebuiltBlocks)
+            output.append(contentsOf: parsed.originalDataTail)
         }
-        return Data(result)
+        let bundleEnd = output.count
+        output.append(contentsOf: parsed.full[parsed.bundleEnd..<parsed.full.count])
+        replaceU64(&output, at: parsed.sizePosition, value: UInt64(bundleEnd))
+        replaceU32(&output, at: parsed.sizePosition + 8, value: UInt32(packedInfo.count))
+        replaceU32(&output, at: parsed.sizePosition + 12, value: UInt32(info.count))
+        replaceU32(&output, at: parsed.sizePosition + 16,
+                   value: (parsed.flags & ~UInt32(0x3F)) | 2)
+
+        // Verifica que todo el contenido descomprimido, todos los nodos y la
+        // distribución de bloques siguen siendo correctos antes de devolver bytes.
+        let checked = try parse(Data(output), findTarget: false)
+        guard checked.plain == updatedPlain,
+              checked.nodes == parsed.nodes,
+              checked.blocks.map(\.unpackedSize) == parsed.blocks.map(\.unpackedSize) else {
+            throw Failure.unsupported("falló la verificación de integridad después de reconstruir UnityFS")
+        }
+        return Data(output)
     }
 
     #if ANTENNA_TESTING
-    static func unpackForTesting(_ resource: Data) throws -> [UInt8] { try parse(resource).plain }
+    static func unpackForTesting(_ resource: Data) throws -> [UInt8] {
+        try parse(resource, findTarget: false).plain
+    }
     #endif
+
+    private struct StorageBlock {
+        let unpackedSize: Int
+        let packedSize: Int
+        let flags: UInt16
+        let infoOffset: Int
+        let packedOffset: Int
+    }
+
+    private struct Node: Equatable {
+        let offset: Int
+        let size: Int
+        let flags: UInt32
+        let path: String
+    }
 
     private struct Bundle {
         let full: [UInt8]
@@ -113,91 +160,173 @@ enum NXAntennaOnlyUnityFS {
         let infoStart: Int
         let infoAtEnd: Bool
         let dataWasAligned: Bool
+        let originalDataTail: [UInt8]
         let blockInfo: [UInt8]
+        let blocks: [StorageBlock]
+        let nodes: [Node]
         let plain: [UInt8]
+        let targetOffset: Int?
     }
 
-    private static func parse(_ data: Data) throws -> Bundle {
+    private static func parse(_ data: Data, findTarget: Bool) throws -> Bundle {
         let bytes = [UInt8](data)
-        guard bytes.count >= 80, bytes.count < maxBundleBytes,
+        guard bytes.count >= 80, bytes.count <= maxBundleBytes,
               Array(bytes.prefix(8)) == Array("UnityFS\0".utf8) else {
-            throw Failure.unsupported("el archivo no es un UnityFS compatible")
+            throw Failure.unsupported("no es un paquete UnityFS reconocido")
         }
         var pos = 8
         guard try readU32(bytes, &pos) == 8 else {
-            throw Failure.unsupported("versión de UnityFS desconocida")
+            throw Failure.unsupported("versión UnityFS distinta de la compatible")
         }
         let engine = try readCString(bytes, &pos)
         let revision = try readCString(bytes, &pos)
         guard engine == "5.x.x", revision == "2018.4.12f1" else {
-            throw Failure.unsupported("versión Unity distinta a la examinada")
+            throw Failure.unsupported("versión de Unity diferente del perfil analizado")
         }
         let sizePosition = pos
         let bundleSize = try readU64(bytes, &pos)
         let infoCompressed = Int(try readU32(bytes, &pos))
         let infoPlain = Int(try readU32(bytes, &pos))
         let flags = try readU32(bytes, &pos)
-        let mode = Int(flags & 0x3F)
+        let infoMode = Int(flags & 0x3F)
         let infoAtEnd = (flags & 0x80) != 0
-        guard mode == 0 || mode == 2 || mode == 3,
-              infoCompressed > 0, infoPlain >= 34, infoPlain < 32768,
+        guard [0, 2, 3].contains(infoMode), infoCompressed > 0,
+              infoPlain >= 34, infoPlain <= 1_048_576,
               bundleSize > UInt64(pos), bundleSize <= UInt64(bytes.count) else {
-            throw Failure.unsupported("cabecera UnityFS con tamaño o compresión incompatible")
+            throw Failure.unsupported("cabecera UnityFS inválida o formato de compresión no admitido")
         }
         let end = Int(bundleSize)
-        func aligned(_ v: Int) -> Int { (v + 15) & ~15 }
+        func aligned(_ n: Int) -> Int { (n + 15) & ~15 }
 
-        // UnityFS admite información de bloques al final (0x80) o al comienzo;
-        // la bandera 0x40 de padding no es obligatoria en todos los bundles.
-        let metadataPositions = infoAtEnd ? [end - infoCompressed] : [pos, aligned(pos)]
-        for infoStart in Set(metadataPositions).sorted() {
-            guard infoStart >= pos, infoStart <= end,
-                  infoCompressed <= end - infoStart else { continue }
+        // Versiones UnityFS 7+ suelen alinear el comienzo del índice a 16 bytes.
+        // 0x200 significa que los datos deben empezar alineados al terminarlo.
+        let infoPositions = infoAtEnd ? [end - infoCompressed] : [pos, aligned(pos)]
+        var recognizedProfileIssue: String?
+        for infoStart in Set(infoPositions).sorted() {
+            guard infoStart >= pos, infoCompressed <= end - infoStart,
+                  infoStart - pos < 16 || infoAtEnd else { continue }
+            if !infoAtEnd && !bytes[pos..<infoStart].allSatisfy({ $0 == 0 }) { continue }
             let packedInfo = Array(bytes[infoStart..<(infoStart + infoCompressed)])
-            guard let info = try? decodeBlock(packedInfo, mode: mode, expected: infoPlain),
+            guard let info = try? decodeBlock(packedInfo, mode: infoMode, expected: infoPlain),
                   info.count >= 34 else { continue }
-            var cursor = 16  // reserva/huella de tabla del bundle
-            guard let count = try? readU32(info, &cursor), count == 1,
-                  let originalSizeRaw = try? readU32(info, &cursor),
-                  let packedSizeRaw = try? readU32(info, &cursor),
-                  let blockFlagsRaw = try? readU16(info, &cursor) else { continue }
-            let originalSize = Int(originalSizeRaw)
-            let packedSize = Int(packedSizeRaw)
-            let blockMode = Int(blockFlagsRaw & 0x3F)
-            guard originalSize == expectedBytes, packedSize > 0,
-                  blockMode == 0 || blockMode == 2 || blockMode == 3,
-                  let nodeCount = try? readU32(info, &cursor), nodeCount == 1,
-                  let nodeOffset = try? readU64(info, &cursor),
-                  let nodeSize = try? readU64(info, &cursor),
-                  (try? readU32(info, &cursor)) != nil,
-                  (try? readCString(info, &cursor)) != nil,
-                  nodeOffset == 0, nodeSize == UInt64(expectedBytes),
-                  cursor == info.count else { continue }
+            var cursor = 16
+            guard let blockCountRaw = try? readU32(info, &cursor),
+                  blockCountRaw > 0, blockCountRaw <= 4096 else { continue }
+            var descriptors = [(size: Int, packed: Int, flags: UInt16, pos: Int)]()
+            var totalPlain = 0
+            var totalPacked = 0
+            var malformed = false
+            for _ in 0..<Int(blockCountRaw) {
+                let at = cursor
+                guard let sizeRaw = try? readU32(info, &cursor),
+                      let packedRaw = try? readU32(info, &cursor),
+                      let flagsRaw = try? readU16(info, &cursor) else {
+                    malformed = true
+                    break
+                }
+                let size = Int(sizeRaw), packedSize = Int(packedRaw)
+                guard size > 0, packedSize > 0,
+                      size <= maxBundleBytes - totalPlain,
+                      packedSize <= maxBundleBytes - totalPacked,
+                      [0, 2, 3].contains(Int(flagsRaw & 0x3F)) else {
+                    malformed = true
+                    break
+                }
+                totalPlain += size
+                totalPacked += packedSize
+                descriptors.append((size, packedSize, flagsRaw, at))
+            }
+            if malformed { continue }
+            guard let nodeCountRaw = try? readU32(info, &cursor),
+                  nodeCountRaw > 0, nodeCountRaw <= 4096 else { continue }
+            var nodes = [Node]()
+            for _ in 0..<Int(nodeCountRaw) {
+                guard let offsetRaw = try? readU64(info, &cursor),
+                      let sizeRaw = try? readU64(info, &cursor),
+                      let nodeFlags = try? readU32(info, &cursor),
+                      let name = try? readCString(info, &cursor),
+                      offsetRaw <= UInt64(totalPlain),
+                      sizeRaw <= UInt64(totalPlain) - offsetRaw else {
+                    malformed = true
+                    break
+                }
+                nodes.append(Node(offset: Int(offsetRaw), size: Int(sizeRaw),
+                                  flags: nodeFlags, path: name))
+            }
+            if malformed || cursor != info.count { continue }
 
-            let afterMetadata = infoAtEnd ? pos : infoStart + infoCompressed
-            let candidates = Set([afterMetadata, aligned(afterMetadata)]).sorted()
-            for dataStart in candidates {
+            let afterInfo = infoAtEnd ? pos : infoStart + infoCompressed
+            let dataPositions = [afterInfo, aligned(afterInfo)]
+            for dataStart in Set(dataPositions).sorted() {
                 let dataLimit = infoAtEnd ? infoStart : end
-                guard dataStart >= afterMetadata, dataStart <= dataLimit,
-                      packedSize <= dataLimit - dataStart else { continue }
-                let compressed = Array(bytes[dataStart..<(dataStart + packedSize)])
-                guard let plain = try? decodeBlock(compressed, mode: blockMode, expected: expectedBytes),
-                      plain.count == expectedBytes else { continue }
-                // Para este perfil los bloques y la tabla deben ser contiguos;
-                // solo se acepta padding cero de 16 bytes donde corresponde.
-                let gap = bytes[afterMetadata..<dataStart]
-                guard gap.allSatisfy({ $0 == 0 }), gap.count < 16 else { continue }
-                return Bundle(full: bytes, bundleEnd: end, sizePosition: sizePosition,
-                              flags: flags, dataStart: dataStart, infoStart: infoStart,
-                              infoAtEnd: infoAtEnd, dataWasAligned: dataStart != afterMetadata,
-                              blockInfo: info, plain: plain)
+                guard dataStart >= afterInfo, dataStart <= dataLimit,
+                      dataStart - afterInfo < 16,
+                      totalPacked <= dataLimit - dataStart,
+                      bytes[afterInfo..<dataStart].allSatisfy({ $0 == 0 }) else { continue }
+                // Si existe 0x200, el inicio de los bloques tiene que estar alineado.
+                // Aceptar archivos de versiones antiguas sin padding pese a la bandera 0x200,
+                // si todas las comprobaciones de bloques y nodo son correctas.
+
+                var readAt = dataStart
+                var plain = [UInt8]()
+                plain.reserveCapacity(totalPlain)
+                var blocks = [StorageBlock]()
+                for descriptor in descriptors {
+                    let compressed = Array(bytes[readAt..<(readAt + descriptor.packed)])
+                    guard let decoded = try? decodeBlock(compressed,
+                                    mode: Int(descriptor.flags & 0x3F),
+                                    expected: descriptor.size) else {
+                        malformed = true
+                        break
+                    }
+                    plain.append(contentsOf: decoded)
+                    blocks.append(StorageBlock(unpackedSize: descriptor.size,
+                                               packedSize: descriptor.packed,
+                                               flags: descriptor.flags,
+                                               infoOffset: descriptor.pos,
+                                               packedOffset: readAt))
+                    readAt += descriptor.packed
+                }
+                if malformed { malformed = false; continue }
+                let tail = Array(bytes[readAt..<dataLimit])
+                // Se permite sólo padding corto y nulo, no datos ignorados.
+                guard tail.count < 16 && tail.allSatisfy({ $0 == 0 }) else { continue }
+
+                var target: Int? = nil
+                if findTarget {
+                    var matches = [Int]()
+                    for node in nodes where node.size == expectedBytes {
+                        if profileOffsets.allSatisfy({ offset in
+                            let at = node.offset + offset
+                            return at + 4 <= plain.count &&
+                                   Array(plain[at..<(at + 4)]) == cleanBits
+                        }) {
+                            matches.append(node.offset)
+                        }
+                    }
+                    if matches.count != 1 {
+                        let candidates = nodes.filter { $0.size == expectedBytes }.count
+                        recognizedProfileIssue = matches.isEmpty
+                            ? "nodos: \(nodes.count), bloques: \(blocks.count), perfiles de tamaño esperado: \(candidates); la calibración no coincide"
+                            : "se hallaron varios perfiles de antena y el destino es ambiguo"
+                        continue
+                    }
+                    target = matches[0]
+                }
+                return Bundle(full: bytes, bundleEnd: end,
+                              sizePosition: sizePosition, flags: flags,
+                              dataStart: dataStart, infoStart: infoStart,
+                              infoAtEnd: infoAtEnd,
+                              dataWasAligned: dataStart != afterInfo,
+                              originalDataTail: tail,
+                              blockInfo: info, blocks: blocks, nodes: nodes,
+                              plain: plain, targetOffset: target)
             }
         }
         throw Failure.unsupported(
-            "tabla o ubicación de bloques UnityFS incompatible " +
-            "(flags 0x\(String(flags, radix: 16)), " +
-            "tamaño interno esperado: \(expectedBytes) bytes)"
-        )
+            "estructura de bloques o nodo del perfil no reconocido " +
+            "(flags 0x\(String(flags, radix: 16)), perfil: \(expectedBytes) bytes; " +
+            "\(recognizedProfileIssue ?? "no se pudo decodificar la tabla de bloques"))")
     }
 
     private static func decodeBlock(_ compressed: [UInt8], mode: Int, expected: Int) throws -> [UInt8] {

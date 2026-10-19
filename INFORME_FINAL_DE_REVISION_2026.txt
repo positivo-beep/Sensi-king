@@ -1,0 +1,31 @@
+NEXORA SYSTEM 2026 — REVISIÓN FUENTE COMPLETA 2026-10-18
+
+Archivo original: NEXORA_SYSTEM_2026_COMPLETO_INTERFAZ_ROJA_LIMPIEZA.zip
+Cobertura: 429 archivos originales conservados, 2 reparados y 4 nuevos.
+
+ARCHIVOS REPARADOS:
+- .github/workflows/build-nexora-ios.yml
+- ThreeOneOSFive/ThreeOneOSFive.xcodeproj/project.pbxproj
+
+ADICIONES:
+- LEEME_NEXORA_PROYECTO_COMPLETO.txt
+- NEXORA_VERSION_VERIFICADA.json
+- ThreeOneOSFive/scripts/verificar_entrega_completa_nexora.py
+- ThreeOneOSFive/scripts/verificar_ipa_generada.py
+
+
+VERIFICACIONES LOCALES:
+- 13 verificadores estáticos/funcionales ejecutados: OK.
+- Swift (56 archivos): análisis sintáctico correcto.
+- Limpieza de temporales propios: ejecutable Swift probado (casos positivos, repetición, rutas inválidas, symlinks).
+- Workflow Github Actions: YAML válido, 11 pasos definidos.
+- Validador de IPA: caso simulado positivo pasa; fallo de icono produce rechazo.
+- Referencia mal ubicada de ANTENA SOLA en PBXGroup corregida en el proyecto fuente.
+- Recursos incluidos verificados por hashes (ver catalogo y manifest).
+
+IMPORTANTE: NINGUNA prueba real de Xcode se ejecutó en este ambiente Linux.
+El código de ANTENA SOLA no está probado con el archivo real del iPhone.
+GitHub no conectado: este trabajo NO se ha subido a main.
+Resultado verde de GitHub = conjunto de pasos ejecutados con éxito, no prueba absoluta de efectos en iOS.
+Limpieza = sólo archivos temporales propios. No borra rastros o datos externos sin autorización.
+No se afirma ausencia total de errores.

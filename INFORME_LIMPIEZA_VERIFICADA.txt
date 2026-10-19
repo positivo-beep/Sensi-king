@@ -1,0 +1,30 @@
+NEXORA SYSTEM 2026 — REVISIÓN DE LIMPIEZA SEGURA
+Fecha: 2026-10-18
+Base: NEXORA_PROYECTO_ROJO_ICONO_ACTUALIZADO.zip (código fuente)
+
+CAMBIOS REALES
+- Nueva opción en Configuración > Diagnóstico técnico: «Limpiar temporales propios ahora».
+- Solicita confirmación explícita y muestra el resultado de las eliminaciones realizadas.
+- Borra carpetas temporales de NEXORA cuyos nombres correspondan a UUID válidos, sin tocar otras aplicaciones.
+- Detecta restauraciones pendientes por identificador, incluso si el proyecto ya no figura en el catálogo.
+- Conserva áreas protegidas, rutas desconocidas, enlaces simbólicos y archivos necesarios para recuperación.
+- Informa por separado operaciones completadas, protegidas, fallidas y entradas no reconocidas.
+- No elimina los respaldos originales, el historial de restauración, licencias, registros de iOS ni los datos de otras apps.
+
+PRUEBAS EJECUTADAS EN ESTE ENTORNO
+- Suite Swift de temporales: siete comprobaciones informadas con resultado correcto.
+- 12 verificadores previos del proyecto: correctos.
+- Comprobación de sintaxis: 56/56 archivos Swift analizados sin errores sintácticos.
+- Controles iOS y compilación Xcode: PENDIENTE. Solo se han validado sintaxis y módulo Foundation.
+
+LÍMITES Y SEGURIDAD
+El servicio de limpieza de otras aplicaciones (LimitedCleanerService) NO se ha ampliado.
+No se intenta borrar registros del sistema, historial de servicios externos ni borrar evidencias de modificaciones de otras aplicaciones.
+Si existen modificaciones externas activas, se deben restaurar por su propio procedimiento y comprobar el resultado antes de eliminar respaldos. Borrar datos antes de verificar la restauración puede impedir la recuperación.
+La comprobación de sintaxis no demuestra que iOS o el sistema de archivos den permisos suficientes.
+No se garantiza ausencia absoluta de errores y no se ha compilado una nueva IPA en este entorno Linux.
+
+ARCHIVOS MODIFICADOS
+- ThreeOneOSFive/ThreeOneOSFive/ContentView.swift
+- ThreeOneOSFive/ThreeOneOSFive/helpers/NXOwnedTemporaryWorkspaces.swift
+- ThreeOneOSFive/scripts/PruebaTemporalesNX.swift

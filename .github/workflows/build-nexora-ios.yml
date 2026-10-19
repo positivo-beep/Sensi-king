@@ -17,45 +17,27 @@ jobs:
       - name: Obtener proyecto
         uses: actions/checkout@v4
 
-      - name: Validar estructura y preparar Xcode
+      - name: Verificar proyecto completo antes de compilar
         shell: bash
         run: |
           set -euo pipefail
+          python3 scripts/verificar_entrega_completa_nexora.py
           test -f ThreeOneOSFive/helpers/NXAntennaOnlyUnityFS.swift
-          test -f ThreeOneOSFive/ContentView.swift
-          test -f scripts/PruebaAntenaSola.swift
-          python3 - <<'PYFIX'
-          from pathlib import Path
-          p = Path('ThreeOneOSFive.xcodeproj/project.pbxproj')
-          s = p.read_text(encoding='utf-8')
-          item = '3105N401 /* NXAntennaOnlyUnityFS.swift in Sources */'
-          ref  = '3105N402 /* NXAntennaOnlyUnityFS.swift */'
-          assert s.count(item + ' = {isa = PBXBuildFile;') == 1, 'No existe la definición del helper de ANTENA SOLA'
-          assert s.count(ref + ' = {isa = PBXFileReference;') == 1, 'No existe la referencia del helper de ANTENA SOLA'
-          # En la copia cargada, el ID del build file está indebidamente en PBXGroup.
-          s = s.replace('\t\t\t\t' + item + ',\n', '')
-          begin = s.index('/* Begin PBXSourcesBuildPhase section */')
-          end = s.index('/* End PBXSourcesBuildPhase section */', begin)
-          phase = s[begin:end]
-          if '\t\t\t\t3105N401,\n' not in phase:
-              marker = '\t\t\t\t3105B218,\n'
-              assert phase.count(marker) == 1, 'No se encontró la posición esperada en Sources'
-              phase = phase.replace(marker, marker + '\t\t\t\t3105N401,\n', 1)
-              s = s[:begin] + phase + s[end:]
-          p.write_text(s, encoding='utf-8')
-          assert '3105N401,\n' in s, 'No se agregó ANTENA SOLA a Sources'
-          print('Proyecto Xcode seleccionado: versión con ANTENA SOLA; fuente incluida en compilación.')
-          PYFIX
+          test -f ThreeOneOSFive/helpers/NXOwnedTemporaryWorkspaces.swift
+          xcodebuild -version
 
       - name: Verificación previa
         shell: bash
         run: |
           set -euo pipefail
           python3 scripts/verificar_nexora.py
+          python3 scripts/verificar_interfaz_y_respaldo_final.py
+          python3 scripts/verificar_diseno_rojo_nexora.py
           python3 scripts/verificar_integracion_nexora.py
           python3 scripts/verificar_opciones_v14.py
           python3 scripts/verificar_catalogo_completo_nexora.py
           python3 scripts/verificar_seguridad_licencias.py
+          python3 scripts/verificar_seguridad_release_nexora.py
           python3 scripts/verificar_restauracion_v21_1.py
           python3 scripts/verificar_audio_personalizado_v21_2.py
           python3 scripts/verificar_temporales_nexora_v21_3.py
@@ -90,6 +72,33 @@ jobs:
           grep -Fq 'Temporales antiguos: eliminados; los recientes permanecen intactos.' temporales-nexora-test.log
           grep -Fq 'Enlace simbólico externo: protegido.' temporales-nexora-test.log
 
+      - name: Pruebas del formato UnityFS y ANTENA SOLA (3 pares)
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -DANTENNA_TESTING -o "$RUNNER_TEMP/nexora-antena-tests" \
+            ThreeOneOSFive/helpers/NXAntennaOnlyUnityFS.swift \
+            scripts/PruebaAntenaSola.swift
+          "$RUNNER_TEMP/nexora-antena-tests" \
+            "$PWD"/ThreeOneOSFive/Assets.xcassets/NXModAimDrag.dataset/assetindexer.* \
+            "$PWD"/ThreeOneOSFive/Assets.xcassets/NXModAntenaDrag.dataset/assetindexer.* \
+            "$PWD"/ThreeOneOSFive/Assets.xcassets/NXModAimCuello.dataset/assetindexer.* \
+            "$PWD"/ThreeOneOSFive/Assets.xcassets/NXModAntenaCuello.dataset/assetindexer.* \
+            "$PWD"/ThreeOneOSFive/Assets.xcassets/NXModAimPecho.dataset/assetindexer.* \
+            "$PWD"/ThreeOneOSFive/Assets.xcassets/NXModAntenaPecho.dataset/assetindexer.* \
+            | tee antena-unityfs-test.log
+          grep -q 'ANTENA: 3/3 comparaciones pasaron' antena-unityfs-test.log
+
+      - name: Verificar variantes UnityFS 0x243 y varios bloques
+        shell: bash
+        run: |
+          set -euo pipefail
+          swiftc -DANTENNA_TESTING -o "$RUNNER_TEMP/nexora-antena-243" \
+            ThreeOneOSFive/helpers/NXAntennaOnlyUnityFS.swift \
+            scripts/PruebaAntenaFormato243.swift
+          "$RUNNER_TEMP/nexora-antena-243" scripts/fixtures_antenna/*.bin | tee antena-formato243-test.log
+          grep -q 'ANTENA: 9 pruebas de estructura/integridad correctas' antena-formato243-test.log
+
       - name: Compilar para iOS sin firmar
         shell: bash
         run: |
@@ -116,6 +125,13 @@ jobs:
           cp -R "$APP" "$PWD/package/Payload/"
           (cd "$PWD/package" && zip -qr "$OLDPWD/NEXORA_SYSTEM_2026_3105_sin_firmar.ipa" Payload)
 
+      - name: Verificar contenido de IPA y generar informe
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/verificar_ipa_generada.py "$PWD/NEXORA_SYSTEM_2026_3105_sin_firmar.ipa"
+          test -s NEXORA_RESULTADO_COMPILACION.json
+
       - name: Entregar IPA
         if: success()
         uses: actions/upload-artifact@v4
@@ -134,5 +150,7 @@ jobs:
             ThreeOneOSFive/xcodebuild.log
             ThreeOneOSFive/motor-transacciones-test.log
             ThreeOneOSFive/temporales-nexora-test.log
+            ThreeOneOSFive/antena-formato243-test.log
+            ThreeOneOSFive/NEXORA_RESULTADO_COMPILACION.json
           if-no-files-found: ignore
           retention-days: 7

@@ -1,0 +1,41 @@
+NEXORA SYSTEM 2026 — INTERFAZ ROJA IMPLEMENTADA EN CÓDIGO
+
+BASE DE TRABAJO: Sensi-king-main(1).zip del usuario, continuando el proyecto fuente revisado con sus pruebas.
+ESTADO: fuentes SwiftUI preparadas para GitHub Actions; NO es una IPA nueva y NO está certificada para uso en iPhone.
+
+CONTENIDO DE ESTE PARCHE (rutas relativas a la raíz Sensi-king):
+- .github/workflows/build-nexora-ios.yml
+- ThreeOneOSFive/ThreeOneOSFive/App.swift
+- ThreeOneOSFive/ThreeOneOSFive/ContentView.swift
+- ThreeOneOSFive/ThreeOneOSFive/Assets.xcassets/NexoraDarkCity.imageset/Contents.json
+- ThreeOneOSFive/ThreeOneOSFive/Assets.xcassets/NexoraDarkCity.imageset/NexoraDarkCity.jpg
+- ThreeOneOSFive/scripts/verificar_diseno_rojo_nexora.py
+
+Se preserva la estructura interior ThreeOneOSFive/ThreeOneOSFive que compila GitHub Actions.
+NO reemplazar los archivos ubicados en ThreeOneOSFive/App.swift o ThreeOneOSFive/ContentView.swift: son una copia distinta del repositorio.
+
+MEJORAS CONCRETAS DE ESTA ENTREGA:
+- Inicio de sesión y panel con rojo/neón en los controles SwiftUI reales.
+- Fondo gótico real de imagen, teñido rojo por código, sin botones falsos pegados.
+- NEXORA y X roja más grandes en login y panel.
+- Segmentos, interruptores, bordes y botón INGRESAR armonizados en rojo y negro.
+- Conserva el modelo de keys/Cloudflare, las opciones y la lógica de respaldo existentes.
+- Verificador adicional en GitHub Actions para confirmar la presencia de interfaz funcional.
+
+VERIFICACIONES EN ESTE ENTORNO:
+- 12 verificaciones Python del proyecto: OK (estáticas, salvo comprobación local de temporales).
+- swiftc -frontend -parse App.swift y ContentView.swift: OK.
+- YAML del workflow: OK.
+
+PENDIENTES REALES:
+- Compilar con Xcode/macOS en GitHub Actions; descargar y revisar logs.
+- Probar keys contra servidor real sin exponer credenciales.
+- Verificar respaldo/restauración dentro del sandbox y acceso a recursos externos sólo cuando esté permitido.
+- ANTENA SOLA: error UnityFS con archivo real todavía SIN COMPROBAR como corregido.
+- No prometer 100% sin errores.
+
+PASOS DESPUÉS DE APLICAR EN UNA RAMA DE PRUEBAS:
+1. Comprueba que todos estos archivos estén en las rutas indicadas.
+2. Haz commit y push en rama de prueba y ejecuta GitHub Actions, configurando el trigger para esa rama si corresponde.
+3. Revisa el resultado completo de Xcode y artefactos; NO instales si fallan las pruebas.
+4. Conserva la IPA actual y copias de seguridad verificadas.

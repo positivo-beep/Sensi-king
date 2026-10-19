@@ -1,0 +1,26 @@
+NEXORA SYSTEM 2026 — MOTOR ANTENA SOLA, CORRECCIÓN DE LECTOR UNITYFS
+
+Problema observado: el iPhone mostró UnityFS flags 0x243 y rechazo por "tabla o ubicación de bloques".
+0x243 = 0x200 (padding de bloques) + 0x40 (directorio e índice combinados) + 0x03 (LZ4HC).
+El código anterior suponía exactamente 1 bloque y 1 nodo, ambos de 45964 bytes.
+
+Cambios realizados en el código Swift:
+* Lee entre 1 y 4096 bloques y nodos, índice al principio/final, padding opcional.
+* Reconstruye únicamente los bloques que contienen los cuatro bytes afectados por cada calibración.
+* Preserva el contenido descomprimido de los demás nodos y los metadatos de sus rutas.
+* Exige encontrar un solo nodo de 45964 bytes con las dos calibraciones originales exactas.
+* Recalcula el hash de contenido usando CryptoKit en iOS y verifica el recurso reconstruido.
+* No escribe si el perfil no se reconoce; PatchTransaction mantiene el sistema existente de respaldo/restauración.
+* El resultado de error señala ahora si hay perfiles incompatibles o la tabla no pudo decodificarse.
+
+Pruebas EJECUTADAS en Linux (swiftc):
+* 3/3 pares de recursos AIM + ANTENA equivalentes.
+* 9/9 casos sintéticos (0x243, 0x2c3, 0xc3, 0x43, 1 o 3 bloques y perfil incorrecto rechazado).
+* 4/4 casos sintéticos 0x243 previos con distintas alineaciones.
+* Se añade una prueba al workflow GitHub Actions antes de la compilación.
+
+Limitación crítica:
+El archivo exacto del iPhone con flags 0x243 no está disponible. El formato de cabecera NO prueba
+que su contenido corresponda al perfil de 45964 bytes. Por ello no se certifica que esta corrección
+funcione con ESE archivo hasta disponer de un recurso de prueba idéntico o comprobarla en el iPhone.
+La IPA anterior no incluye este cambio. Esta entrega es código fuente y NO una IPA compilada.
