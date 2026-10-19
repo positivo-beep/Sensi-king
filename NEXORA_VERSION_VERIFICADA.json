@@ -1,14 +1,20 @@
 {
-  "revision": "2026-10-19 (corrección compilación CryptoKit MD5 Swift)",
-  "description": "Versión fuente completa, con control de cambios y empaquetado IPA",
+  "revision": "2.1.6-build15",
+  "description": "Proyecto completo: exclusión mutua de activar/restaurar y bloqueo ante diarios corruptos; compilación macOS y pruebas iPhone pendientes.",
   "sha256": {
-    "ThreeOneOSFive/ThreeOneOSFive/App.swift": "8b68b19ff6a04bfeab228f80f82ffd341c8d334c87d657456ee4d6eaa059cecc",
-    "ThreeOneOSFive/ThreeOneOSFive/ContentView.swift": "ac0e8a55aa68508b5cafdd6aaaccbd01ef2d7930883621d9ef45a3183419035a",
-    "ThreeOneOSFive/ThreeOneOSFive/helpers/PatchTransaction.swift": "69a2115cf30df07b8abe0ce2df86c11bbe19d4464853e983305e9ce3f50d3fcc",
+    "ThreeOneOSFive/ThreeOneOSFive/App.swift": "5396d3e1dd3cd045b4c0ca85db00930c838519540e2060eec0ca028d9aa993c2",
+    "ThreeOneOSFive/ThreeOneOSFive/ContentView.swift": "d363686ea0ea36405622eb7051bc48061ba288eda7c33e5b31f9e273b70b762a",
+    "ThreeOneOSFive/ThreeOneOSFive/helpers/PatchTransaction.swift": "456ba64bc14ff45b31586774d64b488d08fcc1e4f6c111c223a23d163624c762",
     "ThreeOneOSFive/ThreeOneOSFive/helpers/NXAntennaOnlyUnityFS.swift": "a4e06071246a68e270d103958daf5959081e4e1a551900f3838d40b0f470524e",
-    "ThreeOneOSFive/ThreeOneOSFive/helpers/NXOwnedTemporaryWorkspaces.swift": "055d3b63e8d4eafdec4a59bb621e4585fc1a2eb2b0416ada898591aa12fe471d",
+    "ThreeOneOSFive/ThreeOneOSFive/helpers/NXOwnedTemporaryWorkspaces.swift": "296718e48a0ce74152386b50f18a4658ed5ddd2b196d8399bdfb851c8939801c",
     "ThreeOneOSFive/ThreeOneOSFive/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png": "02bf324683ef808545154279e85d39e183d81227176e79fb6e6b84a4adf57c0b",
     "ThreeOneOSFive/ThreeOneOSFive/Assets.xcassets/NexoraDarkCity.imageset/NexoraDarkCity.jpg": "52372eaa37d8e53fabebeb6234362d873432d9824e48146248b21449aa9a1132",
-    "ThreeOneOSFive/ThreeOneOSFive/Assets.xcassets/NexoraMark.imageset/NexoraMark.png": "02bf324683ef808545154279e85d39e183d81227176e79fb6e6b84a4adf57c0b"
+    "ThreeOneOSFive/ThreeOneOSFive/Assets.xcassets/NexoraMark.imageset/NexoraMark.png": "02bf324683ef808545154279e85d39e183d81227176e79fb6e6b84a4adf57c0b",
+    "ThreeOneOSFive/ThreeOneOSFive/helpers/FileReplacementService.swift": "02eade407cffc0f28e8887a226afcb5cc2582d0d115e055745be5aedd68264c7",
+    "ThreeOneOSFive/ThreeOneOSFive/helpers/LimitedCleanerService.swift": "7e06795e8e19351a270983507c76f48a8c7fccad317b1437c41ba6f777291cd5",
+    "ThreeOneOSFive/ThreeOneOSFive/helpers/PatchProjectModels.swift": "eb0e5286e04f0735e788b34ced75044a6004d96ea27989fd8fccfd8ec5a904d5",
+    "ThreeOneOSFive/ThreeOneOSFive/views/PatchProjectEditorView.swift": "6b13344a8595f5ca477ad1948d36ac39be701cdfc56bc45c6bba19a83f3b2390",
+    "ThreeOneOSFive/ThreeOneOSFive/helpers/PatchPackageCodec.swift": "ca2cfe528583da14f7f69c12f4c9dfb3cc53c8178f1d25f1c6c986c9f3f46247",
+    "ThreeOneOSFive/ThreeOneOSFive/Info.plist": "8826a65063402ad1e63cf7a308dec2a8b44e4173fa0bb3ed8cd557f077167aaa"
   }
 }

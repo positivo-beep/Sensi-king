@@ -7,6 +7,17 @@ struct NXTemporaryCleanupOutcome {
 }
 
 enum DevicePatchService {
+    /// Explica una situación recuperable sin sugerir borrar los respaldos.
+    static func activationErrorMessage(_ error: Error) -> String {
+        if let patchError = error as? PatchPackageError,
+           patchError == .unverifiableJournal {
+            return "Hay un registro de respaldo dañado o incompatible. " +
+                "NEXORA bloqueó la activación para proteger el original. " +
+                "Conserva los respaldos y revisa la recuperación antes de volver a intentar."
+        }
+        return error.localizedDescription
+    }
+
     static func apply(
         project: PatchProject,
         allowUpdatedOriginal: Bool = false

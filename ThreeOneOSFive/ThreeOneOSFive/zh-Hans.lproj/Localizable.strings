@@ -669,3 +669,5 @@
 "wallpaper.package_files" = "%lld 个文件";
 
 "patch.error.original_version_changed" = "自上次启用后，原文件已发生变化（大小或 SHA-256）。应用前请确认兼容性：\n%@";
+
+"patch.error.unverifiable_journal" = "无法验证备份事务记录。为保护原始文件，已阻止新的激活。请勿删除备份。";

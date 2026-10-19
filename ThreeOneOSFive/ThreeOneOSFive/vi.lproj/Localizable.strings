@@ -669,3 +669,5 @@
 "wallpaper.package_files" = "%lld tệp";
 
 "patch.error.original_version_changed" = "Tệp gốc đã thay đổi kể từ lần kích hoạt trước (kích thước hoặc SHA-256). Kiểm tra tính tương thích trước khi áp dụng:\n%@";
+
+"patch.error.unverifiable_journal" = "Không thể xác minh nhật ký sao lưu. Đã chặn kích hoạt mới để bảo vệ tệp gốc. Không xóa bản sao lưu.";

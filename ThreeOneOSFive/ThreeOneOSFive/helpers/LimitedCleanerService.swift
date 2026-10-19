@@ -13,7 +13,8 @@ struct LimitedCleanerUsage: Equatable {
     )
 
     var totalBytes: Int64 {
-        cacheBytes + temporaryBytes
+        let (total, overflow) = cacheBytes.addingReportingOverflow(temporaryBytes)
+        return overflow ? Int64.max : max(0, total)
     }
 }
 
@@ -34,6 +35,15 @@ enum LimitedCleanerError: Error, Equatable {
 
 enum LimitedCleanerService {
     typealias ContainerRootValidator = (URL) -> Bool
+
+    // Evita recursiones excesivas si la caché contiene miles de directorios
+    // anidados. Los niveles no inspeccionables se conservan, nunca se fuerzan.
+    private static let maximumDirectoryDepth = 64
+
+    private static func safeAdd(_ left: Int64, _ right: Int64) -> Int64 {
+        let (value, overflow) = left.addingReportingOverflow(max(0, right))
+        return overflow ? Int64.max : value
+    }
 
     /// This explicit allowlist is the product boundary. Do not add global `/var`
     /// paths here: this cleaner is intentionally limited to per-app disposable data.
@@ -147,12 +157,15 @@ enum LimitedCleanerService {
         return currentDescriptor
     }
 
-    private static func scanDirectory(_ directoryDescriptor: Int32) -> ScanSummary {
+    private static func scanDirectory(
+        _ directoryDescriptor: Int32, depth: Int = 0
+    ) -> ScanSummary {
+        guard depth < maximumDirectoryDepth else { return .empty }
         var result = ScanSummary.empty
         forEachEntry(in: directoryDescriptor) { name, information in
             switch information.st_mode & S_IFMT {
             case S_IFREG:
-                result.bytes += max(0, Int64(information.st_size))
+                result.bytes = safeAdd(result.bytes, Int64(information.st_size))
                 result.itemCount += 1
             case S_IFDIR:
                 let childDescriptor = name.withCString {
@@ -163,9 +176,9 @@ enum LimitedCleanerService {
                     )
                 }
                 guard childDescriptor >= 0 else { return }
-                let nested = scanDirectory(childDescriptor)
+                let nested = scanDirectory(childDescriptor, depth: depth + 1)
                 close(childDescriptor)
-                result.bytes += nested.bytes
+                result.bytes = safeAdd(result.bytes, nested.bytes)
                 result.itemCount += nested.itemCount
             default:
                 // Symbolic links, sockets and device nodes are never followed or counted.
@@ -177,8 +190,13 @@ enum LimitedCleanerService {
 
     private static func removeDirectoryContents(
         _ directoryDescriptor: Int32,
-        summary: inout RemovalSummary
+        summary: inout RemovalSummary,
+        depth: Int = 0
     ) {
+        guard depth < maximumDirectoryDepth else {
+            summary.failedItemCount += 1
+            return
+        }
         forEachEntry(in: directoryDescriptor) { name, information in
             switch information.st_mode & S_IFMT {
             case S_IFREG:
@@ -202,7 +220,7 @@ enum LimitedCleanerService {
                     }
                     return
                 }
-                removeDirectoryContents(childDescriptor, summary: &summary)
+                removeDirectoryContents(childDescriptor, summary: &summary, depth: depth + 1)
                 close(childDescriptor)
 
                 let result = name.withCString {

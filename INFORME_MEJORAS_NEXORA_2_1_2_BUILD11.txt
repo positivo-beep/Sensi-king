@@ -1,0 +1,51 @@
+NEXORA SYSTEM 2026 — FASE 1 DE MEJORAS INTEGRALES
+19 octubre 2026 | Fuentes 2.1.2 build 11 | NO ES UNA IPA COMPILADA
+
+ORIGEN
+- Base: NEXORA_SYSTEM_2026_COMPLETO_DIAGNOSTICO_Y_LIMPIEZA_2_1_1_BUILD10.zip (copia del proyecto proporcionado previamente).
+- La compilación de GitHub Actions de esta estructura utiliza el subproyecto ThreeOneOSFive/ThreeOneOSFive.xcodeproj, con código activo en ThreeOneOSFive/ThreeOneOSFive/.
+- Se conserva el proyecto completo y la estructura del repositorio (incluyendo los archivos aportados por su propietario).
+
+CAMBIOS COMPROBADOS EN CÓDIGO
+1. Limpieza de temporales propios:
+   - La eliminación automática verifica la antigüedad del contenido, no solo de la carpeta.
+   - Los archivos modificados recientemente mantienen su espacio temporal aunque la fecha del directorio sea antigua.
+   - Ante enlaces simbólicos, subcarpetas inesperadas o metadatos incompletos, el espacio se conserva de forma conservadora.
+   - Se conserva la protección de áreas vinculadas a restauraciones pendientes; no se amplía el alcance a otras aplicaciones.
+   - Se sincronizó el módulo independiente duplicado incluido en el paquete.
+2. Pruebas:
+   - Caso nuevo contra borrado prematuro de archivo reciente dentro de una carpeta antigua.
+   - Prueba existente de carpeta abandonada adaptada para simular antigüedad real de directorio Y archivo.
+   - Comprobación de la nueva prueba agregada a ambos workflows empaquetados.
+3. Licencias en la IPA:
+   - Se exige una fecha expires_at presente y válida antes de autorizar el acceso.
+   - Respuesta del servidor sin fecha de vencimiento: acceso bloqueado, no licencia indefinida.
+   - El endpoint HTTPS continúa apuntando a hypersex-licencias-propias.nexora-system26.workers.dev.
+4. Release:
+   - Se incrementó a 2.1.2 build 11 en Info.plist, configuraciones Xcode y verificadores.
+   - Se actualizaron las huellas SHA-256 de los archivos modificados en NEXORA_VERSION_VERIFICADA.json.
+
+VALIDACIÓN REALIZADA EN ESTE ENTORNO
+- Sintaxis: 56 archivos Swift del proyecto activo interpretados por swiftc -frontend -parse.
+- Prueba funcional local de NXOwnedTemporaryWorkspaces: correcta (protección por fecha de contenido incluida).
+- 13 scripts de revisión de estructura, integridad, licencias, respaldo y limpieza: completados sin error.
+
+VALIDACIONES QUE FALTAN
+- NO se ha compilado una IPA nueva en Xcode/macOS ni instalado en iPhone.
+- NO se han comprobado todos los botones/opciones de juego, acceso a contenedores ajenos ni funcionamiento de recursos de terceros en un iPhone real.
+- NO se verificó ni cambió el Worker de Cloudflare ni su panel publicado. El backend actual debe proporcionar expires_at válido.
+- La revocación remota solo se conoce cuando la IPA revalida con el Worker; no hay notificaciones push de revocación.
+- No se puede asegurar que iOS permita modificar datos de otras aplicaciones; el aislamiento de iOS se mantiene como límite real.
+
+IMPORTANTE ANTES DE PUBLICAR
+- Un ADMIN_TOKEN se mostró parcialmente en una captura anterior de Cloudflare como Variable no secreta. Rotarlo y guardarlo como Secret en Production antes del lanzamiento.
+- No copiar tokens de administrador a la IPA ni a GitHub.
+- Probar activación, expiración, renovación, revocación y restauración con keys de prueba antes de distribuir.
+- Conservar respaldos y documentos de usuario; no aplicar limpieza destructiva a archivos ajenos.
+
+ETAPAS RECOMENDADAS A CONTINUACIÓN
+- Fase 2: pruebas en iPhone + auditoría de recuperación ante interrupciones, respaldos y limpieza manual.
+- Fase 3: seguridad y validaciones del Worker actual, D1, gestión de claves/dispositivos, controles administrativos y registros.
+- Fase 4: interfaz y accesibilidad, gestión de errores, tiempos de carga, consumo de memoria/batería, pruebas finales y lanzamiento.
+
+Esta entrega es FUENTE PREPARADA PARA PROBAR, no garantía de funcionamiento de todas las opciones.

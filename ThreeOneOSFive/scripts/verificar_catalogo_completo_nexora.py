@@ -49,7 +49,7 @@ assert next(i for i in cat if i['opcion']=='RAINBOW COLOR ROJO')['sha256'] == 'e
 assert 'private func activeConflict(' in ui and 'activeConflict(bundleID:' in ui, 'Falta bloqueo de destinos compartidos'
 assert 'try option.checkOriginalExists()' in ui and 'try DevicePatchService.apply(project: project)' in ui, 'Activación sin revisión de original'
 assert 'restore(receipt: receipt)' in ui and 'preserveExternallyChangedTargets: !allowChangedTargets' in ui, 'Falta conexión de restauración protegida'
-assert 'testExternalUpdatePreservation()' in ui and 'Probar protección de actualización' in ui and 'preserveExternallyChangedTargets: true' in ui and 'allowUpdatedOriginal: true' in ui, 'Falta diagnóstico nuevo de protección de actualizaciones'
+assert 'testExternalUpdatePreservation()' in ui and 'Probar protección de actualización' in ui and 'preserveExternallyChangedTargets: true' in ui and 'Importar paquete actualizado' in ui, 'Falta diagnóstico nuevo de protección de actualizaciones'
 assert len({e[4] for e in entries})==3, 'Número inesperado de destinos distintos'
 assert len([i for i in cat if i['recurso']])==12 and len([i for i in cat if i['estado']=='pendiente'])==8
 print('OK: 21 opciones (12 con recurso + ANTENA SOLA generada + 8 pendientes).')

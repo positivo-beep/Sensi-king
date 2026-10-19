@@ -290,16 +290,14 @@ struct ContentView: View {
                 ),
                 titleVisibility: .visible
             ) {
-                Button("Usar archivo actual y continuar") {
-                    if let notice = updatedOriginalNotice {
-                        updatedOriginalNotice = nil
-                        applyWithAcceptedCurrentOriginal(notice.project)
-                    }
+                Button("Importar paquete actualizado") {
+                    updatedOriginalNotice = nil
+                    showImporter = true
                 }
                 Button("Cancelar", role: .cancel) { updatedOriginalNotice = nil }
             } message: {
                 Text((updatedOriginalNotice?.details ?? "") +
-                     "\nEl tamaño o el SHA-256 cambió. NEXORA no puede confirmar que sea una versión oficial. Si continúas, hará el respaldo del archivo ACTUAL para restaurarlo cuando desactives la opción. Confirma antes la compatibilidad de tu archivo modificado.")
+                     "\nEl original cambió. NEXORA no volverá a usar un reemplazo antiguo. Importa un paquete .3105 actualizado para el archivo nuevo y vincula su SHA-256 en el editor. No se ha modificado ningún archivo.")
             }
             .patchStorePresentation(store)
             .preferredColorScheme(.dark)
@@ -506,8 +504,12 @@ struct ContentView: View {
                     }
                 } catch {
                     let changed = (error as? PatchPackageError).flatMap { patchError -> [String]? in
-                        if case .originalVersionChanged(let paths) = patchError { return paths }
-                        return nil
+                        switch patchError {
+                        case .originalVersionChanged(let paths),
+                             .updatedReplacementRequired(let paths),
+                             .incompatibleOriginalVersion(let paths): return paths
+                        default: return nil
+                        }
                     }
                     let retryProject = changed == nil ? nil : (try? option.makeProject())
                     await MainActor.run {
@@ -518,7 +520,7 @@ struct ContentView: View {
                                 details: changed.prefix(3).joined(separator: "\n")
                             )
                         } else {
-                            feedback = NXFeedback(message: "No se aplicó \(option.title): \(error.localizedDescription)")
+                            feedback = NXFeedback(message: "No se aplicó \(option.title): \(DevicePatchService.activationErrorMessage(error))")
                         }
                     }
                 }
@@ -740,8 +742,12 @@ struct ContentView: View {
                     }
                 } catch {
                     let changed = (error as? PatchPackageError).flatMap { patchError -> [String]? in
-                        if case .originalVersionChanged(let paths) = patchError { return paths }
-                        return nil
+                        switch patchError {
+                        case .originalVersionChanged(let paths),
+                             .updatedReplacementRequired(let paths),
+                             .incompatibleOriginalVersion(let paths): return paths
+                        default: return nil
+                        }
                     }
                     let selectedProject = projectForRetry
                     await MainActor.run {
@@ -752,38 +758,13 @@ struct ContentView: View {
                                 details: changed.prefix(3).joined(separator: "\n")
                             )
                         } else {
-                            feedback = NXFeedback(message: "No se pudo aplicar \(baseProject.name): \(error.localizedDescription)")
+                            feedback = NXFeedback(message: "No se pudo aplicar \(baseProject.name): \(DevicePatchService.activationErrorMessage(error))")
                         }
                     }
                 }
             }
         } else if let receipt = DevicePatchService.latestReceipt(projectID: item.id) {
             restore(receipt: receipt)
-        }
-    }
-
-    /// El usuario confirmó que revisó el archivo actual. Antes de escribir,
-    /// el motor guardará ese archivo como original de ESTA operación.
-    private func applyWithAcceptedCurrentOriginal(_ project: PatchProject) {
-        guard busyProject == nil else { return }
-        busyProject = project.id
-        Task.detached(priority: .userInitiated) {
-            do {
-                _ = try DevicePatchService.apply(
-                    project: project,
-                    allowUpdatedOriginal: true
-                )
-                await MainActor.run {
-                    busyProject = nil
-                    store.reload()
-                    activationFeedback.play()
-                }
-            } catch {
-                await MainActor.run {
-                    busyProject = nil
-                    feedback = NXFeedback(message: "No se pudo aplicar \(project.name): \(error.localizedDescription)")
-                }
-            }
         }
     }
 

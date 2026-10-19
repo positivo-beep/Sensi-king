@@ -49,6 +49,8 @@ enum FileReplacementError: Error, Equatable, LocalizedError {
     case sameFile
     case symbolicLinkUnsupported
     case sourceTooLarge
+    case sourceChangedDuringCopy
+    case targetChangedDuringCopy
     case replacementFailed
 
     var errorDescription: String? {
@@ -60,6 +62,8 @@ enum FileReplacementError: Error, Equatable, LocalizedError {
         case .sameFile: return "A file cannot replace itself."
         case .symbolicLinkUnsupported: return "Symbolic links are not supported."
         case .sourceTooLarge: return "The selected file is too large."
+        case .sourceChangedDuringCopy: return "The selected file changed during copying. Try again."
+        case .targetChangedDuringCopy: return "The original changed during copying. Nothing was replaced."
         case .replacementFailed: return "The file could not be replaced safely."
         }
     }
@@ -97,6 +101,11 @@ enum FileReplacementService {
         }
         guard sourceValues.isDirectory != true else {
             throw FileReplacementError.sourceIsDirectory
+        }
+        // Solo archivos ordinarios. Nunca copiar dispositivos, sockets ni entradas
+        // cuya naturaleza no pueda verificarse.
+        guard targetValues.isRegularFile == true, sourceValues.isRegularFile == true else {
+            throw FileReplacementError.replacementFailed
         }
         guard targetURL.standardizedFileURL.resolvingSymlinksInPath()
                 != sourceURL.standardizedFileURL.resolvingSymlinksInPath() else {
@@ -138,14 +147,41 @@ enum FileReplacementService {
             throw FileReplacementError.replacementFailed
         }
 
+        // Antes de publicar, comprobar que la copia quedó completa y que
+        // ni el origen ni el destino cambiaron durante la operación.
+        let finalSource = try values(
+            for: sourceURL,
+            missingError: .sourceMissing,
+            fileManager: fileManager
+        )
+        guard finalSource.isRegularFile == true,
+              finalSource.isSymbolicLink != true,
+              finalSource.fileSize == sourceValues.fileSize,
+              finalSource.contentModificationDate == sourceValues.contentModificationDate,
+              Int64(finalSource.fileSize ?? -1) == copied else {
+            throw FileReplacementError.sourceChangedDuringCopy
+        }
+        let staged = try values(
+            for: stagingURL,
+            missingError: .replacementFailed,
+            fileManager: fileManager
+        )
+        guard staged.isRegularFile == true, staged.isSymbolicLink != true,
+              Int64(staged.fileSize ?? -1) == copied else {
+            throw FileReplacementError.replacementFailed
+        }
         let currentValues = try values(
             for: targetURL,
             missingError: .targetMissing,
             fileManager: fileManager
         )
-        guard currentValues.isSymbolicLink != true,
-              currentValues.isDirectory != true else {
+        guard currentValues.isRegularFile == true,
+              currentValues.isSymbolicLink != true else {
             throw FileReplacementError.symbolicLinkUnsupported
+        }
+        guard currentValues.fileSize == targetValues.fileSize,
+              currentValues.contentModificationDate == targetValues.contentModificationDate else {
+            throw FileReplacementError.targetChangedDuringCopy
         }
         guard rename(stagingURL.path, targetURL.path) == 0 else {
             throw FileReplacementError.replacementFailed
@@ -160,7 +196,10 @@ enum FileReplacementService {
     ) throws -> URLResourceValues {
         guard fileManager.fileExists(atPath: url.path) else { throw missingError }
         do {
-            return try url.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey, .fileSizeKey])
+            return try url.resourceValues(forKeys: [
+                .isDirectoryKey, .isRegularFileKey, .isSymbolicLinkKey,
+                .fileSizeKey, .contentModificationDateKey
+            ])
         } catch {
             throw missingError
         }

@@ -59,11 +59,14 @@ enum NXOwnedTemporaryWorkspaces {
     /// Crea SOLO un temporal propio, identificado por la opción que lo generó.
     @discardableResult
     static func create(data: Data, optionID: UUID, filename: String) throws -> URL {
-        guard !filename.isEmpty, filename != ".", filename != "..",
-              !filename.contains("/"), !filename.contains("\\"),
-              filename.range(of: "^[A-Za-z0-9._-]+$", options: .regularExpression) != nil else {
-            throw CleanupError.invalidFilename
-        }
+        // Nombres estrictamente ASCII y limitados en tamaño: no permitir rutas,
+        // separadores, saltos de línea, controles ni nombres excesivos.
+        let isSafeName = !filename.isEmpty && filename.utf8.count <= 128 &&
+            filename != "." && filename != ".." && filename.utf8.allSatisfy { byte in
+                (65...90).contains(byte) || (97...122).contains(byte) ||
+                (48...57).contains(byte) || byte == 45 || byte == 46 || byte == 95
+            }
+        guard isSafeName else { throw CleanupError.invalidFilename }
         let workspace = try path(for: optionID, create: true)
         let target = workspace.appendingPathComponent(filename, isDirectory: false)
         if manager.fileExists(atPath: target.path) {
@@ -79,7 +82,19 @@ enum NXOwnedTemporaryWorkspaces {
     static func clean(optionID: UUID) throws -> Int {
         let workspace = try path(for: optionID, create: false)
         guard manager.fileExists(atPath: workspace.path) else { return 0 }
-        let entries = try manager.contentsOfDirectory(at: workspace, includingPropertiesForKeys: nil)
+        // Nunca borrar recursivamente un directorio o enlace no reconocido. Si
+        // alguna otra función puso algo inesperado aquí, conservar todo y avisar.
+        let resourceKeys: Set<URLResourceKey> = [.isRegularFileKey, .isSymbolicLinkKey]
+        let entries = try manager.contentsOfDirectory(
+            at: workspace, includingPropertiesForKeys: Array(resourceKeys), options: []
+        )
+        for entry in entries {
+            let values = try entry.resourceValues(forKeys: resourceKeys)
+            guard values.isRegularFile == true, values.isSymbolicLink != true,
+                  entry.standardizedFileURL.deletingLastPathComponent() == workspace else {
+                throw CleanupError.unsafeWorkspace
+            }
+        }
         try manager.removeItem(at: workspace)
         guard !manager.fileExists(atPath: workspace.path) else {
             throw CleanupError.verificationFailed
@@ -92,12 +107,43 @@ enum NXOwnedTemporaryWorkspaces {
         return !manager.fileExists(atPath: workspace.path)
     }
 
+    /// La fecha del directorio no indica si un archivo fue modificado hace poco.
+    /// Para no borrar trabajos recientes, solo considera abandonado un espacio
+    /// cuyos archivos directos también sean antiguos. Ante un enlace simbólico,
+    /// subcarpeta inesperada o metadatos incompletos, conserva el espacio.
+    private static func isOldEnoughToClean(_ workspace: URL, before cutoff: Date) throws -> Bool {
+        let keys: Set<URLResourceKey> = [
+            .isDirectoryKey, .isRegularFileKey, .isSymbolicLinkKey, .contentModificationDateKey
+        ]
+        let attributes = try workspace.resourceValues(forKeys: keys)
+        guard attributes.isDirectory == true,
+              attributes.isSymbolicLink != true,
+              let modified = attributes.contentModificationDate,
+              modified <= cutoff else {
+            return false
+        }
+        let entries = try manager.contentsOfDirectory(
+            at: workspace, includingPropertiesForKeys: Array(keys), options: []
+        )
+        for entry in entries {
+            let values = try entry.resourceValues(forKeys: keys)
+            guard values.isRegularFile == true,
+                  values.isSymbolicLink != true,
+                  let entryModified = values.contentModificationDate,
+                  entryModified <= cutoff else {
+                return false
+            }
+        }
+        return true
+    }
+
     /// Elimina SOLO espacios temporales abandonados dentro del caché propio de NEXORA.
     /// Se usa al arrancar la app, no durante una operación activa. No inspecciona
     /// aplicaciones externas ni respaldos/transacciones. Conserva temporales recientes.
     @discardableResult
     static func cleanAbandoned(olderThan minimumAge: TimeInterval = 48 * 60 * 60,
-                               now: Date = Date()) throws -> Int {
+                               now: Date = Date(),
+                               keeping protectedIDs: Set<UUID> = []) throws -> Int {
         guard minimumAge > 0 else { return 0 }
         let base = try checkedRoot(create: false)
         guard manager.fileExists(atPath: base.path) else { return 0 }
@@ -114,20 +160,101 @@ enum NXOwnedTemporaryWorkspaces {
                   candidate.standardizedFileURL.deletingLastPathComponent() == base else {
                 continue
             }
-            let values = try candidate.resourceValues(forKeys: [
-                .isDirectoryKey, .isSymbolicLinkKey, .contentModificationDateKey
-            ])
-            guard values.isDirectory == true,
-                  values.isSymbolicLink != true,
-                  let modified = values.contentModificationDate,
-                  now.timeIntervalSince(modified) >= minimumAge else {
+            // Igual que en limpieza manual: un espacio con restauración pendiente
+            // NUNCA se borra automáticamente, aunque sea antiguo.
+            guard !protectedIDs.contains(identifier) else { continue }
+            // Verificar también las fechas de los archivos. Un archivo modificado
+            // hoy no debe desaparecer solo porque el directorio es antiguo.
+            // Un espacio inseguro no debe impedir que se revisen los demás.
+            // Se conserva el problemático, sin suprimir detalles de la limpieza manual.
+            do {
+                guard try isOldEnoughToClean(candidate, before: now.addingTimeInterval(-minimumAge)) else {
+                    continue
+                }
+                // clean vuelve a validar las entradas antes de cualquier borrado.
+                _ = try clean(optionID: identifier)
+                cleaned += 1
+            } catch {
                 continue
             }
-            // La propia clean vuelve a verificar la ruta y confirma la eliminación.
-            _ = try clean(optionID: identifier)
-            cleaned += 1
         }
         return cleaned
+    }
+
+    /// Resultado de una limpieza solicitada explícitamente por el usuario.
+    /// Los pendientes NO se anuncian como éxito. Esta operación no toca
+    /// respaldos, claves, registros ni archivos externos al contenedor de NEXORA.
+    struct CleanupReport {
+        let cleanedWorkspaces: Int
+        let removedEntries: Int
+        let protectedWorkspaces: Int
+        let failedWorkspaces: [String]
+        let unrecognizedEntries: Int
+
+        var isComplete: Bool {
+            failedWorkspaces.isEmpty && unrecognizedEntries == 0 && protectedWorkspaces == 0
+        }
+    }
+
+    /// Enumeración segura de identificadores para comprobar las restauraciones
+    /// pendientes incluso cuando un paquete se quitó del catálogo de la interfaz.
+    static func knownWorkspaceIDs() throws -> Set<UUID> {
+        let base = try checkedRoot(create: false)
+        guard manager.fileExists(atPath: base.path) else { return [] }
+        let names = try manager.contentsOfDirectory(atPath: base.path)
+        return Set(names.compactMap { name in
+            guard let identifier = UUID(uuidString: name),
+                  name.uppercased() == identifier.uuidString else { return nil }
+            return identifier
+        })
+    }
+
+    /// Limpia los espacios de trabajo temporales propios conocidos por UUID.
+    /// Permite preservar explícitamente opciones activas. No borra carpetas
+    /// desconocidas ni intenta seguir enlaces simbólicos.
+    static func cleanAll(keeping protectedIDs: Set<UUID> = []) throws -> CleanupReport {
+        let base = try checkedRoot(create: false)
+        guard manager.fileExists(atPath: base.path) else {
+            return CleanupReport(cleanedWorkspaces: 0, removedEntries: 0,
+                                 protectedWorkspaces: 0, failedWorkspaces: [],
+                                 unrecognizedEntries: 0)
+        }
+        let candidates = try manager.contentsOfDirectory(
+            at: base, includingPropertiesForKeys: [.isSymbolicLinkKey, .isDirectoryKey], options: []
+        )
+        var cleaned = 0
+        var removed = 0
+        var protected = 0
+        var failed: [String] = []
+        var unknown = 0
+
+        for candidate in candidates {
+            let name = candidate.lastPathComponent
+            guard let identifier = UUID(uuidString: name),
+                  name.uppercased() == identifier.uuidString,
+                  candidate.standardizedFileURL.deletingLastPathComponent() == base else {
+                unknown += 1
+                continue
+            }
+            if protectedIDs.contains(identifier) {
+                protected += 1
+                continue
+            }
+            do {
+                // clean vuelve a comprobar que la ruta no sea un enlace simbólico.
+                let count = try clean(optionID: identifier)
+                guard try isClean(optionID: identifier) else {
+                    throw CleanupError.verificationFailed
+                }
+                removed += count
+                cleaned += 1
+            } catch {
+                failed.append(identifier.uuidString)
+            }
+        }
+        return CleanupReport(cleanedWorkspaces: cleaned, removedEntries: removed,
+                             protectedWorkspaces: protected, failedWorkspaces: failed,
+                             unrecognizedEntries: unknown)
     }
 
     /// Prueba local: elimina los temporales de una opción y confirma que otra

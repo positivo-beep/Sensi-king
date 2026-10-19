@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 
 // Pruebas funcionales reales de PatchTransaction sobre un directorio temporal.
 // Nunca acceden a carpetas de juegos ni de otras aplicaciones.
@@ -6,6 +7,19 @@ import Foundation
 struct PruebaMotorTransacciones {
     static let bundle = "com.nexora.test.local"
     static let manager = FileManager.default
+
+    final class ConcurrentReceiptBox: @unchecked Sendable {
+        private let lock = NSLock()
+        private var values: [(UUID, PatchTransactionReceipt)] = []
+        func append(_ item: (UUID, PatchTransactionReceipt)) {
+            lock.lock(); defer { lock.unlock() }
+            values.append(item)
+        }
+        func snapshot() -> [(UUID, PatchTransactionReceipt)] {
+            lock.lock(); defer { lock.unlock() }
+            return values
+        }
+    }
 
     struct Fixture {
         let root: URL
@@ -94,10 +108,30 @@ struct PruebaMotorTransacciones {
                 do {
                     _ = try PatchTransaction.apply(project: f.project, backupRoot: f.backups, containerResolver: f.resolve)
                     throw NSError(domain: "NEXORA.Test", code: 2, userInfo: [NSLocalizedDescriptionKey: "No avisó de la versión actualizada"])
-                } catch PatchPackageError.originalVersionChanged { /* correcto */ }
+                } catch PatchPackageError.updatedReplacementRequired { /* correcto */ }
                 try require(f.read() == "NUEVO-ORIGINAL", "Alteró el archivo antes de confirmar")
-                let r2 = try PatchTransaction.apply(project: f.project, backupRoot: f.backups,
-                                                    allowUpdatedOriginal: true, containerResolver: f.resolve)
+                do {
+                    _ = try PatchTransaction.apply(project: f.project, backupRoot: f.backups,
+                                                   allowUpdatedOriginal: true, containerResolver: f.resolve)
+                    throw NSError(domain: "NEXORA.Test", code: 2,
+                        userInfo: [NSLocalizedDescriptionKey: "Aceptó paquete antiguo"])
+                } catch PatchPackageError.updatedReplacementRequired { /* correcto */ }
+                // El propietario aporta un nuevo archivo modificado para el original
+                // actualizado, junto con su SHA-256. La restauracion debe recuperar v2.
+                var updatedPackage = f.project
+                let newOriginal = Data("NUEVO-ORIGINAL".utf8)
+                let currentRule = updatedPackage.rules[0]
+                updatedPackage.rules[0] = PatchRule(
+                    id: currentRule.id, bundleID: currentRule.bundleID,
+                    relativePath: currentRule.relativePath,
+                    replacementFilename: "modificado-v2.bin",
+                    replacementData: Data("MODIFICADO-v2".utf8),
+                    expectedOriginalSHA256: SHA256.hash(data: newOriginal)
+                        .map { String(format: "%02x", $0) }.joined()
+                )
+                let r2 = try PatchTransaction.apply(project: updatedPackage,
+                    backupRoot: f.backups, containerResolver: f.resolve)
+                try require(f.read() == "MODIFICADO-v2", "No uso archivo actualizado")
                 _ = try PatchTransaction.restore(receipt: r2, containerResolver: f.resolve)
                 try require(f.read() == "NUEVO-ORIGINAL", "Restauró versión antigua")
             },
@@ -184,6 +218,101 @@ struct PruebaMotorTransacciones {
                     throw NSError(domain: "NEXORA.Test", code: 2, userInfo: [NSLocalizedDescriptionKey: "Restauró respaldo corrupto"])
                 } catch PatchPackageError.restoreFailed { /* correcto */ }
                 try require(f.read() == "MODIFICADO", "Modificó archivo antes de comprobar respaldo")
+            },
+            execute("Bloqueo de hash original incompatible en primera aplicacion") {
+                let f = try Fixture(original: "ORIGINAL-A", replacement: "MOD-A")
+                defer { f.dispose() }
+                var p = f.project
+                let rule = p.rules[0]
+                p.rules[0] = PatchRule(
+                    id: rule.id, bundleID: rule.bundleID, relativePath: rule.relativePath,
+                    replacementFilename: rule.replacementFilename,
+                    replacementData: rule.replacementData,
+                    expectedOriginalSHA256: String(repeating: "0", count: 64))
+                do {
+                    _ = try PatchTransaction.apply(project: p, backupRoot: f.backups,
+                                                    containerResolver: f.resolve)
+                    throw NSError(domain: "NEXORA.Test", code: 2,
+                        userInfo: [NSLocalizedDescriptionKey: "Aplicó paquete con SHA errado"])
+                } catch PatchPackageError.incompatibleOriginalVersion { /* correcto */ }
+                try require(f.read() == "ORIGINAL-A", "Alteró original incompatible")
+                try require(PatchTransaction.latestReceipt(projectID: p.id,
+                       backupRoot: f.backups) == nil, "Dejó una activación fantasma")
+            },
+            execute("Bloquear payload antiguo aunque se actualice su SHA vinculado") {
+                let f = try Fixture(original: "ORIGINAL-A", replacement: "MOD-A")
+                defer { f.dispose() }
+                let r = try PatchTransaction.apply(project: f.project, backupRoot: f.backups,
+                                                   containerResolver: f.resolve)
+                try f.write("ORIGINAL-B")
+                _ = try PatchTransaction.restore(receipt: r,
+                    preserveExternallyChangedTargets: true, containerResolver: f.resolve)
+                var p = f.project
+                let old = p.rules[0]
+                p.rules[0] = PatchRule(
+                    id: old.id, bundleID: old.bundleID, relativePath: old.relativePath,
+                    replacementFilename: old.replacementFilename,
+                    replacementData: old.replacementData,
+                    expectedOriginalSHA256: SHA256.hash(data: Data("ORIGINAL-B".utf8))
+                        .map { String(format: "%02x", $0) }.joined())
+                do {
+                    _ = try PatchTransaction.apply(project: p, backupRoot: f.backups,
+                                                   allowUpdatedOriginal: true,
+                                                   containerResolver: f.resolve)
+                    throw NSError(domain: "NEXORA.Test", code: 2,
+                        userInfo: [NSLocalizedDescriptionKey: "Aplicó reemplazo anterior"])
+                } catch PatchPackageError.updatedReplacementRequired { /* correcto */ }
+                try require(f.read() == "ORIGINAL-B", "Dañó original al usar paquete viejo")
+            },
+            execute("Diario corrupto bloquea nueva activación sin pisar el original") {
+                let f = try Fixture(original: "MI-ORIGINAL"); defer { f.dispose() }
+                let folder = f.backups.appendingPathComponent(UUID().uuidString)
+                    .appendingPathComponent(UUID().uuidString)
+                try manager.createDirectory(at: folder, withIntermediateDirectories: true)
+                let record = folder.appendingPathComponent("journal.plist")
+                try Data("DIARIO-INVALIDO".utf8).write(to: record)
+                do {
+                    _ = try PatchTransaction.apply(project: f.project, backupRoot: f.backups,
+                        containerResolver: f.resolve)
+                    throw NSError(domain: "NEXORA.Test", code: 2,
+                        userInfo: [NSLocalizedDescriptionKey: "Permitió activar con historial corrupto"])
+                } catch PatchPackageError.unverifiableJournal { /* protección correcta */ }
+                try require(f.read() == "MI-ORIGINAL", "Se escribió sobre original durante error de diario")
+                try manager.removeItem(at: folder)
+                let receipt = try PatchTransaction.apply(project: f.project, backupRoot: f.backups,
+                    containerResolver: f.resolve)
+                try require(f.read() == "MODIFICADO", "No reanudó después de corregir historial")
+                _ = try PatchTransaction.restore(receipt: receipt, containerResolver: f.resolve)
+                try require(f.read() == "MI-ORIGINAL", "No restituyó original después de corregir historial")
+            },
+            execute("Activación concurrente de opciones no pisa el primer respaldo") {
+                let f = try Fixture(original: "INICIAL"); defer { f.dispose() }
+                let p2 = PatchProject(name: "alternativa", rules: [PatchRule(
+                    bundleID: bundle, relativePath: "data/file.bin",
+                    replacementFilename: "alternativa.bin", replacementData: Data("OTRO".utf8))])
+                let group = DispatchGroup()
+                let gate = DispatchSemaphore(value: 0)
+                let receipts = ConcurrentReceiptBox()
+                let projects = [f.project, p2]
+                for project in projects {
+                    group.enter()
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        gate.wait()
+                        if let receipt = try? PatchTransaction.apply(project: project,
+                            backupRoot: f.backups, containerResolver: f.resolve) {
+                            receipts.append((project.id, receipt))
+                        }
+                        group.leave()
+                    }
+                }
+                gate.signal(); gate.signal()
+                group.wait()
+                let successful = receipts.snapshot()
+                try require(successful.count == 1, "Dos activaciones competidoras tuvieron éxito")
+                let appliedValue = successful[0].0 == f.project.id ? "MODIFICADO" : "OTRO"
+                try require(f.read() == appliedValue, "Destino no coincide con la única activación")
+                _ = try PatchTransaction.restore(receipt: successful[0].1, containerResolver: f.resolve)
+                try require(f.read() == "INICIAL", "Restauración posterior a carrera no devolvió original")
             },
             execute("Eliminar archivo creado sin original previo") {
                 let f = try Fixture(original: nil); defer { f.dispose() }

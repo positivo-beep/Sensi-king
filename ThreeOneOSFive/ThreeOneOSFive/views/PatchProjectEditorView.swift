@@ -1,4 +1,5 @@
 import SwiftUI
+import CryptoKit
 
 struct PatchProjectEditorView: View {
     @Environment(\.appLanguage) private var language
@@ -287,6 +288,9 @@ struct PatchRuleEditorView: View {
     @State private var relativePath: String
     @State private var replacementFilename: String
     @State private var replacementData: Data
+    @State private var expectedOriginalSHA256: String?
+    @State private var originalSourceName = ""
+    @State private var showOriginalImporter = false
     @State private var showFileImporter = false
     @State private var isImporting = false
     @State private var validationMessageKey: String?
@@ -298,6 +302,7 @@ struct PatchRuleEditorView: View {
         _relativePath = State(initialValue: rule?.relativePath ?? "")
         _replacementFilename = State(initialValue: rule?.replacementFilename ?? "")
         _replacementData = State(initialValue: rule?.replacementData ?? Data())
+        _expectedOriginalSHA256 = State(initialValue: rule?.expectedOriginalSHA256)
     }
 
     var body: some View {
@@ -364,6 +369,33 @@ struct PatchRuleEditorView: View {
                     }
                 }
 
+                Section {
+                    Button {
+                        showOriginalImporter = true
+                    } label: {
+                        Label("Elegir archivo original de esta version", systemImage: "checkmark.shield")
+                    }
+                    .disabled(isImporting)
+                    if let expectedOriginalSHA256 {
+                        Text("Original vinculado: SHA-256 " + String(expectedOriginalSHA256.prefix(12)) + "…")
+                            .font(.caption.monospaced())
+                            .foregroundStyle(.secondary)
+                        if !originalSourceName.isEmpty {
+                            Text(originalSourceName).font(.caption).foregroundStyle(.secondary)
+                        }
+                        Button("Quitar vinculacion del original", role: .destructive) {
+                            self.expectedOriginalSHA256 = nil
+                            originalSourceName = ""
+                        }
+                    } else {
+                        Text("Si cambia el original, importa aqui la nueva version y el reemplazo actualizado. NEXORA comprobara ambos antes de aplicar.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } header: {
+                    Text("Compatibilidad del archivo actualizado")
+                }
+
                 if let validationMessageKey {
                     Section {
                         Label(language.text(validationMessageKey), systemImage: "exclamationmark.triangle.fill")
@@ -381,6 +413,17 @@ struct PatchRuleEditorView: View {
                     Button(language.text("common.done"), action: save)
                         .disabled(isImporting)
                 }
+            }
+            .sheet(isPresented: $showOriginalImporter) {
+                FileDocumentPicker(
+                    allowsMultipleSelection: false,
+                    onSelection: { result in
+                        showOriginalImporter = false
+                        importOriginalFile(result)
+                    },
+                    onCancel: { showOriginalImporter = false }
+                )
+                .ignoresSafeArea()
             }
             .sheet(isPresented: $showFileImporter) {
                 FileDocumentPicker(
@@ -434,6 +477,42 @@ struct PatchRuleEditorView: View {
         }
     }
 
+    private func importOriginalFile(_ result: Result<[URL], Error>) {
+        guard case .success(let urls) = result, let url = urls.first else { return }
+        isImporting = true
+        validationMessageKey = nil
+        DispatchQueue.global(qos: .userInitiated).async {
+            let hasAccess = url.startAccessingSecurityScopedResource()
+            defer { if hasAccess { url.stopAccessingSecurityScopedResource() } }
+            do {
+                let properties = try url.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey])
+                guard properties.isRegularFile == true, properties.isSymbolicLink != true else {
+                    throw PatchPackageError.invalidProject
+                }
+                // Procesamiento por bloques: evita leer un original grande entero
+                // dentro de la memoria del iPhone.
+                let reader = try FileHandle(forReadingFrom: url)
+                defer { try? reader.close() }
+                var hasher = SHA256()
+                while true {
+                    guard let block = try reader.read(upToCount: 1_048_576), !block.isEmpty else { break }
+                    hasher.update(data: block)
+                }
+                let hash = hasher.finalize().map { String(format: "%02x", $0) }.joined()
+                DispatchQueue.main.async {
+                    expectedOriginalSHA256 = hash
+                    originalSourceName = url.lastPathComponent
+                    isImporting = false
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    validationMessageKey = "patch.error.invalid_project"
+                    isImporting = false
+                }
+            }
+        }
+    }
+
     private func save() {
         do {
             let canonicalBundle = try PatchPathValidator.canonicalBundleIdentifier(bundleID)
@@ -444,7 +523,8 @@ struct PatchRuleEditorView: View {
                 bundleID: canonicalBundle,
                 relativePath: canonicalPath,
                 replacementFilename: replacementFilename,
-                replacementData: replacementData
+                replacementData: replacementData,
+                expectedOriginalSHA256: expectedOriginalSHA256
             ))
             dismiss()
         } catch let error as PatchPackageError {

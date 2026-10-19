@@ -669,3 +669,5 @@
 "wallpaper.package_files" = "%lld files";
 
 "patch.error.original_version_changed" = "The original file changed since the last activation (size or SHA-256). Review compatibility before applying; NEXORA cannot confirm that the new file is official:\n%@";
+
+"patch.error.unverifiable_journal" = "A backup transaction record cannot be verified. New activations are blocked to protect your original files. Do not delete backups; review the recovery history.";

@@ -19,7 +19,11 @@ struct ThreeOneOSFiveApp: App {
         // abandonados durante al menos 48 horas. Respaldos y diarios intactos.
         DispatchQueue.global(qos: .utility).async {
             do {
-                _ = try NXOwnedTemporaryWorkspaces.cleanAbandoned()
+                let IDs = try NXOwnedTemporaryWorkspaces.knownWorkspaceIDs()
+                let pending = Set(IDs.filter {
+                    DevicePatchService.latestReceipt(projectID: $0) != nil
+                })
+                _ = try NXOwnedTemporaryWorkspaces.cleanAbandoned(keeping: pending)
             } catch {
                 log("nexora: mantenimiento de caché propia pendiente: \(error.localizedDescription)")
             }
@@ -409,8 +413,15 @@ final class NexoraLicenseModel: ObservableObject {
             }
             // Rechazar fechas de vencimiento inválidas en vez de aceptarlas
             // silenciosamente como si fueran licencias sin vencimiento.
-            expiration = result.expires_at
-            if let rawExpiry = result.expires_at, !rawExpiry.isEmpty, expirationDate == nil {
+            // No autorizar licencias sin una caducidad comprobable: evita que
+            // un Worker incompleto conceda acceso indefinido por accidente.
+            guard let rawExpiry = result.expires_at,
+                  !rawExpiry.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                invalidateAndRequireNewKey("El servidor no devolvió una fecha de vencimiento válida.")
+                return
+            }
+            expiration = rawExpiry
+            guard let verifiedExpiry = expirationDate else {
                 invalidateAndRequireNewKey("El servidor devolvió un vencimiento no válido.")
                 return
             }
@@ -422,7 +433,7 @@ final class NexoraLicenseModel: ObservableObject {
             } else {
                 planDurationDays = nil
             }
-            if let expiry = expirationDate, Date() >= expiry {
+            if Date() >= verifiedExpiry {
                 invalidateAndRequireNewKey("Tu key venció. Introduce una nueva key.")
                 return
             }

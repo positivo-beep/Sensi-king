@@ -1,0 +1,20 @@
+NEXORA SYSTEM 2026 - Versión 2.1.1 build 10
+
+HECHO EN CODIGO (SIN AFIRMAR QUE LO SIGUIENTE RESUELVA ACCESO A OTRAS APPS)
+- Diagnóstico de ANTENA SOLA: aclara cuando iOS rechaza el contenedor de otra aplicación.
+- Conservación de temporales asociados a restauraciones pendientes incluso en la limpieza automática por antigüedad.
+- Prueba funcional adicional para impedir borrados de temporales protegidos al inicio.
+- Limpieza manual conservadora; no borra respaldos ni licencias ni datos ajenos.
+- Identificación de la build e informes actualizados para distinguirla del build 9.
+
+LIMITE CRITICO REAL
+- ANTENA SOLA sigue sin poder actuar sobre el contenedor de Free Fire si iOS no concede acceso.
+- No se proporciona bypass del aislamiento iOS, ni instrucciones para ocultar modificaciones o eliminar rastros de terceros.
+- En un iPhone estándar, aplicaciones distintas no pueden editar arbitrariamente los contenedores privados de otra app.
+- Opciones válidas: contenido gestionado dentro del contenedor propio de NEXORA, importación de archivos ofrecidos voluntariamente por el usuario desde Files, o interfaces autorizadas por la app propietaria.
+- El motor de juego y varias opciones de NEXORA NO han sido probados en iPhone con datos reales.
+
+VERIFICACIONES
+- Las pruebas locales de temporales, la revisión de sintaxis y verificadores Python se ejecutan antes de entregar el ZIP.
+- Xcode/firmado en macOS y comprobación en dispositivo siguen pendientes.
+- No se puede prometer cero errores ni borrado de todos los registros del sistema.

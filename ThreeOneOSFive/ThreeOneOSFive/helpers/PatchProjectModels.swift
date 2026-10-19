@@ -6,19 +6,24 @@ struct PatchRule: Codable, Identifiable, Hashable {
     var relativePath: String
     var replacementFilename: String
     var replacementData: Data
+    /// SHA-256 esperado del archivo ORIGINAL para esta revision del reemplazo.
+    /// Si esta presente, NEXORA debe rechazar originales que no coincidan.
+    var expectedOriginalSHA256: String?
 
     init(
         id: UUID = UUID(),
         bundleID: String,
         relativePath: String,
         replacementFilename: String,
-        replacementData: Data
+        replacementData: Data,
+        expectedOriginalSHA256: String? = nil
     ) {
         self.id = id
         self.bundleID = bundleID
         self.relativePath = relativePath
         self.replacementFilename = replacementFilename
         self.replacementData = replacementData
+        self.expectedOriginalSHA256 = expectedOriginalSHA256
     }
 
     /// A zero-byte file is a valid replacement; the filename records that the
@@ -182,8 +187,11 @@ enum PatchPackageError: Error, Equatable {
     case symbolicLinkUnsupported
     case targetOccupied(String)
     case projectAlreadyApplied
+    case unverifiableJournal
     case restoreTargetsChanged([String])
     case originalVersionChanged([String])
+    case updatedReplacementRequired([String])
+    case incompatibleOriginalVersion([String])
     case activePatchCannotBeDeleted
     case privatePatchRequiresPassword
     case privateOperationFailed
@@ -209,8 +217,11 @@ extension PatchPackageError: LocalizedError {
         case .targetAppUnavailable: return "patch.error.app_unavailable"
         case .targetOccupied: return "patch.error.target_occupied"
         case .projectAlreadyApplied: return "patch.error.already_applied"
+        case .unverifiableJournal: return "patch.error.unverifiable_journal"
         case .restoreTargetsChanged: return "patch.error.restore_targets_changed"
         case .originalVersionChanged: return "patch.error.original_version_changed"
+        case .updatedReplacementRequired: return "patch.error.original_version_changed"
+        case .incompatibleOriginalVersion: return "patch.error.original_version_changed"
         case .activePatchCannotBeDeleted: return "patch.error.active_delete"
         case .symbolicLinkUnsupported: return "patch.error.symlink"
         case .privatePatchRequiresPassword: return "patch.error.private_password"
@@ -235,7 +246,8 @@ extension PatchPackageError: LocalizedError {
         switch self {
         case .targetAppUnavailable(let bundleID), .targetOccupied(let bundleID):
             return bundleID
-        case .restoreTargetsChanged(let paths), .originalVersionChanged(let paths):
+        case .restoreTargetsChanged(let paths), .originalVersionChanged(let paths),
+             .updatedReplacementRequired(let paths), .incompatibleOriginalVersion(let paths):
             return paths.joined(separator: "\n")
         default:
             return nil

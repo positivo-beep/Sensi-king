@@ -1,0 +1,22 @@
+NEXORA SYSTEM 2026 — FUENTE 2.1.1 BUILD 10
+
+Esta es una copia COMPLETA para la raíz del repositorio Sensi-king.
+
+Actualizaciones respecto a 2.1.0 build 9:
+- Limpieza automática: respeta recibos de restauración pendientes aunque el temporal sea antiguo.
+- Verificación nueva que impide borrar en el arranque un temporal antiguo protegido.
+- Mensaje correcto de falta de acceso a contenedor privado de otra app.
+- Versión y nombre de artefacto de GitHub Actions actualizados para diferenciar esta compilación.
+
+USO EN WINDOWS
+1. Haz un respaldo de Sensi-king.
+2. Extrae el ZIP y copia las carpetas directamente en Documentos\GitHub\Sensi-king sin borrar .git.
+3. GitHub Desktop muestra SOLO archivos nuevos/modificados. No tienen que aparecer todos.
+4. Confirma esos cambios, Push origin, y ejecuta el workflow en main.
+5. El artefacto correcto se llama NEXORA_SYSTEM_2026_V2_1_1_BUILD10_sin_firmar.
+
+PENDIENTE / LIMITACIÓN CRÍTICA
+- El acceso al contenedor privado de Free Fire sigue restringido por iOS. No hay solución universal desde otra app.
+- Esta versión no elude esa restricción ni elimina rastros de otras aplicaciones.
+- El sistema no es una IPA ya compilada. Xcode/iPhone requieren validación independiente.
+- Algunas opciones del catálogo siguen pendientes de recursos reales.

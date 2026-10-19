@@ -49,6 +49,15 @@
 
 All notable user-facing changes are documented in this file.
 
+## [2.1.3 build 12] - 2026-10-19 — Mejoras de fiabilidad
+
+- Limpieza de temporales propios más conservadora: nombres seguros, rechazo de entradas anómalas y pruebas de conservación.
+- Reemplazo de archivos con comprobación de cambios durante la copia y verificación del staging.
+- Limpiador limitado de caché con suma segura y profundidad acotada.
+- Pruebas funcionales nuevas para ejecutar en GitHub Actions/macOS.
+- Artefactos y verificadores de versión sincronizados para evitar confusión con builds anteriores.
+- **Pendiente:** compilación en Xcode e instalación/validación real en iPhone. Cloudflare sin cambios.
+
 ## [1.0.1] - 2026-08-15
 
 ### Added

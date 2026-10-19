@@ -1,4 +1,5 @@
 import SwiftUI
+import CryptoKit
 import UIKit
 import UniformTypeIdentifiers
 import AVFoundation
@@ -130,7 +131,7 @@ private struct NXBundledOption: Identifiable {
             guard let root = ContainerStore.resolveAppContainerPath(bundleID: appID),
                   ContainerStore.isApplicationContainerPath(root) else {
                 throw NSError(domain: "NEXORA", code: 2,
-                              userInfo: [NSLocalizedDescriptionKey: "No hay acceso al original. No se aplicó ANTENA SOLA."])
+                              userInfo: [NSLocalizedDescriptionKey: "iOS no permitió leer el archivo de origen en la otra aplicación. ANTENA SOLA no se aplicó ni alteró datos."])
             }
             let source = URL(fileURLWithPath: root, isDirectory: true).appendingPathComponent(targetPath)
             guard FileManager.default.fileExists(atPath: source.path) else {
@@ -158,7 +159,7 @@ private struct NXBundledOption: Identifiable {
         let appID = "com.dts.freefireth"
         guard let root = ContainerStore.resolveAppContainerPath(bundleID: appID),
               ContainerStore.isApplicationContainerPath(root) else {
-            throw NSError(domain: "NEXORA", code: 2, userInfo: [NSLocalizedDescriptionKey: "No hay acceso verificable al contenedor de la aplicación. No se modificó ningún archivo."])
+            throw NSError(domain: "NEXORA", code: 2, userInfo: [NSLocalizedDescriptionKey: "iOS no autorizó el acceso al contenedor de la otra aplicación. ANTENA SOLA no puede aplicarse de esta manera. No se modificó ningún archivo."])
         }
         let target = URL(fileURLWithPath: root, isDirectory: true).appendingPathComponent(targetPath)
         guard FileManager.default.fileExists(atPath: target.path) else {
@@ -332,16 +333,14 @@ struct ContentView: View {
                 ),
                 titleVisibility: .visible
             ) {
-                Button("Usar archivo actual y continuar") {
-                    if let notice = updatedOriginalNotice {
-                        updatedOriginalNotice = nil
-                        applyWithAcceptedCurrentOriginal(notice.project)
-                    }
+                Button("Importar paquete actualizado") {
+                    updatedOriginalNotice = nil
+                    showImporter = true
                 }
                 Button("Cancelar", role: .cancel) { updatedOriginalNotice = nil }
             } message: {
                 Text((updatedOriginalNotice?.details ?? "") +
-                     "\nEl tamaño o el SHA-256 cambió. NEXORA no puede confirmar que sea una versión oficial. Si continúas, hará el respaldo del archivo ACTUAL para restaurarlo cuando desactives la opción. Confirma antes la compatibilidad de tu archivo modificado.")
+                     "\nNEXORA no usara un reemplazo obsoleto. Importa un paquete .3105 nuevo. En el editor de la opcion actualiza el archivo modificado y vincula la version original mediante su SHA-256. No se modifico ningun archivo.")
             }
             .confirmationDialog(
                 "ANTENA SOLA: comprobar el archivo de origen",
@@ -583,8 +582,12 @@ struct ContentView: View {
                     }
                 } catch {
                     let changed = (error as? PatchPackageError).flatMap { patchError -> [String]? in
-                        if case .originalVersionChanged(let paths) = patchError { return paths }
-                        return nil
+                        switch patchError {
+                        case .originalVersionChanged(let paths),
+                             .updatedReplacementRequired(let paths),
+                             .incompatibleOriginalVersion(let paths): return paths
+                        default: return nil
+                        }
                     }
                     let retryProject = changed == nil ? nil : (try? option.makeProject())
                     await MainActor.run {
@@ -595,7 +598,7 @@ struct ContentView: View {
                                 details: changed.prefix(3).joined(separator: "\n")
                             )
                         } else {
-                            feedback = NXFeedback(message: "No se aplicó \(option.title): \(error.localizedDescription)")
+                            feedback = NXFeedback(message: "No se aplicó \(option.title): \(DevicePatchService.activationErrorMessage(error))")
                         }
                     }
                 }
@@ -823,8 +826,12 @@ struct ContentView: View {
                     }
                 } catch {
                     let changed = (error as? PatchPackageError).flatMap { patchError -> [String]? in
-                        if case .originalVersionChanged(let paths) = patchError { return paths }
-                        return nil
+                        switch patchError {
+                        case .originalVersionChanged(let paths),
+                             .updatedReplacementRequired(let paths),
+                             .incompatibleOriginalVersion(let paths): return paths
+                        default: return nil
+                        }
                     }
                     let selectedProject = projectForRetry
                     await MainActor.run {
@@ -835,38 +842,13 @@ struct ContentView: View {
                                 details: changed.prefix(3).joined(separator: "\n")
                             )
                         } else {
-                            feedback = NXFeedback(message: "No se pudo aplicar \(baseProject.name): \(error.localizedDescription)")
+                            feedback = NXFeedback(message: "No se pudo aplicar \(baseProject.name): \(DevicePatchService.activationErrorMessage(error))")
                         }
                     }
                 }
             }
         } else if let receipt = DevicePatchService.latestReceipt(projectID: item.id) {
             restore(receipt: receipt)
-        }
-    }
-
-    /// El usuario confirmó que revisó el archivo actual. Antes de escribir,
-    /// el motor guardará ese archivo como original de ESTA operación.
-    private func applyWithAcceptedCurrentOriginal(_ project: PatchProject) {
-        guard busyProject == nil else { return }
-        busyProject = project.id
-        Task.detached(priority: .userInitiated) {
-            do {
-                _ = try DevicePatchService.apply(
-                    project: project,
-                    allowUpdatedOriginal: true
-                )
-                await MainActor.run {
-                    busyProject = nil
-                    store.reload()
-                    activationFeedback.play()
-                }
-            } catch {
-                await MainActor.run {
-                    busyProject = nil
-                    feedback = NXFeedback(message: "No se pudo aplicar \(project.name): \(error.localizedDescription)")
-                }
-            }
         }
     }
 
@@ -1482,7 +1464,7 @@ private enum NXLocalMotorDemo {
             _ = try PatchTransaction.apply(
                 project: project, backupRoot: backupRoot, containerResolver: resolver)
         } catch let error as PatchPackageError {
-            if case .originalVersionChanged = error {
+            if case .updatedReplacementRequired = error {
                 originalChangeDetected = true
             } else {
                 throw error
@@ -1493,11 +1475,22 @@ private enum NXLocalMotorDemo {
             throw PatchPackageError.applyFailed
         }
 
-        // Con confirmación, la copia de seguridad nueva debe ser v2, no v1.
+        // El reemplazo anterior está obsoleto. Crear para ESTA prueba local un
+        // reemplazo v2 y vincularlo al original nuevo para verificar restauración.
+        var projectV2 = project
+        let previous = project.rules[0]
+        let newReplacement = Data("NEXORA-MODIFICADO-V2-LOCAL".utf8)
+        projectV2.rules[0] = PatchRule(
+            id: previous.id, bundleID: previous.bundleID,
+            relativePath: previous.relativePath,
+            replacementFilename: "estado-modificado-v2.txt",
+            replacementData: newReplacement,
+            expectedOriginalSHA256: SHA256.hash(data: updated)
+                .map { String(format: "%02x", $0) }.joined()
+        )
         let retry = try PatchTransaction.apply(
-            project: project, backupRoot: backupRoot,
-            allowUpdatedOriginal: true, containerResolver: resolver)
-        guard try Data(contentsOf: target) == replacement else {
+            project: projectV2, backupRoot: backupRoot, containerResolver: resolver)
+        guard try Data(contentsOf: target) == newReplacement else {
             throw PatchPackageError.applyFailed
         }
         _ = try PatchTransaction.restore(receipt: retry, containerResolver: resolver)
