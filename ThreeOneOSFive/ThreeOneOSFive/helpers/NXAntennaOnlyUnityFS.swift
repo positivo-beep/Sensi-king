@@ -93,7 +93,7 @@ enum NXAntennaOnlyUnityFS {
         // CryptoKit, cuando está disponible (iPhone), permite recalcular MD5.
         #if canImport(CryptoKit)
         let md5 = Insecure.MD5.hash(data: Data(updatedPlain))
-        info.replaceSubrange(0..<16, with: md5)
+        info.replaceSubrange(0..<16, with: Array(md5))
         #endif
         let packedInfo = compressLZ4(info)
         var output: [UInt8]
