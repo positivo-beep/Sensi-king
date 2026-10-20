@@ -23,6 +23,7 @@ jobs:
           set -euo pipefail
           python3 scripts/verificar_entrega_completa_nexora.py
           python3 scripts/verificar_release_nueva_nexora.py
+          python3 scripts/verificar_sincronizacion_release.py
           test -f ThreeOneOSFive/helpers/NXAntennaOnlyUnityFS.swift
           test -f ThreeOneOSFive/helpers/NXOwnedTemporaryWorkspaces.swift
           xcodebuild -version
@@ -37,6 +38,7 @@ jobs:
           python3 scripts/verificar_integracion_nexora.py
           python3 scripts/verificar_opciones_v14.py
           python3 scripts/verificar_catalogo_completo_nexora.py
+          python3 scripts/verificar_holo_pj_rainbow.py
           python3 scripts/verificar_seguridad_licencias.py
           python3 scripts/verificar_seguridad_release_nexora.py
           python3 scripts/verificar_restauracion_v21_1.py
@@ -46,6 +48,7 @@ jobs:
           python3 scripts/verificar_conservacion_actualizaciones_v21_6.py
           python3 scripts/verificar_actualizacion_segura_v2_1_4.py
           python3 scripts/verificar_activacion_segura_v2_1_6.py
+          python3 scripts/verificar_reemplazo_release_v2_1_9.py
           xcodebuild -version
           xcodebuild -list -project ThreeOneOSFive.xcodeproj
 
@@ -94,11 +97,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          swiftc -o "$RUNNER_TEMP/nexora-replacement-tests" \
+          swiftc -DREPLACEMENT_TESTING -o "$RUNNER_TEMP/nexora-replacement-tests" \
             ThreeOneOSFive/helpers/FileReplacementService.swift \
             scripts/PruebaReemplazoSeguro.swift
           "$RUNNER_TEMP/nexora-replacement-tests" | tee reemplazo-seguro-test.log
-          grep -Fq 'REEMPLAZO: 6/6 comprobaciones correctas' reemplazo-seguro-test.log
+          grep -Fq 'REEMPLAZO: 16/16 comprobaciones correctas' reemplazo-seguro-test.log
 
       - name: Pruebas del formato UnityFS y ANTENA SOLA (3 pares)
         shell: bash
@@ -151,21 +154,21 @@ jobs:
             /usr/libexec/PlistBuddy -c 'Add :CFBundleDisplayName string NEXORA SYSTEM 2026' "$APP/Info.plist"
           mkdir -p "$PWD/package/Payload"
           cp -R "$APP" "$PWD/package/Payload/"
-          (cd "$PWD/package" && zip -qr "$OLDPWD/NEXORA_SYSTEM_2026_V2_1_6_BUILD15_sin_firmar.ipa" Payload)
+          (cd "$PWD/package" && zip -qr "$OLDPWD/NEXORA_SYSTEM_2026_V2_1_9_BUILD18_sin_firmar.ipa" Payload)
 
       - name: Verificar contenido de IPA y generar informe
         shell: bash
         run: |
           set -euo pipefail
-          python3 scripts/verificar_ipa_generada.py "$PWD/NEXORA_SYSTEM_2026_V2_1_6_BUILD15_sin_firmar.ipa"
+          python3 scripts/verificar_ipa_generada.py "$PWD/NEXORA_SYSTEM_2026_V2_1_9_BUILD18_sin_firmar.ipa"
           test -s NEXORA_RESULTADO_COMPILACION.json
 
       - name: Entregar IPA
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: NEXORA_SYSTEM_2026_V2_1_6_BUILD15_sin_firmar
-          path: ThreeOneOSFive/NEXORA_SYSTEM_2026_V2_1_6_BUILD15_sin_firmar.ipa
+          name: NEXORA_SYSTEM_2026_V2_1_9_BUILD18_sin_firmar
+          path: ThreeOneOSFive/NEXORA_SYSTEM_2026_V2_1_9_BUILD18_sin_firmar.ipa
           if-no-files-found: error
           retention-days: 7
 
@@ -178,6 +181,9 @@ jobs:
             ThreeOneOSFive/xcodebuild.log
             ThreeOneOSFive/motor-transacciones-test.log
             ThreeOneOSFive/temporales-nexora-test.log
+            ThreeOneOSFive/limpiador-limitado-test.log
+            ThreeOneOSFive/reemplazo-seguro-test.log
+            ThreeOneOSFive/antena-unityfs-test.log
             ThreeOneOSFive/antena-formato243-test.log
             ThreeOneOSFive/NEXORA_RESULTADO_COMPILACION.json
           if-no-files-found: ignore

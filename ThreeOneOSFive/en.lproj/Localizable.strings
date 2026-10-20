@@ -396,6 +396,8 @@
 "browser.replace_error_same_file" = "A file cannot replace itself.";
 "browser.replace_error_symlink" = "Symbolic links are not supported.";
 "browser.replace_error_too_large" = "The selected file is too large.";
+"browser.replace_error_source_changed" = "The selected file changed during copying. Please choose the updated file again.";
+"browser.replace_error_target_changed" = "The target file changed while preparing the replacement. Its new content was preserved.";
 "browser.replace_error_failed" = "The file could not be replaced safely.";
 "browser.search_files" = "Search this folder";
 "browser.search_empty" = "No Results";

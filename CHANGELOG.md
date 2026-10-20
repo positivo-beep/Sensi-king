@@ -1,3 +1,9 @@
+## NEXORA 2.1.9 (Build 18) — HOLO PJ Rainbow
+
+- Nueva opción HOLOGRAMA PERSONAJE RAINBOW en lugar de HOLOGRAMA PERSONAJE ROJO pendiente.
+- Nuevo dataset UnityFS de 381140 bytes proporcionado por el usuario; integrado al motor de respaldo/restauración existente.
+- Nuevas pruebas de SHA-256, catálogo, destino compartido y workflows; compilación iOS pendiente.
+
 ## NEXORA V21.6 — RAINBOW COLOR ROJO
 
 - Nuevo holograma de arma: RAINBOW COLOR ROJO (anteriormente HOLO ARM PERSONALIZADO 1, pendiente).
@@ -48,6 +54,15 @@
 # Changelog
 
 All notable user-facing changes are documented in this file.
+
+## [2.1.7 build 16] - 2026-10-19 — Reemplazo y actualización más confiables
+
+- Reemplazados los metadatos potencialmente cacheados de `URLResourceValues` por instantáneas `lstat`/`fstat` con tamaño, identidad e instantes de modificación/cambio.
+- Evita leer enlaces simbólicos del origen y sobrescribir originales modificados durante la operación.
+- Mensajes y casos exhaustivos del explorador para archivos fuente/destino modificados.
+- Ampliadas las pruebas del reemplazador a 12/12 con casos de concurrencia, archivos vacíos y archivos grandes.
+- Se mantienen intactos el sistema de licencias, las comprobaciones SHA-256 de versiones de originales, los diarios de restauración y la limpieza propia.
+- **No verificado todavía:** compilación de IPA en macOS ni ejecución en iPhone.
 
 ## [2.1.3 build 12] - 2026-10-19 — Mejoras de fiabilidad
 

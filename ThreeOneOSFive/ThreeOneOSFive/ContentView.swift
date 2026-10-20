@@ -95,6 +95,7 @@ private struct NXBundledOption: Identifiable {
         NXBundledOption(id: UUID(uuidString: "D9B35EA9-DE70-5016-8424-37403118CF6D")!, title: "RAINBOW COLOR ROJO", category: "HOLO ARM", dataAsset: "NXModHoloRainbowRojo", targetPath: "Documents/contentcache/Optional/ios/gameassetbundles/shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D", filename: "shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D"),
         NXBundledOption(id: UUID(uuidString: "BC2E6E51-5EA3-4F1E-89BD-DB6B23C2071A")!, title: "HOLOGRAMA PERSONAJE AZUL", category: "HOLO PJ", dataAsset: "NXModHoloPjAzul", targetPath: "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D", filename: "optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D"),
         NXBundledOption(id: UUID(uuidString: "6A2759B8-35AD-55D2-93F8-0961B712026D")!, title: "HOLOGRAMA PERSONAJE AMARILLO", category: "HOLO PJ", dataAsset: "NXModHoloPjAmarillo", targetPath: "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D", filename: "optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D"),
+        NXBundledOption(id: UUID(uuidString: "444C2683-B2BF-52B9-A5B2-3960AA7C71BB")!, title: "HOLOGRAMA PERSONAJE RAINBOW", category: "HOLO PJ", dataAsset: "NXModHoloPjRainbow", targetPath: "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D", filename: "optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D"),
     ]
 
     // Cada boton usa su NSDataAsset (archivo modificado) y su targetPath.
@@ -106,7 +107,7 @@ private struct NXBundledOption: Identifiable {
     static let pendingByCategory: [String: [String]] = [
         "AIMBOT": ["BALAS MÁGICAS"],
         "HOLO ARM": ["HOLO ARM PERSONALIZADO 2"],
-        "HOLO PJ": ["HOLOGRAMA PERSONAJE ROJO", "HOLOGRAMA PERSONAJE VERDE"],
+        "HOLO PJ": ["HOLOGRAMA PERSONAJE VERDE"],
         "TEXTURA": ["TEXTURA PERSONALIZADA", "TEXTURA CLARA", "TEXTURA OSCURA"],
         "WALK HACK": ["WALK HACK"]
     ]

@@ -14,8 +14,8 @@ with zipfile.ZipFile(ipa,'r') as z:
     assert plist.get('CFBundleDisplayName')=='NEXORA SYSTEM 2026', 'Nombre incorrecto'
     assert plist.get('CFBundleIdentifier')=='com.nexora.system2026', \
         'Identificador incorrecto: revisar Info.plist y PRODUCT_BUNDLE_IDENTIFIER, no editar la IPA a mano'
-    assert plist.get('CFBundleShortVersionString')=='2.1.6', 'La IPA NO es la versión nueva 2.1.6'
-    assert str(plist.get('CFBundleVersion'))=='15', 'La IPA NO es el build 15'
+    assert plist.get('CFBundleShortVersionString')=='2.1.9', 'La IPA NO es la versión nueva 2.1.9'
+    assert str(plist.get('CFBundleVersion'))=='18', 'La IPA NO es el build 18'
     icons=plist.get('CFBundleIcons',{})
     primary=icons.get('CFBundlePrimaryIcon',{})
     assert ('AppIcon' in str(primary)), 'AppIcon no se registró en Info.plist'

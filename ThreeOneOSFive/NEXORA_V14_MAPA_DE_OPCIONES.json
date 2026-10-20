@@ -128,13 +128,14 @@
     "tamano_bytes": 381140
   },
   {
-    "opcion": "HOLOGRAMA PERSONAJE ROJO",
+    "opcion": "HOLOGRAMA PERSONAJE RAINBOW",
     "categoria": "HOLO PJ",
-    "recurso": null,
-    "destino_relativo": null,
-    "sha256": null,
-    "estado": "pendiente",
-    "nota": "Botón visible, deshabilitado: necesita archivo y ruta validados."
+    "recurso": "NXModHoloPjRainbow",
+    "destino_relativo": "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D",
+    "sha256": "71cdc24d159dec937ec14bb373dc8d2fa59cab38f79274981e62a75b68e2337c",
+    "estado": "incluido",
+    "nota": "Archivo Rainbow subido por el propietario. Variante exclusiva del mismo destino que Holo PJ Azul y Amarillo; respaldo original obligatorio y restauración protegida. Compatibilidad en iPhone aún por verificar.",
+    "tamano_bytes": 381140
   },
   {
     "opcion": "TEXTURA PERSONALIZADA",

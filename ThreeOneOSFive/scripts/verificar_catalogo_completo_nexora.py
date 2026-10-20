@@ -5,7 +5,7 @@ import json, re, hashlib, struct
 r=Path(__file__).resolve().parents[1]
 ui=(r/'ThreeOneOSFive/ContentView.swift').read_text()
 entries=re.findall(r'NXBundledOption\(id: UUID\(uuidString: "([^"]+)"\)!, title: "([^"]+)", category: "([^"]+)", dataAsset: "([^"]*)", targetPath: "([^"]+)", filename: "([^"]+)"\)',ui)
-assert len(entries)==13, f'Deben existir 12 opciones con recurso y ANTENA SOLA: {len(entries)}'
+assert len(entries)==14, f'Deben existir 13 opciones con recurso y ANTENA SOLA: {len(entries)}'
 antenna_entries=[e for e in entries if e[1]=='ANTENA SOLA']
 assert len(antenna_entries)==1 and antenna_entries[0][2]=='AIMBOT CON ANTENA' and antenna_entries[0][3]=='', 'ANTENA SOLA debe generar su recurso dinámicamente, sin un AIMBOT empaquetado'
 assert 'NXAntennaOnlyUnityFS.build(from: original)' in ui, 'ANTENA SOLA no genera el recurso desde el archivo actual'
@@ -43,6 +43,10 @@ for item in cat:
 blue=active['HOLOGRAMA PERSONAJE AZUL']
 yellow=active['HOLOGRAMA PERSONAJE AMARILLO']
 assert blue[4]==yellow[4] and blue[3]!=yellow[3], 'Azul y amarillo deben compartir destino con recursos separados'
+rainbow=active['HOLOGRAMA PERSONAJE RAINBOW']
+assert blue[4]==rainbow[4] and rainbow[3] not in (blue[3],yellow[3]), 'Rainbow debe compartir destino y tener recurso independiente'
+assert next(i for i in cat if i['opcion']=='HOLOGRAMA PERSONAJE RAINBOW')['sha256']=='71cdc24d159dec937ec14bb373dc8d2fa59cab38f79274981e62a75b68e2337c', 'El recurso Rainbow no coincide con el recibido'
+assert 'HOLOGRAMA PERSONAJE ROJO' not in ui, 'Fila ROJO pendiente debe reemplazarse'
 assert next(i for i in cat if i['opcion']=='HOLOGRAMA PERSONAJE AZUL')['sha256']=='711375e0b39aed9ea18e6956bbc8ebda82e902925842b8202a1b34a86f88805d', 'El recurso azul no coincide con el enviado por el usuario'
 assert active['RAINBOW COLOR ROJO'][4] == active['HOLO ARM RAINBOW'][4] and active['RAINBOW COLOR ROJO'][3] != active['HOLO ARM RAINBOW'][3], 'Los hologramas arma deben ser alternativas distintas'
 assert next(i for i in cat if i['opcion']=='RAINBOW COLOR ROJO')['sha256'] == 'e07f18950b44d635a8deb5812725ab394ea446e41993f8c84f544a4f2b13a11b', 'El recurso rojo difiere del paquete enviado'
@@ -51,8 +55,8 @@ assert 'try option.checkOriginalExists()' in ui and 'try DevicePatchService.appl
 assert 'restore(receipt: receipt)' in ui and 'preserveExternallyChangedTargets: !allowChangedTargets' in ui, 'Falta conexión de restauración protegida'
 assert 'testExternalUpdatePreservation()' in ui and 'Probar protección de actualización' in ui and 'preserveExternallyChangedTargets: true' in ui and 'Importar paquete actualizado' in ui, 'Falta diagnóstico nuevo de protección de actualizaciones'
 assert len({e[4] for e in entries})==3, 'Número inesperado de destinos distintos'
-assert len([i for i in cat if i['recurso']])==12 and len([i for i in cat if i['estado']=='pendiente'])==8
-print('OK: 21 opciones (12 con recurso + ANTENA SOLA generada + 8 pendientes).')
-print('OK: 12 datasets verificados con SHA-256; azul independiente del amarillo.')
+assert len([i for i in cat if i['recurso']])==13 and len([i for i in cat if i['estado']=='pendiente'])==7
+print('OK: 21 opciones (13 con recurso + ANTENA SOLA generada + 7 pendientes).')
+print('OK: 13 datasets verificados con SHA-256; azul independiente del amarillo.')
 print('OK: interfaz enlazada a motor, bloqueo de destinos compartidos y restauración protegida.')
 print('PENDIENTE: ejecución en iPhone, permisos sobre apps externas y compatibilidad del archivo UnityFS.')

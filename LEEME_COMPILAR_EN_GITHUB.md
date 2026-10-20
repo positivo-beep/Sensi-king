@@ -1,4 +1,4 @@
-# NEXORA SYSTEM 2026 — Compilar la revisión 2.1.6 (build 15)
+# NEXORA SYSTEM 2026 — Compilar la revisión 2.1.9 (build 18)
 
 **Este ZIP contiene código fuente, NO una IPA compilada.** No se cambió tu Worker de Cloudflare.
 
@@ -9,7 +9,7 @@
 3. Copia el **contenido** del ZIP a la carpeta raíz de tu repositorio (donde está `.github`). No lo pongas dentro de una segunda carpeta `ThreeOneOSFive` por error. Confirma que los archivos nuevos aparecen en GitHub Desktop.
 4. Revisa los cambios, crea un commit y súbelo a la rama `main` de tu repositorio. Usa un repositorio privado si los recursos no están destinados a publicarse.
 5. En GitHub abre **Actions → Verificar y compilar NEXORA SYSTEM 2026**. Espera al resultado verde.
-6. En **Artifacts**, descarga `NEXORA_SYSTEM_2026_V2_1_6_BUILD15_sin_firmar`. Contendrá la IPA sin firmar con el mismo nombre y extensión `.ipa`.
+6. En **Artifacts**, descarga `NEXORA_SYSTEM_2026_V2_1_9_BUILD18_sin_firmar`. Contendrá la IPA sin firmar con el mismo nombre y extensión `.ipa`.
 7. Una vez revisada la compilación y el resultado de las pruebas, podrás firmar la IPA con ESign usando tu certificado válido.
 
 Si Actions sale rojo, no instales la IPA anterior pensando que es la nueva. Abre la ejecución fallida y guarda el log correspondiente.
