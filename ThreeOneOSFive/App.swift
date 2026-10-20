@@ -19,7 +19,11 @@ struct ThreeOneOSFiveApp: App {
         // abandonados durante al menos 48 horas. Respaldos y diarios intactos.
         DispatchQueue.global(qos: .utility).async {
             do {
-                _ = try NXOwnedTemporaryWorkspaces.cleanAbandoned()
+                let IDs = try NXOwnedTemporaryWorkspaces.knownWorkspaceIDs()
+                let pending = Set(IDs.filter {
+                    DevicePatchService.latestReceipt(projectID: $0) != nil
+                })
+                _ = try NXOwnedTemporaryWorkspaces.cleanAbandoned(keeping: pending)
             } catch {
                 log("nexora: mantenimiento de caché propia pendiente: \(error.localizedDescription)")
             }
@@ -57,6 +61,8 @@ class AppState: ObservableObject {
     @Published var exploitStatus: ExploitStatus = .notStarted
     @Published var unsupportedMessage: String?
     @Published var kernelExploitRunning = false
+    // No equivale a permiso permanente: solamente registra una aplicación exitosa actual.
+    @Published var lastPatchAppliedThisSession = false
 
     private var autoRunAttempted = false
 
@@ -165,10 +171,10 @@ class AppState: ObservableObject {
 // Se incorpora al final del archivo ThreeOneOSFive/App.swift con instalar.py.
 
 private enum NexoraPalette {
-    static let background = Color(red: 0.018, green: 0.026, blue: 0.042)
-    static let surface = Color(red: 0.055, green: 0.075, blue: 0.099)
-    static let cyan = Color(red: 0.18, green: 0.75, blue: 0.95)
-    static let purple = Color(red: 0.54, green: 0.28, blue: 0.87)
+    static let background = Color(red: 0.022, green: 0.002, blue: 0.006)
+    static let surface = Color(red: 0.072, green: 0.008, blue: 0.014)
+    static let cyan = Color(red: 1.00, green: 0.18, blue: 0.22)
+    static let purple = Color(red: 1.00, green: 0.10, blue: 0.14)
 }
 
 private struct NexoraWirePayload: Encodable {
@@ -292,11 +298,18 @@ final class NexoraLicenseModel: ObservableObject {
     private let licenseAccount = "license"
     private let deviceAccount = "installation-id"
     private var hasStarted = false
+    // Evita que una respuesta de red anterior vuelva a abrir el panel después de salir.
+    private var authorizationGeneration: UInt64 = 0
 
-    private var deviceID: String {
-        if let id = NexoraSecureStorage.read(deviceAccount) { return id }
+    // La identidad nunca puede cambiar silenciosamente entre solicitudes.
+    // Si falla Keychain, la activación se bloquea antes de enviar la key.
+    private func persistentDeviceID() -> String? {
+        if let id = NexoraSecureStorage.read(deviceAccount) {
+            return UUID(uuidString: id) == nil ? nil : id
+        }
         let id = UUID().uuidString
-        _ = NexoraSecureStorage.save(id, deviceAccount)
+        guard NexoraSecureStorage.save(id, deviceAccount),
+              NexoraSecureStorage.read(deviceAccount) == id else { return nil }
         return id
     }
 
@@ -324,6 +337,7 @@ final class NexoraLicenseModel: ObservableObject {
     }
 
     func signOut() {
+        authorizationGeneration &+= 1
         NexoraSecureStorage.delete(licenseAccount)
         input = ""
         state = .locked
@@ -333,6 +347,7 @@ final class NexoraLicenseModel: ObservableObject {
     }
 
     private func invalidateAndRequireNewKey(_ message: String) {
+        authorizationGeneration &+= 1
         NexoraSecureStorage.delete(licenseAccount)
         input = ""
         expiration = nil
@@ -351,7 +366,13 @@ final class NexoraLicenseModel: ObservableObject {
         }
         isBusy = true
         defer { isBusy = false }
+        let currentGeneration = authorizationGeneration
         errorMessage = ""
+        guard let stableDeviceID = persistentDeviceID() else {
+            state = .locked
+            errorMessage = "No se pudo verificar la identidad local del dispositivo."
+            return
+        }
         // La autoridad es Cloudflare, no una bandera local; no incluir secretos de administración.
         // La clave se envía solo al endpoint HTTPS definido por el propietario.
         guard endpoint.scheme == "https", endpoint.host != nil else {
@@ -367,8 +388,9 @@ final class NexoraLicenseModel: ObservableObject {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("no-store", forHTTPHeaderField: "Cache-Control")
         do {
-            request.httpBody = try JSONEncoder().encode(NexoraWirePayload(key: formatted, device_id: deviceID))
+            request.httpBody = try JSONEncoder().encode(NexoraWirePayload(key: formatted, device_id: stableDeviceID))
             let (data, response) = try await licenseSession.data(for: request)
+            guard authorizationGeneration == currentGeneration else { return }
             // Ni redirecciones a otros hosts, ni respuestas anómalas, ni errores HTTP
             // pueden autorizar una licencia.
             guard let http = response as? HTTPURLResponse,
@@ -393,8 +415,15 @@ final class NexoraLicenseModel: ObservableObject {
             }
             // Rechazar fechas de vencimiento inválidas en vez de aceptarlas
             // silenciosamente como si fueran licencias sin vencimiento.
-            expiration = result.expires_at
-            if let rawExpiry = result.expires_at, !rawExpiry.isEmpty, expirationDate == nil {
+            // No autorizar licencias sin una caducidad comprobable: evita que
+            // un Worker incompleto conceda acceso indefinido por accidente.
+            guard let rawExpiry = result.expires_at,
+                  !rawExpiry.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                invalidateAndRequireNewKey("El servidor no devolvió una fecha de vencimiento válida.")
+                return
+            }
+            expiration = rawExpiry
+            guard let verifiedExpiry = expirationDate else {
                 invalidateAndRequireNewKey("El servidor devolvió un vencimiento no válido.")
                 return
             }
@@ -406,7 +435,7 @@ final class NexoraLicenseModel: ObservableObject {
             } else {
                 planDurationDays = nil
             }
-            if let expiry = expirationDate, Date() >= expiry {
+            if Date() >= verifiedExpiry {
                 invalidateAndRequireNewKey("Tu key venció. Introduce una nueva key.")
                 return
             }
@@ -417,6 +446,7 @@ final class NexoraLicenseModel: ObservableObject {
             }
             state = .allowed
         } catch {
+            guard authorizationGeneration == currentGeneration else { return }
             // No mostrar detalles de red o del servidor en la interfaz pública.
             state = .locked
             errorMessage = "No se pudo verificar tu licencia. Comprueba la conexión e inténtalo de nuevo."
@@ -430,7 +460,7 @@ final class NexoraLicenseModel: ObservableObject {
         case "revoked": return "La key fue desactivada."
         case "device_limit": return "Se alcanzó el límite de dispositivos."
         case "device_not_activated": return "El dispositivo aún no está activado."
-        default: return "No se validó la licencia (\(reason ?? "sin información"))."
+        default: return "No se pudo validar la licencia con el servidor."
         }
     }
 }
@@ -483,34 +513,37 @@ private struct NexoraKeyScreen: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                Color(red: 0.022, green: 0.010, blue: 0.032).ignoresSafeArea()
-                RadialGradient(colors: [NexoraPalette.purple.opacity(0.20), .clear],
-                               center: .init(x: 0.50, y: 0.45),
-                               startRadius: 18, endRadius: 390)
-                    .ignoresSafeArea()
-                GeometryReader { dots in
-                    ForEach(0..<12, id: \.self) { index in
-                        Circle()
-                            .fill(NexoraPalette.purple.opacity(index.isMultiple(of: 3) ? 0.27 : 0.13))
-                            .frame(width: index.isMultiple(of: 4) ? 7 : 4,
-                                   height: index.isMultiple(of: 4) ? 7 : 4)
-                            .position(x: dots.size.width * Self.dotX[index],
-                                      y: dots.size.height * Self.dotY[index])
-                    }
-                }
-                .ignoresSafeArea()
-                .accessibilityHidden(true)
+                NXGothicBackdrop()
 
                 ScrollView {
                     VStack(spacing: 0) {
-                        Spacer(minLength: max(48, geometry.size.height * 0.118))
-                        Image("NexoraBanner")
-                            .resizable()
-                            .scaledToFit() // Nunca recortar ni estirar el logotipo.
-                            .frame(width: min(geometry.size.width - 26, 520))
-                            .frame(maxWidth: .infinity)
-                            .shadow(color: NexoraPalette.purple.opacity(0.30), radius: 24, y: 10)
-                            .padding(.bottom, 20)
+                        Spacer(minLength: max(28, geometry.size.height * 0.085))
+                        VStack(spacing: 10) {
+                            HStack(spacing: 0) {
+                                Text("NE").foregroundStyle(.white)
+                                Text("X").foregroundStyle(NexoraPalette.purple)
+                                Text("ORA").foregroundStyle(.white)
+                            }
+                            .font(.system(size: min(72, geometry.size.width * 0.192),
+                                          weight: .black, design: .rounded))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.72)
+                            .shadow(color: NexoraPalette.purple.opacity(0.85), radius: 16)
+                            Text("— SYSTEM 2026 —")
+                                .font(.system(size: 14, weight: .heavy))
+                                .tracking(2.5)
+                                .foregroundStyle(NexoraPalette.purple)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 28)
+                        .padding(.horizontal, 8)
+                        .background(Color.black.opacity(0.68), in: RoundedRectangle(cornerRadius: 23))
+                        .overlay(RoundedRectangle(cornerRadius: 23)
+                            .stroke(LinearGradient(colors: [NexoraPalette.purple,
+                                                           Color(red: 0.93, green: 0.12, blue: 0.29)],
+                                                   startPoint: .leading, endPoint: .trailing), lineWidth: 1.4))
+                        .shadow(color: NexoraPalette.purple.opacity(0.29), radius: 20)
+                        .padding(.bottom, 29)
 
                         Text("NEXORA SYSTEM")
                             .font(.system(size: 30, weight: .black, design: .rounded))
@@ -545,13 +578,13 @@ private struct NexoraKeyScreen: View {
                                     if let value = UIPasteboard.general.string { model.input = value }
                                 }
                                 .font(.system(size: 12, weight: .heavy))
-                                .foregroundStyle(Color(red: 0.75, green: 0.43, blue: 0.98))
+                                .foregroundStyle(NexoraPalette.cyan)
                             }
                             .padding(.horizontal, 16)
                             .frame(height: 58)
-                            .background(Color.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 17))
+                            .background(Color.black.opacity(0.74), in: RoundedRectangle(cornerRadius: 17))
                             .overlay(RoundedRectangle(cornerRadius: 17)
-                                .stroke(NexoraPalette.purple.opacity(0.53), lineWidth: 1.1))
+                                .stroke(NexoraPalette.purple.opacity(0.88), lineWidth: 1.1))
 
                             if !model.errorMessage.isEmpty {
                                 Text(model.errorMessage)
@@ -572,8 +605,8 @@ private struct NexoraKeyScreen: View {
                             .buttonStyle(.plain)
                             .foregroundStyle(.white)
                             .background(
-                                LinearGradient(colors: [Color(red: 0.34, green: 0.11, blue: 0.62),
-                                                        Color(red: 0.68, green: 0.30, blue: 0.98)],
+                                LinearGradient(colors: [Color(red: 0.48, green: 0.022, blue: 0.054),
+                                                        Color(red: 1.00, green: 0.12, blue: 0.16)],
                                                startPoint: .leading, endPoint: .trailing),
                                 in: RoundedRectangle(cornerRadius: 18)
                             )

@@ -1,19 +1,50 @@
 import SwiftUI
+import CryptoKit
 import UIKit
 import UniformTypeIdentifiers
 import AVFoundation
 
 // NEXORA SYSTEM: visual personalizado; el motor GPLv3 3105 permanece separado.
 private enum NXColors {
-    static let background = Color(red: 0.017, green: 0.009, blue: 0.034)
-    static let surface = Color(red: 0.045, green: 0.027, blue: 0.065)
-    static let elevated = Color(red: 0.11, green: 0.064, blue: 0.15)
-    static let green = Color(red: 0.65, green: 0.22, blue: 0.96) // Violeta NEXORA; verde solo para estado online
-    static let cyan = Color(red: 0.65, green: 0.22, blue: 0.96)
-    static let border = Color(red: 0.26, green: 0.12, blue: 0.38)
-    static let muted = Color(red: 0.65, green: 0.61, blue: 0.70)
-    static let purple = Color(red: 0.69, green: 0.28, blue: 0.98)
+    // Diseño confirmado por el propietario: negro + rojo neón en todas las pantallas.
+    // Estos son colores reales de controles SwiftUI, no una captura pegada encima.
+    static let background = Color(red: 0.022, green: 0.002, blue: 0.006)
+    static let surface = Color(red: 0.072, green: 0.008, blue: 0.014)
+    static let elevated = Color(red: 0.18, green: 0.018, blue: 0.029)
+    static let green = Color(red: 0.13, green: 0.89, blue: 0.40) // indicador únicamente
+    static let cyan = Color(red: 1.00, green: 0.18, blue: 0.22) // rojo luminoso
+    static let border = Color(red: 0.96, green: 0.12, blue: 0.18)
+    static let muted = Color(red: 0.74, green: 0.66, blue: 0.67)
+    static let purple = Color(red: 1.00, green: 0.10, blue: 0.14) // compatibilidad nombres internos
 }
+
+// Fondo decorativo real para ambas pantallas. Los botones siguen siendo controles
+// nativos y accesibles; nunca se utiliza una captura de la UI como interfaz.
+struct NXGothicBackdrop: View {
+    var body: some View {
+        GeometryReader { geo in
+            Image("NexoraDarkCity")
+                .resizable()
+                .scaledToFill()
+                .frame(width: geo.size.width, height: geo.size.height)
+                .clipped()
+                // La ilustración de ciudad, héroe oscuro y murciélagos se tiñe rojo,
+                // como la referencia elegida; no incluye botones ni texto aplanados.
+                .colorMultiply(Color(red: 1.0, green: 0.22, blue: 0.25))
+                .overlay {
+                    LinearGradient(colors: [
+                        Color.black.opacity(0.18),
+                        Color(red: 0.026, green: 0.002, blue: 0.006).opacity(0.68),
+                        Color.black.opacity(0.87)
+                    ], startPoint: .top, endPoint: .bottom)
+                }
+                .overlay(Color(red: 0.22, green: 0.001, blue: 0.004).opacity(0.10))
+        }
+        .ignoresSafeArea()
+        .accessibilityHidden(true)
+    }
+}
+
 
 private enum NexoraSocialLinks {
     // Enlaces oficiales proporcionados por el propietario de NEXORA.
@@ -57,11 +88,14 @@ private struct NXBundledOption: Identifiable {
         NXBundledOption(id: UUID(uuidString: "7E4E6CED-F65A-538A-9924-3D17AED6D957")!, title: "AIM DRAG ANTENA", category: "AIMBOT CON ANTENA", dataAsset: "NXModAntenaDrag", targetPath: "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D", filename: "assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D"),
         NXBundledOption(id: UUID(uuidString: "D152E8C1-1866-5D39-AB06-334558C45E4A")!, title: "AIM CUELLO ANTENA", category: "AIMBOT CON ANTENA", dataAsset: "NXModAntenaCuello", targetPath: "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D", filename: "assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D"),
         NXBundledOption(id: UUID(uuidString: "9DAE3BC4-B812-5C6A-87D9-BCD8FAE69498")!, title: "AIM PECHO ANTENA", category: "AIMBOT CON ANTENA", dataAsset: "NXModAntenaPecho", targetPath: "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D", filename: "assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D"),
+        // ANTENA SOLA no contiene un aimbot empaquetado: genera el recurso desde el archivo ACTUAL.
+        NXBundledOption(id: UUID(uuidString: "51E8B46F-1BA4-4E2B-913A-942430A1BFA7")!, title: "ANTENA SOLA", category: "AIMBOT CON ANTENA", dataAsset: "", targetPath: "Documents/contentcache/Compulsory/ios/gameassetbundles/avatar/assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D", filename: "assetindexer.U6Zffc4YIR3DslNj3cXvYGAqz58~3D"),
         NXBundledOption(id: UUID(uuidString: "1F01CB76-4465-5BB9-89D4-EE24BB006D94")!, title: "AZUL CON VERDE", category: "HOLO ARM", dataAsset: "NXModHoloAzul", targetPath: "Documents/contentcache/Optional/ios/gameassetbundles/shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D", filename: "shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D"),
         NXBundledOption(id: UUID(uuidString: "1F6E508C-660E-5236-9DCF-524AC4D4B54A")!, title: "HOLO ARM RAINBOW", category: "HOLO ARM", dataAsset: "NXModHoloRainbow", targetPath: "Documents/contentcache/Optional/ios/gameassetbundles/shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D", filename: "shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D"),
         NXBundledOption(id: UUID(uuidString: "D9B35EA9-DE70-5016-8424-37403118CF6D")!, title: "RAINBOW COLOR ROJO", category: "HOLO ARM", dataAsset: "NXModHoloRainbowRojo", targetPath: "Documents/contentcache/Optional/ios/gameassetbundles/shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D", filename: "shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D"),
         NXBundledOption(id: UUID(uuidString: "BC2E6E51-5EA3-4F1E-89BD-DB6B23C2071A")!, title: "HOLOGRAMA PERSONAJE AZUL", category: "HOLO PJ", dataAsset: "NXModHoloPjAzul", targetPath: "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D", filename: "optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D"),
         NXBundledOption(id: UUID(uuidString: "6A2759B8-35AD-55D2-93F8-0961B712026D")!, title: "HOLOGRAMA PERSONAJE AMARILLO", category: "HOLO PJ", dataAsset: "NXModHoloPjAmarillo", targetPath: "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D", filename: "optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D"),
+        NXBundledOption(id: UUID(uuidString: "444C2683-B2BF-52B9-A5B2-3960AA7C71BB")!, title: "HOLOGRAMA PERSONAJE RAINBOW", category: "HOLO PJ", dataAsset: "NXModHoloPjRainbow", targetPath: "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D", filename: "optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D"),
     ]
 
     // Cada boton usa su NSDataAsset (archivo modificado) y su targetPath.
@@ -72,9 +106,8 @@ private struct NXBundledOption: Identifiable {
     // pendiente se sustituye por la fila conectada al motor original.
     static let pendingByCategory: [String: [String]] = [
         "AIMBOT": ["BALAS MÁGICAS"],
-        "AIMBOT CON ANTENA": ["AIM CABEZA ANTENA"],
         "HOLO ARM": ["HOLO ARM PERSONALIZADO 2"],
-        "HOLO PJ": ["HOLOGRAMA PERSONAJE ROJO", "HOLOGRAMA PERSONAJE VERDE"],
+        "HOLO PJ": ["HOLOGRAMA PERSONAJE VERDE"],
         "TEXTURA": ["TEXTURA PERSONALIZADA", "TEXTURA CLARA", "TEXTURA OSCURA"],
         "WALK HACK": ["WALK HACK"]
     ]
@@ -91,10 +124,30 @@ private struct NXBundledOption: Identifiable {
     // El nombre del recurso es fijo y Xcode lo incorpora a Assets.car.
     // Sin archivo correspondiente se impide el reemplazo, no se finge éxito.
     func makeProject() throws -> PatchProject {
-        guard let payload = NSDataAsset(name: dataAsset)?.data else {
-            throw NSError(domain: "NEXORA", code: 1, userInfo: [NSLocalizedDescriptionKey: "Falta el archivo de esta opción en la IPA."])
-        }
         let appID = "com.dts.freefireth"
+        let payload: Data
+        if title == "ANTENA SOLA" && dataAsset.isEmpty {
+            // No reutilizar los recursos AIMBOT: la base siempre es el archivo que
+            // se encuentra en el destino, con los checks del perfil UnityFS.
+            guard let root = ContainerStore.resolveAppContainerPath(bundleID: appID),
+                  ContainerStore.isApplicationContainerPath(root) else {
+                throw NSError(domain: "NEXORA", code: 2,
+                              userInfo: [NSLocalizedDescriptionKey: "iOS no permitió leer el archivo de origen en la otra aplicación. ANTENA SOLA no se aplicó ni alteró datos."])
+            }
+            let source = URL(fileURLWithPath: root, isDirectory: true).appendingPathComponent(targetPath)
+            guard FileManager.default.fileExists(atPath: source.path) else {
+                throw NSError(domain: "NEXORA", code: 3,
+                              userInfo: [NSLocalizedDescriptionKey: "No existe el original compatible. No se aplicó ANTENA SOLA."])
+            }
+            let original = try Data(contentsOf: source, options: .mappedIfSafe)
+            payload = try NXAntennaOnlyUnityFS.build(from: original)
+        } else {
+            guard let bundled = NSDataAsset(name: dataAsset)?.data else {
+                throw NSError(domain: "NEXORA", code: 1,
+                              userInfo: [NSLocalizedDescriptionKey: "Falta el archivo de esta opción en la IPA."])
+            }
+            payload = bundled
+        }
         let rule = PatchRule(bundleID: appID, relativePath: targetPath,
                              replacementFilename: filename, replacementData: payload)
         return PatchProject(id: id, name: title, author: "NEXORA SYSTEM 2026",
@@ -107,11 +160,27 @@ private struct NXBundledOption: Identifiable {
         let appID = "com.dts.freefireth"
         guard let root = ContainerStore.resolveAppContainerPath(bundleID: appID),
               ContainerStore.isApplicationContainerPath(root) else {
-            throw NSError(domain: "NEXORA", code: 2, userInfo: [NSLocalizedDescriptionKey: "No hay acceso verificable al contenedor de la aplicación. No se modificó ningún archivo."])
+            // Sin permiso verificable, no ejecutar ni indicar éxito.
+            throw NSError(domain: "NEXORA", code: 2, userInfo: [NSLocalizedDescriptionKey:
+                "No se pudo acceder al contenedor necesario para «\(title)». " +
+                "El reconocimiento de iOS o una licencia válida no conceden acceso a otros datos. " +
+                "No se modificó ningún archivo."])
         }
         let target = URL(fileURLWithPath: root, isDirectory: true).appendingPathComponent(targetPath)
         guard FileManager.default.fileExists(atPath: target.path) else {
-            throw NSError(domain: "NEXORA", code: 3, userInfo: [NSLocalizedDescriptionKey: "No se encontró el archivo original esperado. El reemplazo se canceló para evitar pérdida de datos."])
+            throw NSError(domain: "NEXORA", code: 3, userInfo: [NSLocalizedDescriptionKey:
+                "No se encontró el archivo original de «\(title)». " +
+                "La operación se canceló para conservar los datos existentes."])
+        }
+        guard FileManager.default.isReadableFile(atPath: target.path) else {
+            throw NSError(domain: "NEXORA", code: 4, userInfo: [NSLocalizedDescriptionKey:
+                "El archivo original de «\(title)» existe, pero no se puede leer. " +
+                "No se intentó reemplazarlo."])
+        }
+        guard FileManager.default.isWritableFile(atPath: target.path) else {
+            throw NSError(domain: "NEXORA", code: 5, userInfo: [NSLocalizedDescriptionKey:
+                "El archivo original de «\(title)» existe, pero no hay permiso de escritura. " +
+                "No se intentó reemplazarlo."])
         }
     }
 }
@@ -133,6 +202,7 @@ struct ContentView: View {
     @State private var restoreConflict: PatchTransactionReceipt?
     @State private var feedback: NXFeedback?
     @State private var updatedOriginalNotice: NXOriginalVersionNotice?
+    @State private var showAntennaOriginalConfirmation = false
     @State private var compatibilityNoticeShown = false
     // Diagnóstico opcional (plegado en Configuración): archivos internos propios.
     @State private var nxMotorDemoIsApplied = false
@@ -173,17 +243,7 @@ struct ContentView: View {
         NavigationStack {
             GeometryReader { geometry in
                 ZStack(alignment: .top) {
-                    NXColors.background.ignoresSafeArea()
-                    LinearGradient(
-                        colors: [
-                            Color(red: 0.018, green: 0.010, blue: 0.034),
-                            Color(red: 0.053, green: 0.012, blue: 0.078),
-                            NXColors.background
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .ignoresSafeArea()
+                    NXGothicBackdrop()
 
                     ScrollView(.vertical) {
                         VStack(spacing: 0) {
@@ -297,7 +357,21 @@ struct ContentView: View {
                 Button("Cancelar", role: .cancel) { updatedOriginalNotice = nil }
             } message: {
                 Text((updatedOriginalNotice?.details ?? "") +
-                     "\nEl original cambió. NEXORA no volverá a usar un reemplazo antiguo. Importa un paquete .3105 actualizado para el archivo nuevo y vincula su SHA-256 en el editor. No se ha modificado ningún archivo.")
+                     "\nNEXORA no usara un reemplazo obsoleto. Importa un paquete .3105 nuevo. En el editor de la opcion actualiza el archivo modificado y vincula la version original mediante su SHA-256. No se modifico ningun archivo.")
+            }
+            .confirmationDialog(
+                "ANTENA SOLA: comprobar el archivo de origen",
+                isPresented: $showAntennaOriginalConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Continuar con verificación") {
+                    if let option = NXBundledOption.all.first(where: { $0.title == "ANTENA SOLA" }) {
+                        toggleBuiltIn(option, enabled: true, antennaApproved: true)
+                    }
+                }
+                Button("Cancelar", role: .cancel) { }
+            } message: {
+                Text("La modificación se generará desde el archivo ACTUAL, no desde un Aimbot existente. NEXORA rechazará archivos incompatibles y variantes conocidas con Aimbot, pero no puede detectar todas las modificaciones desconocidas. No continúes si ya lo alteraste fuera de NEXORA.")
             }
             .patchStorePresentation(store)
             .preferredColorScheme(.dark)
@@ -321,35 +395,41 @@ struct ContentView: View {
 
     private var brandHeader: some View {
         ZStack {
-            VStack(spacing: 0) {
-                Text("NEXORA")
-                    .font(.system(size: 30, weight: .black, design: .rounded))
-                    .italic()
-                    .tracking(1.8)
-                    .foregroundStyle(LinearGradient(
-                        colors: [.white, NXColors.purple, .white],
-                        startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .shadow(color: NXColors.purple.opacity(0.55), radius: 13)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
+            VStack(spacing: 3) {
+                HStack(spacing: 0) {
+                    Text("NE").foregroundStyle(.white)
+                    Text("X")
+                        .foregroundStyle(NXColors.cyan)
+                        .shadow(color: NXColors.cyan.opacity(0.9), radius: 12)
+                    Text("ORA").foregroundStyle(.white)
+                }
+                .font(.system(size: 49, weight: .black, design: .rounded))
+                .tracking(1.1)
+                .shadow(color: NXColors.purple.opacity(0.82), radius: 12)
+                .lineLimit(1)
+                .minimumScaleFactor(0.70)
+
                 Text("— SYSTEM 2026 —")
                     .font(.system(size: 11, weight: .bold, design: .rounded))
-                    .tracking(2.2)
+                    .tracking(2.4)
                     .foregroundStyle(NXColors.purple)
             }
+            .padding(.trailing, 44)
             HStack {
                 Spacer()
                 Button { showSettings = true } label: {
                     Image(systemName: "gearshape.fill")
                         .font(.system(size: 18))
-                        .frame(width: 43, height: 43)
-                        .background(NXColors.surface, in: Circle())
+                        .frame(width: 45, height: 45)
+                        .background(.black.opacity(0.72), in: Circle())
+                        .overlay(Circle().stroke(NXColors.border, lineWidth: 1))
+                        .shadow(color: NXColors.cyan.opacity(0.3), radius: 10)
                 }
                 .accessibilityLabel("Configuración")
             }
             .foregroundStyle(.white)
         }
-        .frame(height: 76)
+        .frame(height: 111)
     }
 
     private var categoryTabs: some View {
@@ -367,7 +447,15 @@ struct ContentView: View {
                             .foregroundStyle(selected ? Color.white : Color.white.opacity(0.66))
                             .padding(.horizontal, 12)
                             .frame(height: 34)
-                            .background(selected ? NXColors.cyan : Color.clear, in: Capsule())
+                            .background {
+                                if selected {
+                                    Capsule()
+                                        .fill(LinearGradient(colors: [NXColors.elevated, NXColors.cyan],
+                                                             startPoint: .leading, endPoint: .trailing))
+                                        .overlay(Capsule().stroke(NXColors.cyan.opacity(0.95), lineWidth: 1.2))
+                                        .shadow(color: NXColors.cyan.opacity(0.62), radius: 11)
+                                }
+                            }
                     }
                     .buttonStyle(.plain)
                     .accessibilityAddTraits(selected ? [.isSelected] : [])
@@ -375,16 +463,18 @@ struct ContentView: View {
             }
             .padding(4)
         }
-        .background(Color(red: 0.055, green: 0.032, blue: 0.080), in: Capsule())
-        .overlay(Capsule().stroke(NXColors.cyan.opacity(0.33), lineWidth: 1))
+        .background(Color.black.opacity(0.70), in: Capsule())
+        .overlay(Capsule().stroke(NXColors.border.opacity(0.78), lineWidth: 1))
     }
 
     private var onlineStatus: some View {
         HStack(spacing: 9) {
+            // Detectar una versión iOS conocida NO comprueba el acceso a archivos.
             Circle()
-                .fill(appState.isSupported ? Color(red: 0.10, green: 0.85, blue: 0.36) : .orange)
+                .fill(appState.lastPatchAppliedThisSession ? Color(red: 0.10, green: 0.85, blue: 0.36) : .orange)
                 .frame(width: 9, height: 9)
-            Text(appState.isSupported ? "Sistema en línea" : "Versión sin verificar")
+            Text(appState.lastPatchAppliedThisSession ? "Última activación comprobada" :
+                 (appState.isSupported ? "iOS reconocido · Acceso no verificado" : "Versión sin verificar"))
                 .foregroundStyle(.white.opacity(0.60))
                 .font(.system(size: 13, weight: .medium))
             Spacer()
@@ -462,8 +552,11 @@ struct ContentView: View {
         .padding(.horizontal, 16)
         .frame(height: 64)
         .frame(maxWidth: .infinity)
-        .background(NXColors.surface.opacity(0.84), in: RoundedRectangle(cornerRadius: 21))
-        .overlay(RoundedRectangle(cornerRadius: 21).stroke(NXColors.border.opacity(0.65), lineWidth: 1))
+        .background(Color.black.opacity(0.73), in: RoundedRectangle(cornerRadius: 21))
+        .overlay(RoundedRectangle(cornerRadius: 21).stroke(
+            LinearGradient(colors: [NXColors.cyan.opacity(0.98), NXColors.border.opacity(0.58)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1.1))
+        .shadow(color: NXColors.cyan.opacity(0.23), radius: 10, y: 2)
     }
 
     // Protege el mismo destino cuando unas opciones usan recursos incorporados
@@ -484,9 +577,13 @@ struct ContentView: View {
         return nil
     }
 
-    private func toggleBuiltIn(_ option: NXBundledOption, enabled: Bool) {
+    private func toggleBuiltIn(_ option: NXBundledOption, enabled: Bool, antennaApproved: Bool = false) {
         guard busyProject == nil else { return }
         if enabled {
+            if option.title == "ANTENA SOLA" && !antennaApproved {
+                showAntennaOriginalConfirmation = true
+                return
+            }
             if let activeName = activeConflict(bundleID: "com.dts.freefireth", path: option.targetPath, excluding: option.id) {
                 feedback = NXFeedback(message: "El archivo de destino ya lo utiliza \(activeName). Desactiva esa opción antes de activar \(option.title).")
                 return
@@ -499,6 +596,7 @@ struct ContentView: View {
                     _ = try DevicePatchService.apply(project: project)
                     await MainActor.run {
                         busyProject = nil
+                        appState.lastPatchAppliedThisSession = true
                         store.reload()
                         activationFeedback.play()
                     }
@@ -512,8 +610,10 @@ struct ContentView: View {
                         }
                     }
                     let retryProject = changed == nil ? nil : (try? option.makeProject())
+                    log("nexora: activación fallida para \(option.title): \(error.localizedDescription)")
                     await MainActor.run {
                         busyProject = nil
+                        appState.lastPatchAppliedThisSession = false
                         if let changed, let retryProject {
                             updatedOriginalNotice = NXOriginalVersionNotice(
                                 project: retryProject,
@@ -560,8 +660,11 @@ struct ContentView: View {
         .padding(.horizontal, 16)
         .frame(height: 64)
         .frame(maxWidth: .infinity)
-        .background(NXColors.surface.opacity(0.84), in: RoundedRectangle(cornerRadius: 21))
-        .overlay(RoundedRectangle(cornerRadius: 21).stroke(NXColors.border.opacity(0.65), lineWidth: 1))
+        .background(Color.black.opacity(0.73), in: RoundedRectangle(cornerRadius: 21))
+        .overlay(RoundedRectangle(cornerRadius: 21).stroke(
+            LinearGradient(colors: [NXColors.cyan.opacity(0.98), NXColors.border.opacity(0.58)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1.1))
+        .shadow(color: NXColors.cyan.opacity(0.23), radius: 10, y: 2)
     }
 
     private func patchRow(_ item: PatchLibraryItem) -> some View {
@@ -594,8 +697,11 @@ struct ContentView: View {
         .padding(.horizontal, 16)
         .frame(height: 64)
         .frame(maxWidth: .infinity)
-        .background(NXColors.surface.opacity(0.84), in: RoundedRectangle(cornerRadius: 21))
-        .overlay(RoundedRectangle(cornerRadius: 21).stroke(NXColors.border.opacity(0.65), lineWidth: 1))
+        .background(Color.black.opacity(0.73), in: RoundedRectangle(cornerRadius: 21))
+        .overlay(RoundedRectangle(cornerRadius: 21).stroke(
+            LinearGradient(colors: [NXColors.cyan.opacity(0.98), NXColors.border.opacity(0.58)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1.1))
+        .shadow(color: NXColors.cyan.opacity(0.23), radius: 10, y: 2)
         .contentShape(RoundedRectangle(cornerRadius: 21))
         .onTapGesture { if item.isLocked { store.requestUnlock(for: item) } }
     }
@@ -704,7 +810,7 @@ struct ContentView: View {
         }
         .padding(10)
         .frame(maxWidth: 440)
-        .background(Color(red: 0.055, green: 0.032, blue: 0.077), in: RoundedRectangle(cornerRadius: 18))
+        .background(Color(red: 0.070, green: 0.006, blue: 0.016), in: RoundedRectangle(cornerRadius: 18))
         .overlay(RoundedRectangle(cornerRadius: 18).stroke(NXColors.border, lineWidth: 1))
         .padding(.horizontal, 19)
         .padding(.top, 6)
@@ -737,6 +843,7 @@ struct ContentView: View {
                     _ = try DevicePatchService.apply(project: project)
                     await MainActor.run {
                         busyProject = nil
+                        appState.lastPatchAppliedThisSession = true
                         store.reload()
                         activationFeedback.play()
                     }
@@ -750,8 +857,10 @@ struct ContentView: View {
                         }
                     }
                     let selectedProject = projectForRetry
+                    log("nexora: error al activar paquete \(baseProject.name): \(error.localizedDescription)")
                     await MainActor.run {
                         busyProject = nil
+                        appState.lastPatchAppliedThisSession = false
                         if let changed, let selectedProject {
                             updatedOriginalNotice = NXOriginalVersionNotice(
                                 project: selectedProject,
@@ -869,13 +978,18 @@ private struct NXSettingsView: View {
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var license: NexoraLicenseModel
     @EnvironmentObject private var patchStore: PatchProjectStore
+    @EnvironmentObject private var fileOperationCoordinator: FileOperationCoordinator
     @State private var settingsImporter = false
+    @State private var showTechnicalLog = false
     @State private var settingsError: String?
     @State private var demoIsApplied = NXLocalMotorDemo.isApplied
     @State private var demoBusy = false
     @State private var demoResult = "Sin ejecutar"
     @State private var cleanupResult = "Limpieza de temporales: sin probar"
+    @State private var showOwnedCleanupConfirmation = false
+    @State private var ownedCleanupResult = "Temporales propios: no se han limpiado"
     @State private var updateProtectionResult = "Protección de actualizaciones: sin probar"
+    @State private var realFilesCheckResult = "Archivos reales: aún no comprobados"
     @Environment(\.openURL) private var openURL
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var music: NXMusicPlayer
@@ -893,6 +1007,9 @@ private struct NXSettingsView: View {
                     card("COMPATIBILIDAD DE 3105", icon: "iphone") {
                         settingsDetail("Dispositivo", value: AppInfo.machineName)
                         settingsDetail("Sistema actual", value: "iOS \(AppInfo.osVersion) (\(AppInfo.osBuild))")
+                        settingsDetail("Acceso a archivos", value: appState.lastPatchAppliedThisSession ?
+                            "Última activación completada; acceso futuro sin garantía" :
+                            "No comprobado en este inicio; la versión de iOS no lo acredita")
                         HStack(spacing: 8) {
                             Image(systemName: appState.isSupported ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
                                 .foregroundStyle(appState.isSupported ? Color.green : Color.orange)
@@ -932,6 +1049,13 @@ private struct NXSettingsView: View {
                     }
                     DisclosureGroup("Diagnóstico técnico del motor 3105") {
                         VStack(alignment: .leading, spacing: 10) {
+                            Button {
+                                showTechnicalLog = true
+                            } label: {
+                                Label("Ver errores de activación", systemImage: "doc.text.magnifyingglass")
+                            }
+                            Text("Revisa el registro antes de compartirlo: puede incluir rutas de archivos y datos del dispositivo.")
+                                .font(.system(size: 10)).foregroundStyle(NXColors.muted)
                             Text("Prueba reversible con archivos propios de NEXORA")
                                 .font(.system(size: 12))
                             HStack {
@@ -957,6 +1081,17 @@ private struct NXSettingsView: View {
                             Text(cleanupResult)
                                 .font(.system(size: 11))
                                 .foregroundStyle(NXColors.purple)
+                            Button(role: .destructive) {
+                                showOwnedCleanupConfirmation = true
+                            } label: {
+                                Label("Limpiar temporales propios ahora", systemImage: "trash")
+                                    .font(.system(size: 12, weight: .semibold))
+                            }
+                            .disabled(demoBusy || patchStore.isBusy || fileOperationCoordinator.payload != nil)
+                            Text(ownedCleanupResult)
+                                .font(.system(size: 11))
+                                .foregroundStyle(NXColors.muted)
+                                .fixedSize(horizontal: false, vertical: true)
                             Button {
                                 testExternalUpdatePreservation()
                             } label: {
@@ -967,6 +1102,21 @@ private struct NXSettingsView: View {
                             Text(updateProtectionResult)
                                 .font(.system(size: 11))
                                 .foregroundStyle(NXColors.purple)
+                            Divider().overlay(NXColors.border)
+                            Button {
+                                checkActualOptionFiles()
+                            } label: {
+                                Label("Comprobar archivos reales (solo lectura)", systemImage: "doc.text.magnifyingglass")
+                                    .font(.system(size: 12, weight: .semibold))
+                            }
+                            .disabled(demoBusy)
+                            Text(realFilesCheckResult)
+                                .font(.system(size: 11))
+                                .foregroundStyle(NXColors.purple)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Text("Comprueba los recursos de las opciones y la lectura de sus destinos reales. No cambia archivos ni comprueba permisos de escritura o restauración.")
+                                .font(.system(size: 10))
+                                .foregroundStyle(NXColors.muted)
                             Text("Solo comprueba temporales dentro de NEXORA; no borra respaldos, registros ni datos externos.")
                                 .font(.system(size: 11))
                                 .foregroundStyle(NXColors.muted)
@@ -999,6 +1149,21 @@ private struct NXSettingsView: View {
         }
         .preferredColorScheme(.dark)
         .tint(NXColors.cyan)
+        .confirmationDialog(
+            "¿Limpiar los temporales propios de NEXORA?",
+            isPresented: $showOwnedCleanupConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Limpiar temporales propios", role: .destructive) {
+                cleanOwnedTemporaryWorkspaces()
+            }
+            Button("Cancelar", role: .cancel) {}
+        } message: {
+            Text("Borra áreas temporales creadas por NEXORA. No elimina respaldos, registros, licencias ni datos de otras apps. Hazlo sin operaciones activas.")
+        }
+        .sheet(isPresented: $showTechnicalLog) {
+            LogView()
+        }
         .fileImporter(
             isPresented: $settingsImporter,
             allowedContentTypes: [UTType(filenameExtension: "3105") ?? .data, .data],
@@ -1024,6 +1189,48 @@ private struct NXSettingsView: View {
         } message: { Text(settingsError ?? "") }
     }
 
+    private func cleanOwnedTemporaryWorkspaces() {
+        guard !demoBusy, !patchStore.isBusy,
+              fileOperationCoordinator.payload == nil else {
+            ownedCleanupResult = "Hay una operación activa; limpieza cancelada para proteger datos."
+            return
+        }
+        // Mantener intactos los temporales de cualquier modificación que
+        // todavía posea un recibo de restauración pendiente.
+        let protectedIDs: Set<UUID>
+        do {
+            let knownIDs = try NXOwnedTemporaryWorkspaces.knownWorkspaceIDs()
+            let catalogIDs = Set(NXBundledOption.all.map(\.id) + patchStore.items.map(\.id))
+            protectedIDs = Set(knownIDs.union(catalogIDs).filter {
+                DevicePatchService.latestReceipt(projectID: $0) != nil
+            })
+        } catch {
+            ownedCleanupResult = "No se pudo verificar el estado de los temporales: \(error.localizedDescription)"
+            return
+        }
+        demoBusy = true
+        Task.detached(priority: .userInitiated) {
+            do {
+                let result = try NXOwnedTemporaryWorkspaces.cleanAll(keeping: protectedIDs)
+                let message: String
+                if result.isComplete {
+                    message = "Limpieza verificada: \(result.cleanedWorkspaces) áreas y \(result.removedEntries) entradas temporales propias eliminadas. Respaldos conservados."
+                } else {
+                    message = "Limpieza PARCIAL: \(result.cleanedWorkspaces) áreas eliminadas; \(result.protectedWorkspaces) protegidas por restauración pendiente, \(result.failedWorkspaces.count) errores y \(result.unrecognizedEntries) entradas no reconocidas. Respaldos intactos."
+                }
+                await MainActor.run {
+                    ownedCleanupResult = message
+                    demoBusy = false
+                }
+            } catch {
+                await MainActor.run {
+                    ownedCleanupResult = "No se completó la limpieza: \(error.localizedDescription)"
+                    demoBusy = false
+                }
+            }
+        }
+    }
+
     private func testOwnedTemporaryCleanup() {
         guard !demoBusy else { return }
         demoBusy = true
@@ -1039,6 +1246,18 @@ private struct NXSettingsView: View {
                     cleanupResult = "Error de limpieza: \(error.localizedDescription)"
                     demoBusy = false
                 }
+            }
+        }
+    }
+
+    private func checkActualOptionFiles() {
+        guard !demoBusy else { return }
+        demoBusy = true
+        Task.detached(priority: .userInitiated) {
+            let message = NXReadOnlyRealFileCheck.run()
+            await MainActor.run {
+                realFilesCheckResult = message
+                demoBusy = false
             }
         }
     }
@@ -1143,6 +1362,54 @@ private struct NXSettingsView: View {
     }
 }
 
+// MARK: - Diagnóstico de acceso a recursos reales, estrictamente sin escrituras.
+// No solicita permisos adicionales ni intenta eludir el aislamiento de iOS.
+private enum NXReadOnlyRealFileCheck {
+    static func run() -> String {
+        let options = NXBundledOption.all
+        let presentAssets = options.filter { NSDataAsset(name: $0.dataAsset)?.data != nil }.count
+        var result = "Recursos modificados incluidos: \(presentAssets)/\(options.count)."
+        guard presentAssets == options.count else {
+            return result + "\nFaltan recursos incorporados. Revisa el proyecto antes de aplicar las opciones."
+        }
+        let appID = "com.dts.freefireth"
+        guard let path = ContainerStore.resolveAppContainerPath(bundleID: appID),
+              ContainerStore.isApplicationContainerPath(path) else {
+            return result + "\nDestino externo: no se pudo localizar o no hay permiso de acceso. No se modificó ningún archivo."
+        }
+        let container = URL(fileURLWithPath: path, isDirectory: true)
+        let groups = Dictionary(grouping: options, by: { $0.targetPath })
+        var readableCount = 0
+        for (index, relativePath) in groups.keys.sorted().enumerated() {
+            guard let group = groups[relativePath] else { continue }
+            let label = Set(group.map(\.category)).sorted().joined(separator: "/")
+            let heading = "\nDestino \(index + 1) (\(label), \(group.count) opciones): "
+            do {
+                let file = try PatchPathValidator.resolveContainedTargetURL(
+                    relativePath: relativePath, containerRoot: container)
+                var isDirectory: ObjCBool = false
+                guard FileManager.default.fileExists(atPath: file.path, isDirectory: &isDirectory),
+                      !isDirectory.boolValue else {
+                    result += heading + "no se encontró el archivo original."
+                    continue
+                }
+                let handle = try FileHandle(forReadingFrom: file)
+                defer { try? handle.close() }
+                _ = try handle.read(upToCount: 1)
+                let attributes = try FileManager.default.attributesOfItem(atPath: file.path)
+                let size = (attributes[.size] as? NSNumber)?.int64Value ?? -1
+                result += heading + "lectura correcta (\(size) bytes)."
+                readableCount += 1
+            } catch {
+                result += heading + "lectura no disponible (\(error.localizedDescription))."
+            }
+        }
+        result += "\nDestinos legibles: \(readableCount)/\(groups.count)."
+        result += "\nEsto NO confirma escritura, reemplazo, respaldo ni restauración."
+        return result
+    }
+}
+
 // MARK: - NEXORA: autoprueba reversible (motor real 3105, solo archivos propios)
 private enum NXLocalMotorDemo {
     private static let appID = "com.nexora.demo.local"
@@ -1236,7 +1503,7 @@ private enum NXLocalMotorDemo {
             _ = try PatchTransaction.apply(
                 project: project, backupRoot: backupRoot, containerResolver: resolver)
         } catch let error as PatchPackageError {
-            if case .originalVersionChanged = error {
+            if case .updatedReplacementRequired = error {
                 originalChangeDetected = true
             } else {
                 throw error
@@ -1247,11 +1514,22 @@ private enum NXLocalMotorDemo {
             throw PatchPackageError.applyFailed
         }
 
-        // Con confirmación, la copia de seguridad nueva debe ser v2, no v1.
+        // El reemplazo anterior está obsoleto. Crear para ESTA prueba local un
+        // reemplazo v2 y vincularlo al original nuevo para verificar restauración.
+        var projectV2 = project
+        let previous = project.rules[0]
+        let newReplacement = Data("NEXORA-MODIFICADO-V2-LOCAL".utf8)
+        projectV2.rules[0] = PatchRule(
+            id: previous.id, bundleID: previous.bundleID,
+            relativePath: previous.relativePath,
+            replacementFilename: "estado-modificado-v2.txt",
+            replacementData: newReplacement,
+            expectedOriginalSHA256: SHA256.hash(data: updated)
+                .map { String(format: "%02x", $0) }.joined()
+        )
         let retry = try PatchTransaction.apply(
-            project: project, backupRoot: backupRoot,
-            allowUpdatedOriginal: true, containerResolver: resolver)
-        guard try Data(contentsOf: target) == replacement else {
+            project: projectV2, backupRoot: backupRoot, containerResolver: resolver)
+        guard try Data(contentsOf: target) == newReplacement else {
             throw PatchPackageError.applyFailed
         }
         _ = try PatchTransaction.restore(receipt: retry, containerResolver: resolver)

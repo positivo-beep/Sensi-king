@@ -61,6 +61,8 @@ class AppState: ObservableObject {
     @Published var exploitStatus: ExploitStatus = .notStarted
     @Published var unsupportedMessage: String?
     @Published var kernelExploitRunning = false
+    // No equivale a permiso permanente: solamente registra una aplicación exitosa actual.
+    @Published var lastPatchAppliedThisSession = false
 
     private var autoRunAttempted = false
 

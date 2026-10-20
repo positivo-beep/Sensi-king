@@ -160,11 +160,27 @@ private struct NXBundledOption: Identifiable {
         let appID = "com.dts.freefireth"
         guard let root = ContainerStore.resolveAppContainerPath(bundleID: appID),
               ContainerStore.isApplicationContainerPath(root) else {
-            throw NSError(domain: "NEXORA", code: 2, userInfo: [NSLocalizedDescriptionKey: "iOS no autorizó el acceso al contenedor de la otra aplicación. ANTENA SOLA no puede aplicarse de esta manera. No se modificó ningún archivo."])
+            // Sin permiso verificable, no ejecutar ni indicar éxito.
+            throw NSError(domain: "NEXORA", code: 2, userInfo: [NSLocalizedDescriptionKey:
+                "No se pudo acceder al contenedor necesario para «\(title)». " +
+                "El reconocimiento de iOS o una licencia válida no conceden acceso a otros datos. " +
+                "No se modificó ningún archivo."])
         }
         let target = URL(fileURLWithPath: root, isDirectory: true).appendingPathComponent(targetPath)
         guard FileManager.default.fileExists(atPath: target.path) else {
-            throw NSError(domain: "NEXORA", code: 3, userInfo: [NSLocalizedDescriptionKey: "No se encontró el archivo original esperado. El reemplazo se canceló para evitar pérdida de datos."])
+            throw NSError(domain: "NEXORA", code: 3, userInfo: [NSLocalizedDescriptionKey:
+                "No se encontró el archivo original de «\(title)». " +
+                "La operación se canceló para conservar los datos existentes."])
+        }
+        guard FileManager.default.isReadableFile(atPath: target.path) else {
+            throw NSError(domain: "NEXORA", code: 4, userInfo: [NSLocalizedDescriptionKey:
+                "El archivo original de «\(title)» existe, pero no se puede leer. " +
+                "No se intentó reemplazarlo."])
+        }
+        guard FileManager.default.isWritableFile(atPath: target.path) else {
+            throw NSError(domain: "NEXORA", code: 5, userInfo: [NSLocalizedDescriptionKey:
+                "El archivo original de «\(title)» existe, pero no hay permiso de escritura. " +
+                "No se intentó reemplazarlo."])
         }
     }
 }
@@ -453,10 +469,12 @@ struct ContentView: View {
 
     private var onlineStatus: some View {
         HStack(spacing: 9) {
+            // Detectar una versión iOS conocida NO comprueba el acceso a archivos.
             Circle()
-                .fill(appState.isSupported ? Color(red: 0.10, green: 0.85, blue: 0.36) : .orange)
+                .fill(appState.lastPatchAppliedThisSession ? Color(red: 0.10, green: 0.85, blue: 0.36) : .orange)
                 .frame(width: 9, height: 9)
-            Text(appState.isSupported ? "Sistema en línea" : "Versión sin verificar")
+            Text(appState.lastPatchAppliedThisSession ? "Última activación comprobada" :
+                 (appState.isSupported ? "iOS reconocido · Acceso no verificado" : "Versión sin verificar"))
                 .foregroundStyle(.white.opacity(0.60))
                 .font(.system(size: 13, weight: .medium))
             Spacer()
@@ -578,6 +596,7 @@ struct ContentView: View {
                     _ = try DevicePatchService.apply(project: project)
                     await MainActor.run {
                         busyProject = nil
+                        appState.lastPatchAppliedThisSession = true
                         store.reload()
                         activationFeedback.play()
                     }
@@ -591,8 +610,10 @@ struct ContentView: View {
                         }
                     }
                     let retryProject = changed == nil ? nil : (try? option.makeProject())
+                    log("nexora: activación fallida para \(option.title): \(error.localizedDescription)")
                     await MainActor.run {
                         busyProject = nil
+                        appState.lastPatchAppliedThisSession = false
                         if let changed, let retryProject {
                             updatedOriginalNotice = NXOriginalVersionNotice(
                                 project: retryProject,
@@ -822,6 +843,7 @@ struct ContentView: View {
                     _ = try DevicePatchService.apply(project: project)
                     await MainActor.run {
                         busyProject = nil
+                        appState.lastPatchAppliedThisSession = true
                         store.reload()
                         activationFeedback.play()
                     }
@@ -835,8 +857,10 @@ struct ContentView: View {
                         }
                     }
                     let selectedProject = projectForRetry
+                    log("nexora: error al activar paquete \(baseProject.name): \(error.localizedDescription)")
                     await MainActor.run {
                         busyProject = nil
+                        appState.lastPatchAppliedThisSession = false
                         if let changed, let selectedProject {
                             updatedOriginalNotice = NXOriginalVersionNotice(
                                 project: selectedProject,
@@ -956,6 +980,7 @@ private struct NXSettingsView: View {
     @EnvironmentObject private var patchStore: PatchProjectStore
     @EnvironmentObject private var fileOperationCoordinator: FileOperationCoordinator
     @State private var settingsImporter = false
+    @State private var showTechnicalLog = false
     @State private var settingsError: String?
     @State private var demoIsApplied = NXLocalMotorDemo.isApplied
     @State private var demoBusy = false
@@ -982,6 +1007,9 @@ private struct NXSettingsView: View {
                     card("COMPATIBILIDAD DE 3105", icon: "iphone") {
                         settingsDetail("Dispositivo", value: AppInfo.machineName)
                         settingsDetail("Sistema actual", value: "iOS \(AppInfo.osVersion) (\(AppInfo.osBuild))")
+                        settingsDetail("Acceso a archivos", value: appState.lastPatchAppliedThisSession ?
+                            "Última activación completada; acceso futuro sin garantía" :
+                            "No comprobado en este inicio; la versión de iOS no lo acredita")
                         HStack(spacing: 8) {
                             Image(systemName: appState.isSupported ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
                                 .foregroundStyle(appState.isSupported ? Color.green : Color.orange)
@@ -1021,6 +1049,13 @@ private struct NXSettingsView: View {
                     }
                     DisclosureGroup("Diagnóstico técnico del motor 3105") {
                         VStack(alignment: .leading, spacing: 10) {
+                            Button {
+                                showTechnicalLog = true
+                            } label: {
+                                Label("Ver errores de activación", systemImage: "doc.text.magnifyingglass")
+                            }
+                            Text("Revisa el registro antes de compartirlo: puede incluir rutas de archivos y datos del dispositivo.")
+                                .font(.system(size: 10)).foregroundStyle(NXColors.muted)
                             Text("Prueba reversible con archivos propios de NEXORA")
                                 .font(.system(size: 12))
                             HStack {
@@ -1125,6 +1160,9 @@ private struct NXSettingsView: View {
             Button("Cancelar", role: .cancel) {}
         } message: {
             Text("Borra áreas temporales creadas por NEXORA. No elimina respaldos, registros, licencias ni datos de otras apps. Hazlo sin operaciones activas.")
+        }
+        .sheet(isPresented: $showTechnicalLog) {
+            LogView()
         }
         .fileImporter(
             isPresented: $settingsImporter,
