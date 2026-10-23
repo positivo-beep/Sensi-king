@@ -249,7 +249,7 @@
   "scripts/verificar_conservacion_actualizaciones_v21_6.py": "cd83207b483b73a15d019d0a7d94e826519b8d18e364a545ea563dd9c271af00",
   "scripts/verificar_holo_pj_oscuro_rainbow.py": "aacc0e781af03db90a626100ac82d12ba53933f44c3ab9f9edfca1dbbe269ea9",
   "scripts/verificar_integracion_nexora.py": "63cfbec9cab1b1f851b427d927f28d6911606ded6a40508f298afb233fdb625e",
-  "scripts/verificar_nexora.py": "5811fbac44655c6418172db232614e757194fe031f410238d101fee7427dec8b",
+  "scripts/verificar_nexora.py": "196def95a02bf4b51ac4901172b1b5903404d579f4cb1c1f5a631516982530a6",
   "scripts/verificar_nexora_autoupdate.py": "3c849974d3dee8b8a0ebc4c3bae19bf9c7a7c63f3028e83e80c6e7e7c93ebdda",
   "scripts/verificar_no_regresion_nexora.py": "bb01705e5ac2c33ece1ec4ae90ffd9da404c89315540398b760922ad8b6c2b82",
   "scripts/verificar_opciones_v14.py": "c069ee7076e0a80cce713c24dbc85749f8460cefee461e17b6a1d6226710798d",
