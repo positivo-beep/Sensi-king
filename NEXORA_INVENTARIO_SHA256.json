@@ -239,7 +239,7 @@
   "scripts/PruebaRevisionesOriginalesNX.swift": "9c434f315909085143c0ea1497f4cb097dcb7dc50e52b3b5e00dfc6679882a1a",
   "scripts/PruebaTemporalesNX.swift": "69ef7b373523e996a3b55cbcf9964c731bf186741a08c4d9fba4bbc19f929457",
   "scripts/verificar_audio_personalizado_v21_2.py": "84bc07e3c002750c9d37eea1c2be9905452e91904da4b61e3739c50806b4ffe8",
-  "scripts/verificar_base_estable_y_rainbow.py": "f0ed97a1471c9b389cf0119fe9809b62089f785db1486a30684b7cb2eb152572",
+  "scripts/verificar_base_estable_y_rainbow.py": "30ef4227ce3dfc15b24feacfad4d8a3d29ae498de10e54ca01811af09f408281",
   "scripts/verificar_build11_interfaz_y_limpieza.py": "c7e8503ad0c2a0df496cd058258e9c02960aa387a6b51336562626f42c930c19",
   "scripts/verificar_build12_interfaz_roja.py": "65df7e4cfaab5eb5f7a7808c00a024992550d8ac3282f6df07284cf9cf49808b",
   "scripts/verificar_build12_ipa.py": "d4a1b47465cf107edce2f9d345792b97ffdbb7a32141fe72b63a6bdf74d8a189",

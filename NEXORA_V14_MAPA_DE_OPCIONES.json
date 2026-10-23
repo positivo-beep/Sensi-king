@@ -186,15 +186,6 @@
     "nota": "Opción visible y apagada hasta incorporar su paquete validado."
   },
   {
-    "opcion": "HOLOGRAMA PERSONAJE VERDE",
-    "categoria": "HOLO PJ",
-    "recurso": null,
-    "destino_relativo": null,
-    "sha256": null,
-    "estado": "pendiente",
-    "nota": "Opción visible y apagada hasta incorporar su paquete validado."
-  },
-  {
     "opcion": "TEXTURA CLARA",
     "categoria": "TEXTURA",
     "recurso": null,

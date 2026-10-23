@@ -8,7 +8,7 @@ R=Path(__file__).resolve().parents[1]
 ui=(R/'ThreeOneOSFive/ContentView.swift').read_text(encoding='utf8')
 manifest=json.loads((R/'NEXORA_ALOK_CAMBIOS_SHA256.json').read_text())
 for name,sha in manifest.items():
-    assert hashlib.sha256((R/name).read_bytes()).hexdigest()==(json.loads((R/'NEXORA_INVENTARIO_SHA256.json').read_text())[name] if name=='ThreeOneOSFive/ContentView.swift' else sha),name
+    assert hashlib.sha256((R/name).read_bytes()).hexdigest()==(json.loads((R/'NEXORA_INVENTARIO_SHA256.json').read_text())[name] if name in ('ThreeOneOSFive/ContentView.swift', 'NEXORA_V14_MAPA_DE_OPCIONES.json') else sha),name
 assets=R/'ThreeOneOSFive/Assets.xcassets'
 items=json.loads((R/'NEXORA_V14_MAPA_DE_OPCIONES.json').read_text())
 options=[it for it in items if it['opcion']=='TEXTURA ALOK']
@@ -66,6 +66,6 @@ assert ui.count('targetPath: "'+it['destino_relativo']+'"')==1
 assert 'try NXActivationPreflight.validateBundledResource(payload)' in ui
 assert 'try NXActivationPreflight.validateReadableWritableOriginal(at: target)' in ui
 assert 'DevicePatchService.restore(' in ui
-assert len(items)==22
+assert len(items)==21
 assert sum(x['estado']=='incluido' for x in items)==15
 print('OK: TEXTURA ALOK importada íntegra, antigua fila sustituida, preflight y restauración conservados. Acceso iOS pendiente.')

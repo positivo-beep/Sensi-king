@@ -53,8 +53,14 @@ ui=(R/'ThreeOneOSFive/ContentView.swift').read_text()
 assert ui.count('title: "'+name+'"')==1
 assert ui.count('dataAsset: "'+asset+'"')==1
 assert ui.count('targetPath: "'+target+'"')==4
-assert 'let finalHologram = builtIn.first(where: { $0.dataAsset == "'+asset+'" })' in ui
-assert 'builtInPatchRow(finalHologram)' in ui
+# La variante Oscuro Rainbow debe ser la cuarta incluida en HOLO PJ,
+# sustituyendo la fila Verde, sin crear una quinta fila.
+assert 'ForEach(builtIn) { option in' in ui
+assert 'builtInPatchRow(option)' in ui
+assert '"HOLOGRAMA PERSONAJE VERDE"' not in ui
+assert 'builtIn.filter { $0.dataAsset !=' not in ui
+assert ui.count('title: "HOLOGRAMA PERSONAJE ') == 3
+assert ui.index('title: "HOLOGRAMA PERSONAJE AZUL"') < ui.index('title: "HOLOGRAMA PERSONAJE AMARILLO"') < ui.index('title: "HOLOGRAMA PERSONAJE RAINBOW"') < ui.index('title: "'+name+'"')
 # UnityFS: declared archive may be shorter than padded on-disk file;
 # block metadata is LZ4, archive data compressed with LZMA.
 version=int.from_bytes(b[8:12],'big');assert 6<=version<=8
@@ -85,4 +91,4 @@ assert block_pos==size-cs and expanded>0
 for path, hash in json.loads((R/'NEXORA_BUILD16_CAMBIOS_SHA256.json').read_text()).items():
     if path=='ThreeOneOSFive/ContentView.swift':continue
     assert hashlib.sha256((R/path).read_bytes()).hexdigest()==hash,path
-print('OK: holograma oscuro Rainbow — datos UnityFS completos, botón final, opciones previas intactas, SHA-256 verificado.')
+print('OK: holograma oscuro Rainbow — datos UnityFS completos, cuarta posición sin Verde, opciones previas intactas, SHA-256 verificado.')

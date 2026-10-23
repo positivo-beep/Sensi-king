@@ -6,7 +6,7 @@ root=Path(__file__).resolve().parent.parent
 catalog=json.loads((root/'NEXORA_V14_MAPA_DE_OPCIONES.json').read_text())
 ui=(root/'ThreeOneOSFive/ContentView.swift').read_text()
 assets=root/'ThreeOneOSFive/Assets.xcassets'
-assert len(catalog) == 22, f'El catálogo esperaba 22 opciones: {len(catalog)}'
+assert len(catalog) == 21, f'El catálogo esperaba 21 opciones: {len(catalog)}'
 assert len({entry['opcion'] for entry in catalog})==len(catalog), 'Nombres duplicados'
 assert 'private func activeConflict(' in ui, 'Falta exclusión mutua de destinos'
 assert 'DevicePatchService.apply(project:' in ui

@@ -8,7 +8,7 @@ root=Path(__file__).resolve().parents[1]
 ui=(root/'ThreeOneOSFive/ContentView.swift').read_text(encoding='utf-8')
 cat=json.loads((root/'NEXORA_V14_MAPA_DE_OPCIONES.json').read_text(encoding='utf-8'))
 assets=root/'ThreeOneOSFive/Assets.xcassets'
-assert len(cat)==22
+assert len(cat)==21
 assert len(set(c['opcion'] for c in cat))==len(cat)
 for name in ('HOLOGRAMA PERSONAJE RAINBOW','HOLOGRAMA PERSONAJE AZUL','RAINBOW COLOR ROJO'):
  c=next(x for x in cat if x['opcion']==name)
@@ -21,7 +21,11 @@ for name in ('HOLOGRAMA PERSONAJE RAINBOW','HOLOGRAMA PERSONAJE AZUL','RAINBOW C
  assert len(raw)==c['tamano_bytes']
 assert 'title: "HOLOGRAMA PERSONAJE ROJO"' not in ui
 assert '"HOLOGRAMA PERSONAJE ROJO"' not in ui
-assert '"HOLOGRAMA PERSONAJE VERDE"' in ui
+# Se retiró Verde y la cuarta plaza corresponde a Oscuro Rainbow.
+# Esta prueba debe seguir la interfaz actual, no exigir el texto de Build 16.
+assert '"HOLOGRAMA PERSONAJE VERDE"' not in ui, 'La fila Verde antigua no debe estar en el panel'
+assert ui.count('title: "HOLOGRAMA PERSONA OSCURO RAINBOW OSCURO"') == 1, 'Debe existir el holograma Oscuro Rainbow como cuarta opcion'
+assert len([line for line in ui.splitlines() if 'NXBundledOption(' in line and 'category: "HOLO PJ"' in line]) == 4, 'HOLO PJ debe contener cuatro opciones'
 assert 'NXModHoloPjAmarillo' in ui
 assert 'DevicePatchService.apply(project:' in ui
 assert 'DevicePatchService.restore(' in ui
