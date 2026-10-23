@@ -2,7 +2,14 @@ from pathlib import Path
 import json, plistlib, xml.etree.ElementTree as ET
 root = Path(__file__).resolve().parent.parent
 proj = (root / 'ThreeOneOSFive.xcodeproj/project.pbxproj').read_text()
-files = list(root.glob('ThreeOneOSFive/**/*.swift'))
+# Los archivos de prueba en subcarpetas scripts/ o tests/ NO pertenecen
+# al target de la app de iOS. No deben exigirse en PBXSourcesBuildPhase.
+source_root = root / 'ThreeOneOSFive'
+excluded_dirs = {'scripts', 'tests', 'Tests'}
+files = [
+    f for f in source_root.rglob('*.swift')
+    if not any(part in excluded_dirs for part in f.relative_to(source_root).parts[:-1])
+]
 assert files, 'No se encontraron fuentes Swift'
 for f in files:
     assert f'/* {f.name} in Sources */' in proj, f'No esta agregado a Sources: {f}'
