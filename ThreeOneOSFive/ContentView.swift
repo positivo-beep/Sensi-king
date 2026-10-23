@@ -2,6 +2,7 @@ import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 import AVFoundation
+import Darwin
 
 // NEXORA SYSTEM: visual personalizado; el motor GPLv3 3105 permanece separado.
 private enum NXColors {
@@ -106,7 +107,6 @@ private struct NXBundledOption: Identifiable {
         "AIMBOT": ["BALAS MÁGICAS"],
         "AIMBOT CON ANTENA": ["AIM CABEZA ANTENA"],
         "HOLO ARM": ["HOLO ARM PERSONALIZADO 2"],
-        "HOLO PJ": ["HOLOGRAMA PERSONAJE VERDE"],
         "TEXTURA": ["TEXTURA CLARA", "TEXTURA OSCURA"],
         "WALK HACK": ["WALK HACK"]
     ]
@@ -161,6 +161,7 @@ struct ContentView: View {
     @StateObject private var music = NXMusicPlayer()
     @StateObject private var ownedUpdater = NXOwnedResourceUpdater()
     @StateObject private var activationFeedback = NXActivationFeedback()
+    @StateObject private var realtimeWatcher = NXRealtimeFileWatcher()
     @Environment(\.scenePhase) private var nxScenePhase
     @State private var selectedCategory = "AIMBOT"
     @State private var showSettings = false
@@ -344,11 +345,39 @@ struct ContentView: View {
             .onChange(of: nxScenePhase) { phase in
                 if phase == .active {
                     ownedUpdater.checkWhenActive()
+                } else {
+                    // En segundo plano iOS puede suspender la app: cerrar los observadores.
+                    realtimeWatcher.stop()
                 }
+            }
+            .onChange(of: periodicAuditEnabled) { enabled in
+                if !enabled { realtimeWatcher.stop() }
             }
             .task(id: nxScenePhase == .active && periodicAuditEnabled && license.state == .allowed) {
                 guard nxScenePhase == .active, periodicAuditEnabled, license.state == .allowed else { return }
-                // Retrasar el primer escaneo hasta tener el panel dibujado.
+                defer { realtimeWatcher.stop() }
+                // No iniciar nada en la pantalla de la key. El panel ya se dibujó.
+                do { try await Task.sleep(nanoseconds: 2_000_000_000) }
+                catch { return }
+                let watchedPaths = Array(Set(NXBundledOption.all.map(\.targetPath))).sorted()
+                // Resolver contenedores en una cola de utilidad, no en el hilo UI.
+                let accessibleURLs = await Task.detached(priority: .utility) { () -> [URL] in
+                    guard let path = ContainerStore.resolveAppContainerPath(bundleID: "com.dts.freefireth"),
+                          ContainerStore.isApplicationContainerPath(path) else { return [] }
+                    let root = URL(fileURLWithPath: path, isDirectory: true)
+                    return watchedPaths.map { root.appendingPathComponent($0) }
+                }.value
+                guard !Task.isCancelled, nxScenePhase == .active,
+                      periodicAuditEnabled, license.state == .allowed else { return }
+                realtimeWatcher.start(fileURLs: accessibleURLs, expectedCount: watchedPaths.count) {
+                    // Se dispara solo cuando el sistema informa cambios reales.
+                    // La comparación SHA-256 sigue siendo la autoridad, no el evento.
+                    checkOriginalsOnForeground()
+                }
+                // Primera inspección asíncrona al entrar. No bloquea el login ni la UI.
+                checkOriginalsOnForeground()
+                // Una comprobación completa de respaldo tras dibujar el panel;
+                // eventos de archivos accesibles disparan revisiones antes.
                 do { try await Task.sleep(nanoseconds: 30_000_000_000) }
                 catch { return }
                 while !Task.isCancelled && license.state == .allowed && nxScenePhase == .active {
@@ -404,9 +433,11 @@ struct ContentView: View {
                             ". Solo se bloquean las opciones relacionadas.")
                     }
                     periodicAuditStatus = "Última comprobación: \(when). Nuevos cambios: \(discovered.count). Archivos con bloqueo: \(blockedPaths.count)."
+                    realtimeWatcher.auditFinished(message: "Última inspección completada: \(when)")
                 case .failure:
                     // La falta de permisos o respaldos NO demuestra que el archivo haya cambiado.
                     periodicAuditStatus = "Último intento: \(when). Verificación incompleta; no se bloquearon otras opciones."
+                    realtimeWatcher.auditFinished(message: "Sin acceso completo: \(when)")
                 }
             }
         }
@@ -491,9 +522,16 @@ struct ContentView: View {
             Circle()
                 .fill(appState.isSupported ? Color(red: 0.10, green: 0.85, blue: 0.36) : .orange)
                 .frame(width: 9, height: 9)
-            Text(appState.isSupported ? "Sistema en línea" : "Versión sin verificar")
-                .foregroundStyle(.white.opacity(0.60))
-                .font(.system(size: 13, weight: .medium))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(appState.isSupported ? "Sistema en línea" : "Versión sin verificar")
+                    .foregroundStyle(.white.opacity(0.75))
+                    .font(.system(size: 13, weight: .medium))
+                Text(realtimeWatcher.status)
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(realtimeWatcher.isWatching ? Color.green : .orange)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             Spacer()
             // Identificador visual para comprobar que no se ejecuta una IPA anterior.
             Text("B16 · ROJO")
@@ -521,9 +559,10 @@ struct ContentView: View {
     private var installedPatchSection: some View {
         let builtIn = NXBundledOption.all.filter { $0.category == selectedCategory }
         LazyVStack(spacing: 10) {
-            // Este nuevo holograma se muestra al FINAL de HOLO PJ, incluso
-            // después de las filas pendientes o paquetes importados.
-            ForEach(builtIn.filter { $0.dataAsset != "NXModHoloPjOscuroRainbowOscuro" }) { option in
+            // Las cuatro variantes incorporadas de HOLO PJ se muestran
+            // en su orden original: Azul, Amarillo, Rainbow, Oscuro Rainbow.
+            // La cuarta sustituye a Verde (que no tenia archivo).
+            ForEach(builtIn) { option in
                 builtInPatchRow(option)
             }
             // Los paquetes .3105 importados por el usuario siguen funcionando.
@@ -536,10 +575,6 @@ struct ContentView: View {
                 if itemForDefault(title) == nil {
                     missingPackageRow(title)
                 }
-            }
-            if selectedCategory == "HOLO PJ",
-               let finalHologram = builtIn.first(where: { $0.dataAsset == "NXModHoloPjOscuroRainbowOscuro" }) {
-                builtInPatchRow(finalHologram)
             }
             if builtIn.isEmpty && filteredPackages.isEmpty &&
                (NXBundledOption.pendingByCategory[selectedCategory] ?? []).isEmpty {
@@ -1545,5 +1580,87 @@ private enum NXLocalMotorDemo {
             }
             return "Restauración OK: archivo ORIGINAL recuperado byte por byte."
         }
+    }
+}
+
+
+// MARK: - Observador por eventos. No concede permisos ni vigila en segundo plano.
+// Mantener en ContentView.swift evita introducir un nuevo archivo Swift sin
+// registrarlo en el target (error sufrido en verificaciones anteriores).
+@MainActor
+final class NXRealtimeFileWatcher: ObservableObject {
+    @Published private(set) var status = "Vigilancia pendiente"
+    @Published private(set) var isWatching = false
+
+    private var sources: [DispatchSourceFileSystemObject] = []
+    private var pendingAudit: DispatchWorkItem?
+    private var active = false
+
+    func start(fileURLs: [URL], expectedCount: Int, onChange: @escaping () -> Void) {
+        stop()
+        guard !fileURLs.isEmpty else {
+            status = "Sin acceso: no hay vigilancia en tiempo real"
+            return
+        }
+        var openedPaths = Set<String>()
+        var watchedFiles = 0
+        for fileURL in fileURLs {
+            // El directorio observa reemplazos/renombrados; el archivo, escrituras.
+            // Son avisos de cambio, nunca permisos para acceder a otros procesos.
+            let paths = [fileURL.path, fileURL.deletingLastPathComponent().path]
+            var fileOpened = false
+            for (index, path) in paths.enumerated() {
+                guard openedPaths.insert(path).inserted else { continue }
+                let fd = Darwin.open(path, O_EVTONLY)
+                guard fd >= 0 else { continue }
+                if index == 0 { fileOpened = true }
+                let source = DispatchSource.makeFileSystemObjectSource(
+                    fileDescriptor: fd,
+                    eventMask: [.write, .extend, .attrib, .rename, .delete, .revoke],
+                    queue: .main
+                )
+                source.setEventHandler { [weak self] in
+                    Task { @MainActor in self?.queueAudit(onChange) }
+                }
+                source.setCancelHandler { _ = Darwin.close(fd) }
+                sources.append(source)
+                source.resume()
+            }
+            if fileOpened { watchedFiles += 1 }
+        }
+        active = !sources.isEmpty
+        isWatching = active
+        if active {
+            status = "Eventos activos: \(watchedFiles)/\(expectedCount) archivos; respaldo cada 5 min"
+        } else {
+            status = "Sin permisos de lectura: vigilancia en tiempo real no disponible"
+        }
+    }
+
+    func auditFinished(message: String) {
+        if active { status = "Eventos activos · " + message }
+    }
+
+    private func queueAudit(_ onChange: @escaping () -> Void) {
+        guard active else { return }
+        // Agrupar varios eventos de una misma escritura, evitando SHA repetidos.
+        pendingAudit?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self = self, self.active else { return }
+            self.status = "Cambio de archivo detectado; verificando SHA-256..."
+            onChange()
+        }
+        pendingAudit = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: work)
+    }
+
+    func stop() {
+        active = false
+        isWatching = false
+        pendingAudit?.cancel()
+        pendingAudit = nil
+        sources.forEach { $0.cancel() }
+        sources.removeAll()
+        status = "Vigilancia pausada"
     }
 }

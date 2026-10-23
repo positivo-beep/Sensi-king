@@ -1,0 +1,49 @@
+NEXORA SYSTEM 2026 - VIGILANCIA BASADA EN EVENTOS
+================================================
+
+CAMBIOS
+- La pantalla principal muestra el estado del observador, no solo Configuración.
+- Tras entrar con una key válida, espera 2 segundos y prepara observadores
+  sobre archivos/rutas que el sistema permita abrir.
+- Cuando iOS notifica cambios en una ruta accesible, agrupa eventos durante
+  1,5 segundos y solicita la inspección SHA-256 EXISTENTE en segundo plano.
+- Hace una revisión inicial no bloqueante y conserva la revisión periódica
+  cada 5 minutos como respaldo.
+- La revisión conserva la protección de respaldos y el bloqueo selectivo de
+  opciones afectadas. Un fallo de lectura NO se presenta como parche real.
+- Suspende observadores al pasar a segundo plano o apagar la opción.
+- No modifica App.swift, verificación de keys, endpoint Cloudflare, licencias,
+  ni la lógica de archivos del motor existente.
+
+LIMITACIONES IMPORTANTES
+- La vigilancia por eventos solo observa archivos a los que el proceso tiene
+  acceso. Si no puede abrirlos, muestra 'Sin acceso' en el panel.
+- En iOS una app normal no puede monitorizar continuamente los archivos
+  privados de otra app ni seguir vigilando al estar suspendida en segundo plano.
+- No detecta todos los posibles parches ni construye automáticamente una
+  modificación compatible con una versión desconocida.
+- La capacidad de recibir un evento no demuestra que el resultado SHA-256
+  indique un parche oficial.
+- No se ha compilado con Xcode ni probado este cambio en un iPhone en este
+  entorno: evitar afirmar 100% hasta probar una IPA real.
+
+COMO INSTALAR EN WORKING COPY
+1. Guarda el ZIP pequeño en Archivos en el iPhone.
+2. Compartir -> Working Copy -> Unzip to Repository.
+3. Elige Sensi-king-2, la raíz del repositorio, y Extract.
+4. Reemplaza solo ContentView.swift y NEXORA_INVENTARIO_SHA256.json.
+5. Commit y Push normal. No uses Force Push.
+6. GitHub Actions verificará y compilará. Mantén la IPA anterior.
+
+PRUEBA EN DISPOSITIVO
+- Abre con una key válida. El texto bajo 'Sistema en línea' debe indicar
+  'Eventos activos...' o 'Sin acceso...'.
+- Los cambios de archivos accesibles deben actualizar el estado, disparar
+  la comprobación SHA y registrar el resultado en Configuración.
+- Pasa la app a segundo plano: el observador se pausa, y se reanuda al volver.
+- No se garantiza vigilancia cuando la app está cerrada o en segundo plano.
+
+PRUEBAS REALIZADAS EN PREPARACION
+- 26/26 verificaciones previas del workflow pasan.
+- Inventario SHA-256: 265 archivos concordantes.
+- swiftc -frontend -parse ContentView.swift: pasa (NO equivale a compilación).
