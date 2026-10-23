@@ -124,26 +124,38 @@
     "destino_relativo": "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D",
     "sha256": "711375e0b39aed9ea18e6956bbc8ebda82e902925842b8202a1b34a86f88805d",
     "estado": "incluido",
-    "nota": "Recurso incorporado y conectado en ContentView; alternativa exclusiva del amarillo. Compatibilidad real pendiente de validar en iPhone y destino.",
+    "nota": "Activo en listado; acceso sujeto a permisos iOS y pruebas en iPhone.",
     "tamano_bytes": 381140
   },
   {
-    "opcion": "HOLOGRAMA PERSONAJE ROJO",
+    "opcion": "HOLOGRAMA PERSONAJE RAINBOW",
     "categoria": "HOLO PJ",
-    "recurso": null,
-    "destino_relativo": null,
-    "sha256": null,
-    "estado": "pendiente",
-    "nota": "Botón visible, deshabilitado: necesita archivo y ruta validados."
+    "recurso": "NXModHoloPjRainbow",
+    "destino_relativo": "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D",
+    "sha256": "71cdc24d159dec937ec14bb373dc8d2fa59cab38f79274981e62a75b68e2337c",
+    "estado": "incluido",
+    "nota": "Archivo Rainbow del usuario; sustituye la opción Rojo y conserva motor Build 8.",
+    "tamano_bytes": 381140
   },
   {
-    "opcion": "TEXTURA PERSONALIZADA",
+    "opcion": "HOLOGRAMA PERSONA OSCURO RAINBOW OSCURO",
+    "categoria": "HOLO PJ",
+    "recurso": "NXModHoloPjOscuroRainbowOscuro",
+    "destino_relativo": "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalavatarres_commonab_shader.BNrjwQsbTrqz6jACY9i6FB6DyYI~3D",
+    "sha256": "22fd920de462bda852649a604cac2116df84eeb9a9955197dcb37d8bd3c115a1",
+    "tamano_bytes": 381140,
+    "estado": "incluido",
+    "nota": "Variante distinta aportada por usuario. Misma familia de destino que otros HOLO PJ; exclusiva; acceso y compatibilidad se comprobarán en iPhone."
+  },
+  {
+    "opcion": "TEXTURA ALOK",
     "categoria": "TEXTURA",
-    "recurso": null,
-    "destino_relativo": null,
-    "sha256": null,
-    "estado": "pendiente",
-    "nota": "Botón visible, deshabilitado: necesita archivo y ruta validados."
+    "recurso": "NXModTexturaAlok",
+    "destino_relativo": "Documents/contentcache/Optional/ios/optionalavatarres/gameassetbundles/optionalab_avatar_66.1GZrX1l5Sm~2FgqXYqB7dDyULWdn4~3D",
+    "sha256": "623efcd8995dc27ba939595843dd29b99cf98f944db528895534e714e9136df5",
+    "estado": "incluido",
+    "nota": "Archivo proporcionado por el usuario; ruta inferida por estructura de recursos. Validación local UnityFS y SHA-256. La ubicación y permisos deben verificarse en el iPhone; no certifica activación.",
+    "tamano_bytes": 2554373
   },
   {
     "opcion": "WALK HACK",
@@ -160,9 +172,9 @@
     "recurso": "NXModHoloRainbowRojo",
     "destino_relativo": "Documents/contentcache/Optional/ios/gameassetbundles/shaders.P0K3UG2TfecMBhWMMV~2Fu8ReudIk~3D",
     "sha256": "e07f18950b44d635a8deb5812725ab394ea446e41993f8c84f544a4f2b13a11b",
-    "tamano_bytes": 1486274,
     "estado": "incluido",
-    "nota": "Archivo verificado del paquete FREE HOLO SHADER.3105 proporcionado por el usuario; opción exclusiva para el mismo destino de los otros HOLO ARM."
+    "nota": "Variación adicional de holograma de arma, sin modificar el motor.",
+    "tamano_bytes": 1486274
   },
   {
     "opcion": "HOLO ARM PERSONALIZADO 2",

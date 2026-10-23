@@ -1,5 +1,3 @@
-> **NEXORA SYSTEM 2026 — v2.1.7 build 16:** la aplicación que se compila en esta entrega se encuentra en `ThreeOneOSFive/ThreeOneOSFive/`. Consulta `REPORTE_MEJORAS_V2_1_7_BUILD16.md` (en esta carpeta o en la raíz) para ver pruebas y límites. La documentación histórica de 3105 que aparece a continuación NO garantiza acceso a datos privados de otras aplicaciones ni compatibilidad de los dispositivos actuales.
-
 > Mejora V21.4: ver `NEXORA_V21_4_LIMPIEZA_REFORZADA.md`. Limpieza limitada a temporales propios; no oculta cambios ni elimina registros externos.
 
 > Actualización V21.3: módulo comprobable de limpieza de temporales propios. Lee `NEXORA_V21_3_LIMPIEZA_PROPIA.md` para alcance y limitaciones.

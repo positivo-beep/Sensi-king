@@ -11,7 +11,9 @@ assert 'let preservedPaths = Set(' in e
 assert 'journal.status = preservedDigests.isEmpty ? .restored : .externalUpdatePreserved' in e
 assert r'return preservedChanges.map(\.displayPath)' in e
 assert 'preservedChangedFiles: preserved' in s
-assert 'preserveExternallyChangedTargets: !allowChangedTargets' in v
+assert 'preserveExternallyChangedTargets: true' in v
+assert 'allowChangedTargets: false' in v
+assert 'Restaurar de todas formas' not in v
 assert 'inspection.changedTargets.contains(where: { $0.kind == .missing })' in v
 assert (r/'ThreeOneOSFive/Assets.xcassets/NexoraActivation.dataset/opcion_activada_audio.mp3').is_file()
 print('OK V21.6: conservación ante cambios externos; archivo ausente detiene operación; sonido conservado.')

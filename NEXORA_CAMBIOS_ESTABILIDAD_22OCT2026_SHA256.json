@@ -1,0 +1,6 @@
+{
+  ".github/workflows/build-nexora-ios.yml": "6a1d884474da854fb2ae65dbd79effde77668720f95a124f332ef14bbe7343e4",
+  "ThreeOneOSFive/App.swift": "c3413dd2aa20e7e490e8ed02ca23f54f4a339661deed1d9c6fd0b1b641c204ea",
+  "ThreeOneOSFive/ContentView.swift": "42197212586a75edd725bdcde01d232a7d9acaadfa2cd1d8f97def83139966c6",
+  "ThreeOneOSFive/helpers/NXOwnedResourceUpdater.swift": "c5f8a17ef10736a07c5a16b7a36ace2d057f09ed504e539ca0e4c7694cb58727"
+}

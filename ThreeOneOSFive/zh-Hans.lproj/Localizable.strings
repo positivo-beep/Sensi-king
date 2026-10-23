@@ -396,8 +396,6 @@
 "browser.replace_error_same_file" = "文件不能替换自身。";
 "browser.replace_error_symlink" = "不支持符号链接。";
 "browser.replace_error_too_large" = "所选文件过大。";
-"browser.replace_error_source_changed" = "所选文件在复制过程中发生变化，请重新选择更新后的文件。";
-"browser.replace_error_target_changed" = "目标文件在准备替换时发生变化，已保留其新内容。";
 "browser.replace_error_failed" = "无法安全替换文件。";
 "browser.search_files" = "搜索此文件夹";
 "browser.search_empty" = "无结果";

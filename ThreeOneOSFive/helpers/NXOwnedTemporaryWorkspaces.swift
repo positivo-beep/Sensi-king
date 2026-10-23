@@ -20,6 +20,10 @@ enum NXOwnedTemporaryWorkspaces {
 
     private static let manager = FileManager.default
 
+    // Serializa las operaciones de temporales propios dentro del proceso.
+    // Es recursivo porque cleanAll/cleanAbandoned llaman a clean.
+    private static let workspaceLock = NSRecursiveLock()
+
     private static var root: URL {
         let caches = manager.urls(for: .cachesDirectory, in: .userDomainMask).first
             ?? manager.temporaryDirectory
@@ -59,6 +63,8 @@ enum NXOwnedTemporaryWorkspaces {
     /// Crea SOLO un temporal propio, identificado por la opción que lo generó.
     @discardableResult
     static func create(data: Data, optionID: UUID, filename: String) throws -> URL {
+        workspaceLock.lock()
+        defer { workspaceLock.unlock() }
         // Nombres estrictamente ASCII y limitados en tamaño: no permitir rutas,
         // separadores, saltos de línea, controles ni nombres excesivos.
         let isSafeName = !filename.isEmpty && filename.utf8.count <= 128 &&
@@ -80,6 +86,8 @@ enum NXOwnedTemporaryWorkspaces {
     /// Borra SOLO el área de temporales de una opción, sin acceder a otra aplicación.
     @discardableResult
     static func clean(optionID: UUID) throws -> Int {
+        workspaceLock.lock()
+        defer { workspaceLock.unlock() }
         let workspace = try path(for: optionID, create: false)
         guard manager.fileExists(atPath: workspace.path) else { return 0 }
         // Nunca borrar recursivamente un directorio o enlace no reconocido. Si
@@ -103,6 +111,8 @@ enum NXOwnedTemporaryWorkspaces {
     }
 
     static func isClean(optionID: UUID) throws -> Bool {
+        workspaceLock.lock()
+        defer { workspaceLock.unlock() }
         let workspace = try path(for: optionID, create: false)
         return !manager.fileExists(atPath: workspace.path)
     }
@@ -144,6 +154,8 @@ enum NXOwnedTemporaryWorkspaces {
     static func cleanAbandoned(olderThan minimumAge: TimeInterval = 48 * 60 * 60,
                                now: Date = Date(),
                                keeping protectedIDs: Set<UUID> = []) throws -> Int {
+        workspaceLock.lock()
+        defer { workspaceLock.unlock() }
         guard minimumAge > 0 else { return 0 }
         let base = try checkedRoot(create: false)
         guard manager.fileExists(atPath: base.path) else { return 0 }
@@ -199,6 +211,8 @@ enum NXOwnedTemporaryWorkspaces {
     /// Enumeración segura de identificadores para comprobar las restauraciones
     /// pendientes incluso cuando un paquete se quitó del catálogo de la interfaz.
     static func knownWorkspaceIDs() throws -> Set<UUID> {
+        workspaceLock.lock()
+        defer { workspaceLock.unlock() }
         let base = try checkedRoot(create: false)
         guard manager.fileExists(atPath: base.path) else { return [] }
         let names = try manager.contentsOfDirectory(atPath: base.path)
@@ -213,6 +227,8 @@ enum NXOwnedTemporaryWorkspaces {
     /// Permite preservar explícitamente opciones activas. No borra carpetas
     /// desconocidas ni intenta seguir enlaces simbólicos.
     static func cleanAll(keeping protectedIDs: Set<UUID> = []) throws -> CleanupReport {
+        workspaceLock.lock()
+        defer { workspaceLock.unlock() }
         let base = try checkedRoot(create: false)
         guard manager.fileExists(atPath: base.path) else {
             return CleanupReport(cleanedWorkspaces: 0, removedEntries: 0,

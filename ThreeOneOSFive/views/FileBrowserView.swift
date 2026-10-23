@@ -1392,8 +1392,6 @@ struct FileBrowserView: View {
         case .sameFile: key = "browser.replace_error_same_file"
         case .symbolicLinkUnsupported: key = "browser.replace_error_symlink"
         case .sourceTooLarge: key = "browser.replace_error_too_large"
-        case .sourceChangedDuringCopy: key = "browser.replace_error_source_changed"
-        case .targetChangedDuringCopy: key = "browser.replace_error_target_changed"
         case .replacementFailed: key = "browser.replace_error_failed"
         }
         return language.text(key)

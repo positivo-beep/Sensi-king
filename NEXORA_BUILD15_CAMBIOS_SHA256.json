@@ -1,0 +1,7 @@
+{
+  "ThreeOneOSFive/ContentView.swift": "52c641e89b94ab9c3c874635c1065fcf4924a21a02b19af8c8bddcd4b1e21039",
+  "ThreeOneOSFive/helpers/PatchTransaction.swift": "61e4ed74c72664ea4c6334235042a9115eae0301de6f7bab01166b2071b91291",
+  "ThreeOneOSFive/helpers/DevicePatchService.swift": "0933d4df23f431ef8a1541e65d9c75b44770c84c7a3b79a4e94092f1ddd9ff72",
+  "ThreeOneOSFive/helpers/NXVersionedPairStore.swift": "cf9552dc6dfd89a64aa395f5f1631eef080611915ad9744038f4770f4e479285",
+  "ThreeOneOSFive/helpers/NXOwnedResourceUpdater.swift": "d948785f5dec4449553c399eb45f69d379938e5d4827ad62452debb80ac267c6"
+}

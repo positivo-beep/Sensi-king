@@ -1,0 +1,19 @@
+NEXORA SYSTEM 2026 | Base 2.0.1 (Build 9) | 20 octubre 2026
+
+BASE: Recuperada del código anterior correspondiente a versión 2.0 Build 8.
+CAMBIOS: Solo interfaz ContentView.swift, catálogo y recursos incorporados; build version en Xcode.
+- Holograma Personaje Rainbow REEMPLAZA entrada pendiente Rojo.
+- Azul activado con recurso importado de Build 18.
+- Rainbow Color Rojo de HOLO ARM importado de Build 18.
+- Amarillo y todas las otras opciones permanecen intactas.
+- Cuenta Cloudflare, login, limpieza y restauración: conservados EXACTAMENTE como estaban en la base anterior.
+- Identificador de aplicación: sin cambiar (com.apple.mobile.MobileHouseArrest).
+- Los archivos del motor de activación, permisos, respaldos y acceso no se han modificado.
+
+PRUEBAS LOCALES: scripts/verificar_base_estable_y_rainbow.py + scripts/verificar_*.py
+RIESGOS: no se ha compilado con Xcode en este entorno ni probado en iPhone. La IPA antigua sólo es la referencia del usuario; no está demostrado que este código reconstruya exactamente su comportamiento.
+Al aplicar el ZIP en GitHub, trabaje en una rama nueva; conserve IPA anterior y respaldos. No instale encima de la versión funcional sin prueba segura.
+
+El workflow del repositorio ahora ejecuta primero una prueba de integridad del motor Build 8 y del catálogo Rainbow.
+Se ha añadido BundledMods/HOLO PERSONAJE/Holograma personaje Rainbow como respaldo legible del recurso del usuario.
+No se ha copiado el motor ni las implementaciones de sustitución de Build 18.

@@ -1,0 +1,12 @@
+{
+  "ThreeOneOSFive/App.swift": "7b47644459450750349ef08a50d9f31c26fe54b8d71b800ca0302086736cacc4",
+  "ThreeOneOSFive/helpers/ContainerStore.swift": "7170a5463077160e87abcbdda8b3aee974f0049f2f0a6ab36a68575fbe590eab",
+  "ThreeOneOSFive/helpers/DevicePatchService.swift": "4f1a12839bd447a8400646d3431dbedc56f134bc705481394b0ae236dd1286ec",
+  "ThreeOneOSFive/helpers/FileReplacementService.swift": "3d70450fc75ef22429da67c2653500d2c3c62d66a1e18ca3dd5fb6e51be67bb7",
+  "ThreeOneOSFive/helpers/KernelExploit.swift": "6c7e12d45312f4f348c3fef76caaf4143acb4aa56c95fe36d5af2e68dc8222be",
+  "ThreeOneOSFive/helpers/PatchTransaction.swift": "1d8299e14854f232ba8208cdedbc3c0c30d6a06c6a89e61444d0bb4f576ed8ca",
+  "ThreeOneOSFive/helpers/NXOwnedTemporaryWorkspaces.swift": "c3c9d6801ba520bceeaff77fcd6f1bd791c2dfab2a9d3563bd7fa7939fb7cb88",
+  "ThreeOneOSFive/helpers/LimitedCleanerService.swift": "e3d4d775de3fcc16984d8d93c9c992320b2caf6091dae06a18befe324972a558",
+  "ThreeOneOSFive/helpers/SBX.swift": "d1418857eab2d19bd557dce44e59296aa79c21c30c10d5b96712eb909812c8e3",
+  "ThreeOneOSFive/Info.plist": "1053aad65b1c08fd18b74be7e335a698a09120a14b6709134a2239d80c692d34"
+}

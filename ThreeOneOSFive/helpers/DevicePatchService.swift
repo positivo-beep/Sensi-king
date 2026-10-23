@@ -7,20 +7,9 @@ struct NXTemporaryCleanupOutcome {
 }
 
 enum DevicePatchService {
-    /// Explica una situación recuperable sin sugerir borrar los respaldos.
-    static func activationErrorMessage(_ error: Error) -> String {
-        if let patchError = error as? PatchPackageError,
-           patchError == .unverifiableJournal {
-            return "Hay un registro de respaldo dañado o incompatible. " +
-                "NEXORA bloqueó la activación para proteger el original. " +
-                "Conserva los respaldos y revisa la recuperación antes de volver a intentar."
-        }
-        return error.localizedDescription
-    }
-
     static func apply(
         project: PatchProject,
-        allowUpdatedOriginal: Bool = false
+        verifiedOriginals: [UUID: Data] = [:]
     ) throws -> PatchTransactionReceipt {
         let bundleIDs = orderedBundleIdentifiers(in: project)
         do {
@@ -28,7 +17,7 @@ enum DevicePatchService {
                 try PatchTransaction.apply(
                     project: project,
                     backupRoot: try PatchProjectLibrary.backupRootURL(),
-                    allowUpdatedOriginal: allowUpdatedOriginal,
+                    verifiedOriginals: verifiedOriginals,
                     containerResolver: { bundleID in
                         guard let root = roots[bundleID] else {
                             throw PatchPackageError.targetAppUnavailable(bundleID)
@@ -42,6 +31,20 @@ enum DevicePatchService {
             // Nunca tocar los respaldos, diarios ni los archivos de otra app.
             _ = try? NXOwnedTemporaryWorkspaces.clean(optionID: project.id)
             throw error
+        }
+    }
+
+    /// Comprobación al volver al primer plano. Solo inspecciona destinos
+    /// legalmente resolubles; jamás modifica archivos ajenos.
+    static func auditKnownOriginals(bundleID: String, relativePaths: [String]) throws -> [String] {
+        try withResolvedContainers(bundleIDs: [bundleID]) { roots in
+            guard let root = roots[bundleID] else {
+                throw PatchPackageError.targetAppUnavailable(bundleID)
+            }
+            return try PatchTransaction.observeAccessibleOriginals(
+                bundleID: bundleID, relativePaths: relativePaths,
+                containerRoot: root, backupRoot: try PatchProjectLibrary.backupRootURL()
+            )
         }
     }
 

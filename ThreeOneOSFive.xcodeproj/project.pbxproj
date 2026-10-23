@@ -41,6 +41,10 @@
 		3105B217 /* PatchTransaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105B117; };
 		3105B218 /* DevicePatchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105B118; };
 		3105N200 /* NXOwnedTemporaryWorkspaces.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105N100; };
+		3105U201 /* NXVersionedPairStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105U101; };
+		3105V201 /* NXOriginalRevisionLedger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105V101; };
+		3105W201 /* NXActivationPreflight.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105W101; };
+		3105U200 /* NXOwnedResourceUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105U100; };
 		3105B219 /* PatchProjectLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105B119; };
 		3105B220 /* PatchProjectStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105B120; };
 		3105B221 /* PatchProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3105B121; };
@@ -131,6 +135,10 @@
 		3105B117 /* PatchTransaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchTransaction.swift; sourceTree = "<group>"; };
 		3105B118 /* DevicePatchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevicePatchService.swift; sourceTree = "<group>"; };
 		3105N100 /* NXOwnedTemporaryWorkspaces.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NXOwnedTemporaryWorkspaces.swift; sourceTree = "<group>"; };
+		3105U101 /* NXVersionedPairStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NXVersionedPairStore.swift; sourceTree = "<group>"; };
+		3105V101 /* NXOriginalRevisionLedger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NXOriginalRevisionLedger.swift; sourceTree = "<group>"; };
+		3105W101 /* NXActivationPreflight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NXActivationPreflight.swift; sourceTree = "<group>"; };
+		3105U100 /* NXOwnedResourceUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NXOwnedResourceUpdater.swift; sourceTree = "<group>"; };
 		3105B119 /* PatchProjectLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchProjectLibrary.swift; sourceTree = "<group>"; };
 		3105B120 /* PatchProjectStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchProjectStore.swift; sourceTree = "<group>"; };
 		3105B121 /* PatchProjectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchProjectsView.swift; sourceTree = "<group>"; };
@@ -271,6 +279,10 @@
 				3105B117 /* PatchTransaction.swift */,
 				3105B118 /* DevicePatchService.swift */,
 				3105N100 /* NXOwnedTemporaryWorkspaces.swift */,
+				3105U100 /* NXOwnedResourceUpdater.swift */,
+				3105U101 /* NXVersionedPairStore.swift */,
+				3105V101 /* NXOriginalRevisionLedger.swift */,
+				3105W101 /* NXActivationPreflight.swift */,
 				3105B119 /* PatchProjectLibrary.swift */,
 				3105B120 /* PatchProjectStore.swift */,
 				3105G103 /* PatchWorkspaceService.swift */,
@@ -410,6 +422,10 @@
 				3105B217,
 				3105B218,
 				3105N200,
+				3105U200,
+				3105U201,
+				3105V201,
+				3105W201,
 				3105B219,
 				3105B220,
 				3105B221,
@@ -467,7 +483,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CODE_SIGN_ENTITLEMENTS = "";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 16;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -483,9 +499,9 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.1.0;
+				MARKETING_VERSION = 2.0.5;
 				OTHER_LDFLAGS = "-lz";
-				PRODUCT_BUNDLE_IDENTIFIER = com.nexora.system2026;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.apple.mobile.MobileHouseArrest";
 				PRODUCT_NAME = 3105;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "ThreeOneOSFive/ThreeOneOSFive-Bridging-Header.h";
@@ -501,7 +517,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CODE_SIGN_ENTITLEMENTS = "";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 16;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -517,9 +533,9 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.1.0;
+				MARKETING_VERSION = 2.0.5;
 				OTHER_LDFLAGS = "-lz";
-				PRODUCT_BUNDLE_IDENTIFIER = com.nexora.system2026;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.apple.mobile.MobileHouseArrest";
 				PRODUCT_NAME = 3105;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "ThreeOneOSFive/ThreeOneOSFive-Bridging-Header.h";

@@ -1,0 +1,10 @@
+NEXORA SYSTEM 2026 — Build 11, revisión de interfaz y estabilidad
+
+BASE: Build 10 comprobado en iPhone por el usuario.
+CAMBIOS: interfaz roja con fondo original NexoraDarkCity, login rojo y negro, tarjetas y selector de categorías; limpieza manual de temporales de NEXORA con confirmación, bloqueos por actividad y preservación de recibos de restauración; contador informativo de activaciones con recibo local.
+CÓDIGO CONSERVADO: servicios de activación, exploración, motor, helpers, exploit y recursos de opciones (incluido Rainbow) idénticos al paquete Build 10.
+PRUEBAS: 15/15 verificaciones Python y análisis sintáctico de todos los archivos Swift. Las comprobaciones de contenido se actualizaron por los cambios de interfaz.
+PENDIENTE: compilación macOS en GitHub Actions y validación real de la interfaz/operaciones desde iPhone. No se garantiza ausencia absoluta de fallos.
+NOTA: El aumento de peso procede únicamente del fondo de ciudad y registros de prueba, no de duplicar proyectos.
+
+CONTROL DE VERSIÓN: 2.0.3 / Build 11; se conserva el bundle identifier y el motor de Build 10.

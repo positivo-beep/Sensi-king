@@ -1,0 +1,17 @@
+NEXORA SYSTEM 2026 - Build 12 ROJO - revisión visual exclusivamente.
+
+Base: Build 11 (rama de prueba). La operación modifica únicamente:
+- ThreeOneOSFive/App.swift (tinte rojo, identificador visible en login)
+- ThreeOneOSFive/ContentView.swift (paleta roja, ciudad roja, etiqueta B12 ROJO)
+- ThreeOneOSFive.xcodeproj/project.pbxproj (versión 2.0.4, Build 12)
+- .github/workflows/build-nexora-ios.yml (prueba del artefacto compilado)
+- scripts/verificar_build12_interfaz_roja.py y scripts/verificar_build12_ipa.py
+
+Los módulos de activación, permisos especiales, licencias y restauración NO se editaron.
+En GitHub Desktop: crea una nueva rama nexora-build12-rojo a partir de Build 11, copia
+contenido del ZIP sobre el repositorio (sin borrar .git), Commit, Publish branch,
+inicia Actions en nexora-build12-rojo, descarga artifact de ESA ejecución.
+En el iPhone comprueba el texto B12 · ROJO junto al estado de sistema.
+Si no está, la IPA instalada NO corresponde a esta compilación. No desinstales
+la Build 10 funcional sin respaldar tus datos.
+Pruebas de fuente e integridad: verificables. Funcionamiento real: pendiente de iPhone.

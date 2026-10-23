@@ -1,17 +1,3 @@
-## NEXORA 2.1.9 (Build 18) — HOLO PJ Rainbow
-
-- Nueva opción HOLOGRAMA PERSONAJE RAINBOW en lugar de HOLOGRAMA PERSONAJE ROJO pendiente.
-- Nuevo dataset UnityFS de 381140 bytes proporcionado por el usuario; integrado al motor de respaldo/restauración existente.
-- Nuevas pruebas de SHA-256, catálogo, destino compartido y workflows; compilación iOS pendiente.
-
-## NEXORA V21.6 — RAINBOW COLOR ROJO
-
-- Nuevo holograma de arma: RAINBOW COLOR ROJO (anteriormente HOLO ARM PERSONALIZADO 1, pendiente).
-- Recurso extraído y verificado del paquete aportado `FREE HOLO SHADER.3105`, sin incorporar ni guardar su contraseña.
-- Se mantienen el holograma Rainbow anterior, Azul con Verde y las variantes de personaje.
-- Los tres hologramas de arma comparten el mismo destino y no deben activarse simultáneamente; se conserva el control existente de conflictos, respaldo y restauración.
-- Esta integración se verifica estáticamente y no demuestra permisos sobre datos de otras apps ni compatibilidad visual en iPhone.
-
 ## NEXORA 2026 V21.6 — Conservación de archivos que cambiaron después de activar una opción
 
 - Si un archivo modificado por NEXORA fue reemplazado externamente mientras la opción estaba activa, se conserva ese contenido en vez de sobrescribirlo con una copia antigua.
@@ -54,24 +40,6 @@
 # Changelog
 
 All notable user-facing changes are documented in this file.
-
-## [2.1.7 build 16] - 2026-10-19 — Reemplazo y actualización más confiables
-
-- Reemplazados los metadatos potencialmente cacheados de `URLResourceValues` por instantáneas `lstat`/`fstat` con tamaño, identidad e instantes de modificación/cambio.
-- Evita leer enlaces simbólicos del origen y sobrescribir originales modificados durante la operación.
-- Mensajes y casos exhaustivos del explorador para archivos fuente/destino modificados.
-- Ampliadas las pruebas del reemplazador a 12/12 con casos de concurrencia, archivos vacíos y archivos grandes.
-- Se mantienen intactos el sistema de licencias, las comprobaciones SHA-256 de versiones de originales, los diarios de restauración y la limpieza propia.
-- **No verificado todavía:** compilación de IPA en macOS ni ejecución en iPhone.
-
-## [2.1.3 build 12] - 2026-10-19 — Mejoras de fiabilidad
-
-- Limpieza de temporales propios más conservadora: nombres seguros, rechazo de entradas anómalas y pruebas de conservación.
-- Reemplazo de archivos con comprobación de cambios durante la copia y verificación del staging.
-- Limpiador limitado de caché con suma segura y profundidad acotada.
-- Pruebas funcionales nuevas para ejecutar en GitHub Actions/macOS.
-- Artefactos y verificadores de versión sincronizados para evitar confusión con builds anteriores.
-- **Pendiente:** compilación en Xcode e instalación/validación real en iPhone. Cloudflare sin cambios.
 
 ## [1.0.1] - 2026-08-15
 

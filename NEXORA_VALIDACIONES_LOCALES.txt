@@ -1,0 +1,49 @@
+verificar_audio_personalizado_v21_2.py: OK
+OK: grabacion incorporada, recurso valido y activaciones conectadas
+SHA256: 7fd96930aadebf5576a3e080742d907c646231e3ab3ded2f2c0bcb42cab6d867
+
+verificar_base_estable_y_rainbow.py: OK
+OK: catálogo, 3 recursos importados, Rainbow reemplaza Rojo; identidad original conservada.
+PENDIENTE: compilación en macOS y prueba real en iPhone.
+OK: 10 archivos críticos del Build 8 permanecen intactos.
+
+verificar_conservacion_actualizaciones_v21_6.py: OK
+OK V21.6: conservación ante cambios externos; archivo ausente detiene operación; sonido conservado.
+Pendiente: compilar en Xcode/GitHub Actions y verificar con archivos de prueba propios.
+
+verificar_integracion_nexora.py: OK
+NEXORA: OK comprobaciones estructurales (55 Swift, assets, licencia, archivos, panel, esquema).
+ATENCIÓN: falta compilación Xcode/macOS y pruebas en iPhone.
+
+verificar_nexora.py: OK
+PREVERIFICACION OK: 55 fuentes Swift, assets, esquema Xcode, licencia, motor original.
+
+verificar_opciones_v14.py: OK
+OK: 21 opciones (13 con recursos, 8 pendientes); motor y UI presentes.
+Pendiente: compilación Xcode, verificación de acceso real y restauración en iPhone.
+
+verificar_restauracion_v21_1.py: OK
+OK: verificación SHA-256 antes de registrar restauración y audio V21 presentes
+
+verificar_seguridad_licencias.py: OK
+nes
+OK: Solo éxito HTTP 2xx autoriza
+OK: Rechazo de expiraciones malformadas
+OK: Revalidación al volver
+OK: Revocación y expiración
+OK: Sin token de administración en cliente
+Auditoría estática correcta. Pendiente: Xcode, Cloudflare, ESign e iPhone.
+
+verificar_temporales_nexora_v21_3.py: OK
+ permitida: bloqueada correctamente.
+Limpieza repetida: segura.
+Temporales antiguos: eliminados; los recientes permanecen intactos.
+Enlace simbólico externo: protegido.
+OK: módulo registrado en Xcode, UI de diagnóstico y pruebas reales de temporales
+
+verificar_version_original_v21_5.py: OK
+OK: preflight antes de aplicar; compara tamaño + SHA-256; aviso y confirmación; audio intacto
+Pendiente: compilación con Xcode y validación funcional en iPhone
+
+Swift parse (56 files): OK
+

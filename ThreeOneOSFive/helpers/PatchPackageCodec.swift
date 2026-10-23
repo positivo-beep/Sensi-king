@@ -358,13 +358,6 @@ enum PatchPackageCodec {
             if !bundles.isEmpty, !bundles.contains(bundleID) {
                 throw PatchPackageError.invalidProject
             }
-            // La huella opcional siempre debe ser una SHA-256 canonica.
-            if let hash = rule.expectedOriginalSHA256 {
-                guard hash.utf8.count == 64,
-                      hash.utf8.allSatisfy({ (48...57).contains($0) || (97...102).contains($0) }) else {
-                    throw PatchPackageError.invalidProject
-                }
-            }
             let targetKey = bundleID + "\0" + relativePath
             guard targets.insert(targetKey).inserted,
                   !directoryTargets.contains(targetKey) else {

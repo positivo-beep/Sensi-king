@@ -1,0 +1,7 @@
+{
+  "ThreeOneOSFive.xcodeproj/project.pbxproj": "8e0db9b94aad117130c998e92feae5acd5cd6fa6921910428f902395a4fae3a2",
+  "ThreeOneOSFive/ContentView.swift": "81d9c141a13c84d4d6d52f074a300c8a48704b4c20f51f644ada66b6529a0ad1",
+  "ThreeOneOSFive/helpers/DevicePatchService.swift": "0e8be03975ccbb96f169795821564167c2edaeccedda26a9fd67836b8cd2d433",
+  "ThreeOneOSFive/helpers/NXOriginalRevisionLedger.swift": "e0c8d514851a31659d1ebebd5d700f61c0580425873b30305f58afbf9c1a26d9",
+  "ThreeOneOSFive/helpers/PatchTransaction.swift": "3a6ae7c217fc775a8bc74877559a7a4a26145f159963960593479c976108b732"
+}

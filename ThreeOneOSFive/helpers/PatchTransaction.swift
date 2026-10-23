@@ -28,13 +28,15 @@ struct PatchRestoreInspection: Equatable {
 }
 
 enum PatchTransaction {
+    // Evita carreras entre comprobación de primer plano, aplicar y restaurar.
+    // No reemplaza las comprobaciones SHA-256 ante cambios de otros procesos.
+    private static let transactionLock = NSRecursiveLock()
     /// Huella histórica de un original guardado ANTES de una activación.
     /// Solo se usan respaldos verificables que ya pertenecen a NEXORA.
     private struct PreviousOriginal {
         let digest: Data
         let byteCount: UInt64
         let createdAt: Date
-        let replacementDigest: Data
     }
 
     private enum Status: String, Codable {
@@ -99,11 +101,6 @@ enum PatchTransaction {
         let snapshotURL: URL?
     }
 
-    private enum WrittenTargetState {
-        case present(Data)
-        case absent
-    }
-
     private enum AppliedSource {
         case file(URL)
         case data(Data)
@@ -113,77 +110,16 @@ enum PatchTransaction {
     private static let schemaVersion = 2
     private static let journalFilename = "journal.plist"
 
-    // Serializa aplicar, restaurar y reactivar en el proceso actual.
-    // Impide que dos botones simultáneos guarden respaldos incompatibles.
-    private static let mutationLock = NSRecursiveLock()
-
-    private static func withMutationLock<T>(_ operation: () throws -> T) rethrows -> T {
-        mutationLock.lock()
-        defer { mutationLock.unlock() }
-        return try operation()
-    }
-
-    // Un diario corrupto no significa que un archivo esté restaurado.
-    // Bloquear una nueva activación protege el original mientras se revisa el respaldo.
-    private static func containsUnverifiableJournal(
-        backupRoot: URL,
-        fileManager: FileManager
-    ) -> Bool {
-        guard fileManager.fileExists(atPath: backupRoot.path) else { return false }
-        guard let projects = try? fileManager.contentsOfDirectory(
-            at: backupRoot, includingPropertiesForKeys: nil
-        ) else { return true }
-        for project in projects {
-            guard let projectID = UUID(uuidString: project.lastPathComponent) else { continue }
-            guard let transactions = try? fileManager.contentsOfDirectory(
-                at: project, includingPropertiesForKeys: nil
-            ) else { return true }
-            for transaction in transactions {
-                guard let transactionID = UUID(uuidString: transaction.lastPathComponent) else { continue }
-                let url = transaction.appendingPathComponent(journalFilename)
-                // Una preparación interrumpida ANTES de escribir el diario
-                // no llega a ejecutar escrituras en los destinos.
-                guard fileManager.fileExists(atPath: url.path) else { continue }
-                guard let journal = try? readJournal(url),
-                      (minimumSchemaVersion...schemaVersion).contains(journal.schemaVersion),
-                      journal.projectID == projectID,
-                      journal.transactionID == transactionID else { return true }
-            }
-        }
-        return false
-    }
-
     static func apply(
         project: PatchProject,
         backupRoot: URL,
-        allowUpdatedOriginal: Bool = false,
+        verifiedOriginals: [UUID: Data] = [:],
         containerResolver: (String) throws -> URL,
         beforeWrite: ((Int) throws -> Void)? = nil,
         fileManager: FileManager = .default
     ) throws -> PatchTransactionReceipt {
-        try withMutationLock {
-            try applyExclusive(
-                project: project,
-                backupRoot: backupRoot,
-                allowUpdatedOriginal: allowUpdatedOriginal,
-                containerResolver: containerResolver,
-                beforeWrite: beforeWrite,
-                fileManager: fileManager
-            )
-        }
-    }
-
-    private static func applyExclusive(
-        project: PatchProject,
-        backupRoot: URL,
-        allowUpdatedOriginal: Bool,
-        containerResolver: (String) throws -> URL,
-        beforeWrite: ((Int) throws -> Void)?,
-        fileManager: FileManager
-    ) throws -> PatchTransactionReceipt {
-        guard !containsUnverifiableJournal(backupRoot: backupRoot, fileManager: fileManager) else {
-            throw PatchPackageError.unverifiableJournal
-        }
+        transactionLock.lock()
+        defer { transactionLock.unlock() }
         guard !project.rules.isEmpty || !project.directories.isEmpty else {
             throw PatchPackageError.invalidProject
         }
@@ -284,25 +220,14 @@ enum PatchTransaction {
             }
         }
 
-        // Validar que cada reemplazo se haya preparado para la version ORIGINAL
-        // seleccionada por el usuario. Nunca inferir compatibilidad solo por tamaño.
-        // Un hash esperado incorrecto (o un original ausente) aborta sin cambios.
-        var incompatible: [String] = []
-        for item in resolvedRules {
-            guard let expected = item.rule.expectedOriginalSHA256 else { continue }
-            let label = item.rule.bundleID + "/" + item.rule.relativePath
-            guard expected.count == 64,
-                  expected.utf8.allSatisfy({ (48...57).contains($0) || (97...102).contains($0) }),
-                  fileManager.fileExists(atPath: item.target.path),
-                  let actual = try? digestFile(item.target),
-                  hexDigest(actual) == expected else {
-                incompatible.append(label + ": original distinto al indicado en el paquete")
-                continue
+        // Fotografiar la versión exacta ANTES de escribir, para detectar cambios
+        // simultáneos mientras se guardan los respaldos.
+        let inspectedDigests: [UUID: Data] = try Dictionary(uniqueKeysWithValues:
+            resolvedRules.compactMap { item -> (UUID, Data)? in
+                guard fileManager.fileExists(atPath: item.target.path) else { return nil }
+                return (item.rule.id, try digestFile(item.target))
             }
-        }
-        if !incompatible.isEmpty {
-            throw PatchPackageError.incompatibleOriginalVersion(incompatible)
-        }
+        )
 
         // Detectar actualizaciones del ORIGINAL (contenido y tamaño) antes de
         // escribir un reemplazo. Un cambio no implica que sea oficial.
@@ -311,40 +236,34 @@ enum PatchTransaction {
             backupRoot: backupRoot,
             fileManager: fileManager
         )
-        // Si ha cambiado el original, NO basta con que el usuario confirme.
-        // Exigir un paquete actualizado con SHA-256 esperado de cada destino.
-        // Una carga antigua sin referencia versionada debe detenerse.
-        if !versionChanges.isEmpty {
-            if versionChanges.contains(where: { $0.contains(": no se encuentra") }) {
-                throw PatchPackageError.originalVersionChanged(versionChanges)
-            }
-            let allBound = resolvedRules.allSatisfy { $0.rule.expectedOriginalSHA256 != nil }
-            if !allBound {
-                throw PatchPackageError.updatedReplacementRequired(versionChanges)
-            }
-            // Rechazar reutilizar el mismo payload de la version anterior,
-            // aunque se haya vinculado a un SHA nuevo.
-            let oldIdentities = Dictionary(uniqueKeysWithValues: resolvedRules.map {
-                ($0.rule.bundleID + "\0" + $0.rule.relativePath, containerFingerprint($0.containerRoot))
-            })
-            let historical = previousOriginalVersions(
-                backupRoot: backupRoot, targetFingerprints: oldIdentities, fileManager: fileManager
+        // El archivo actualizado se descubre SIN que el usuario importe un
+        // original. Guardarlo como revisión observada antes de bloquear el mod.
+        // Observar no equivale a autenticar la procedencia del recurso.
+        for item in resolvedRules {
+            let name = item.rule.bundleID + "/" + item.rule.relativePath
+            guard versionChanges.contains(where: { $0.hasPrefix(name + ":") }),
+                  let observed = inspectedDigests[item.rule.id] else { continue }
+            try preserveObservedOriginal(
+                target: item.target, bundleID: item.rule.bundleID,
+                relativePath: item.rule.relativePath, digest: observed,
+                reason: .externalChange, backupRoot: backupRoot,
+                fileManager: fileManager
             )
-            var stale: [String] = []
-            for item in resolvedRules {
-                let key = item.rule.bundleID + "\0" + item.rule.relativePath
-                if let older = historical[key],
-                   digest(item.rule.replacementData) == older.replacementDigest {
-                    stale.append(item.rule.bundleID + "/" + item.rule.relativePath)
-                }
-            }
-            if !stale.isEmpty {
-                throw PatchPackageError.updatedReplacementRequired(stale)
-            }
         }
-        // Compatibilidad de firma para codigo antiguo: allowUpdatedOriginal no
-        // omite las protecciones, incluso si el llamador lo solicita.
-        _ = allowUpdatedOriginal
+        // Jamás aceptar una modificación vieja por confirmación del usuario.
+        // Única excepción: TODAS las reglas tienen una versión original exacta
+        // verificada por una pareja descargada y validada, y el archivo presente
+        // vuelve a coincidir con SHA-256 inmediatamente antes de la transacción.
+        if !versionChanges.isEmpty {
+            var compatible = !verifiedOriginals.isEmpty
+            for item in resolvedRules {
+                guard let expected = verifiedOriginals[item.rule.id],
+                      fileManager.fileExists(atPath: item.target.path),
+                      let observed = try? digestFile(item.target),
+                      observed == expected else { compatible = false; break }
+            }
+            if !compatible { throw PatchPackageError.originalVersionChanged(versionChanges) }
+        }
 
         let transactionID = UUID()
         let transactionDirectory = backupRoot
@@ -375,16 +294,25 @@ enum PatchTransaction {
                 var originalDigest: Data?
                 if let backupFilename {
                     let backupURL = transactionDirectory.appendingPathComponent(backupFilename)
-                    // Comprobar que la copia tiene los mismos bytes que el origen
-                    // antes y después de copiar. Nunca aplicar si hubo cambios.
-                    let originalDigestBefore = try digestFile(resolved.target)
                     try fileManager.copyItem(at: resolved.target, to: backupURL)
-                    let backupDigest = try digestFile(backupURL)
-                    guard backupDigest == originalDigestBefore,
-                          try digestFile(resolved.target) == originalDigestBefore else {
-                        throw PatchPackageError.applyFailed
+                    originalDigest = try digestFile(backupURL)
+                    // Comprobar SIEMPRE, incluso sin pareja remota, que el
+                    // original copiado sea el inspeccionado inicialmente.
+                    if originalDigest != inspectedDigests[resolved.rule.id] {
+                        throw PatchPackageError.originalVersionChanged([
+                            resolved.rule.bundleID + "/" + resolved.rule.relativePath +
+                            ": cambió mientras se creaba el respaldo"
+                        ])
                     }
-                    originalDigest = backupDigest
+                    // Segunda comprobación: detectar cambios entre la revisión
+                    // previa y la copia. Si cambió un byte, abortar sin aplicar.
+                    if let expected = verifiedOriginals[resolved.rule.id],
+                       originalDigest != expected {
+                        throw PatchPackageError.originalVersionChanged([
+                            resolved.rule.bundleID + "/" + resolved.rule.relativePath +
+                            ": el original cambió durante el respaldo"
+                        ])
+                    }
                 }
                 let replacementDigest = digest(resolved.rule.replacementData)
                 if let appliedFilename {
@@ -407,8 +335,12 @@ enum PatchTransaction {
                 ))
             }
         } catch let error as PatchPackageError {
+            // Antes de generar un journal solo hay copias locales temporales.
+            // Limpiar una transacción incompleta sin tocar el original.
+            try? fileManager.removeItem(at: transactionDirectory)
             throw error
         } catch {
+            try? fileManager.removeItem(at: transactionDirectory)
             throw PatchPackageError.applyFailed
         }
 
@@ -428,9 +360,7 @@ enum PatchTransaction {
             throw PatchPackageError.applyFailed
         }
 
-        // Registrar solo los destinos escritos realmente. Ante un cambio externo
-        // durante la activación, jamás restaurar rutas que NEXORA no tocó.
-        var writtenIndices: [Int] = []
+        var writtenRecordIndices: [Int] = []
         do {
             for resolved in resolvedDirectories where !fileManager.fileExists(atPath: resolved.target.path) {
                 try fileManager.createDirectory(
@@ -440,32 +370,20 @@ enum PatchTransaction {
             }
             for (index, resolved) in resolvedRules.enumerated() {
                 try beforeWrite?(index)
-                // El original pudo actualizarse DESPUÉS de la comprobación
-                // previa o mientras se preparaban los respaldos. Comprobarlo
-                // inmediatamente antes de sustituirlo, incluido el caso en
-                // que el destino no existía y otro proceso acaba de crearlo.
-                try validateFileTarget(
-                    resolved.target,
-                    relativePath: resolved.rule.relativePath,
-                    containerRoot: resolved.containerRoot,
-                    allowMissingParents: false,
-                    fileManager: fileManager
-                )
-                let record = records[index]
-                let unchanged: Bool
-                if record.originalExisted {
-                    if fileManager.fileExists(atPath: resolved.target.path) {
-                        unchanged = try digestFile(resolved.target) == record.originalDigest
-                    } else {
-                        unchanged = false
+                // Última comprobación justo antes de cada escritura. Si una app
+                // actualizó el original entretanto, jamás lo sobreescribimos.
+                if let expected = records[index].originalDigest {
+                    guard fileManager.fileExists(atPath: resolved.target.path),
+                          try digestFile(resolved.target) == expected else {
+                        throw PatchPackageError.originalVersionChanged([
+                            resolved.rule.bundleID + "/" + resolved.rule.relativePath +
+                            ": el original cambió justo antes de aplicar"
+                        ])
                     }
-                } else {
-                    unchanged = !fileManager.fileExists(atPath: resolved.target.path)
-                }
-                guard unchanged else {
-                    throw PatchPackageError.incompatibleOriginalVersion([
-                        resolved.rule.bundleID + "/" + resolved.rule.relativePath
-                            + ": cambió durante la activación; no se sobrescribió"
+                } else if fileManager.fileExists(atPath: resolved.target.path) {
+                    throw PatchPackageError.originalVersionChanged([
+                        resolved.rule.bundleID + "/" + resolved.rule.relativePath +
+                        ": apareció un archivo durante la operación"
                     ])
                 }
                 try atomicWrite(
@@ -474,8 +392,8 @@ enum PatchTransaction {
                     preservingExistingAttributes: true,
                     fileManager: fileManager
                 )
-                writtenIndices.append(index)
-                guard try digestFile(resolved.target) == record.replacementDigest else {
+                writtenRecordIndices.append(index)
+                guard try digestFile(resolved.target) == records[index].replacementDigest else {
                     throw PatchPackageError.applyFailed
                 }
             }
@@ -487,76 +405,92 @@ enum PatchTransaction {
                 journalURL: journalURL
             )
         } catch {
-            let originalError = error
-            var rollbackComplete = true
-            // Recuperar en orden inverso SOLO los destinos reemplazados.
-            // Si otro proceso cambió uno de ellos, no se borra su trabajo:
-            // se conserva el diario .prepared para recuperación supervisada.
-            for index in writtenIndices.reversed() {
-                let record = records[index]
-                let target = resolvedRules[index].target
-                do {
-                    try validateFileTarget(
-                        target,
-                        relativePath: record.relativePath,
-                        containerRoot: resolvedRules[index].containerRoot,
-                        allowMissingParents: false,
-                        fileManager: fileManager
-                    )
-                    guard fileManager.fileExists(atPath: target.path),
-                          try digestFile(target) == record.replacementDigest else {
-                        rollbackComplete = false
-                        continue
-                    }
-                    if record.originalExisted {
-                        guard let filename = record.backupFilename,
-                              let expected = record.originalDigest else {
-                            rollbackComplete = false
-                            continue
-                        }
-                        let backup = transactionDirectory.appendingPathComponent(filename)
-                        guard fileManager.fileExists(atPath: backup.path),
-                              try digestFile(backup) == expected else {
-                            rollbackComplete = false
-                            continue
-                        }
-                        try atomicCopy(backup, to: target, fileManager: fileManager)
-                        guard try digestFile(target) == expected else {
-                            rollbackComplete = false
-                            continue
-                        }
-                    } else {
-                        try fileManager.removeItem(at: target)
-                    }
-                } catch {
-                    rollbackComplete = false
-                }
-            }
-            if rollbackComplete {
+            do {
+                // Revertir ÚNICAMENTE destinos que modificó esta transacción
+                // y que aún contienen exactamente nuestro recurso modificado.
+                // Nunca sustituir cambios externos ni destinos sin escribir.
+                try restoreRecords(
+                    writtenRecordIndices.map { records[$0] },
+                    transactionDirectory: transactionDirectory,
+                    roots: roots,
+                    requirePatchedDigest: true,
+                    createdDirectories: createdDirectories,
+                    fileManager: fileManager
+                )
                 journal.status = .rolledBack
-                do {
-                    try writeJournal(journal, to: journalURL)
-                    let createdURLs = resolvedDirectories
-                        .filter { directory in
-                            createdDirectories.contains { record in
-                                record.bundleID == directory.bundleID
-                                    && record.relativePath == directory.relativePath
-                            }
-                        }
-                        .map(\.target)
-                    removeEmptyCreatedDirectories(createdURLs, fileManager: fileManager)
-                } catch {
-                    rollbackComplete = false
-                }
+                try writeJournal(journal, to: journalURL)
+            } catch {
+                // Dejar el journal PREPARED y los originales para recuperación.
             }
-            guard rollbackComplete else {
-                throw PatchPackageError.applyFailed
-            }
-            if let patchError = originalError as? PatchPackageError {
-                throw patchError
-            }
+            if let patchError = error as? PatchPackageError,
+               case .originalVersionChanged = patchError { throw patchError }
             throw PatchPackageError.applyFailed
         }
+    }
+
+    /// Guarda solamente revisiones de archivos obtenidos por acceso existente.
+    /// Nunca sobreescribe el destino. `source` registra observación, NO autenticidad.
+    @discardableResult
+    private static func preserveObservedOriginal(
+        target: URL, bundleID: String, relativePath: String, digest: Data,
+        reason: NXOriginalRevisionLedger.Source,
+        backupRoot: URL, fileManager: FileManager
+    ) throws -> Bool {
+        let key = bundleID + "\0" + relativePath
+        return try NXOriginalRevisionLedger.preserveIfNew(
+            sourceURL: target, backupRoot: backupRoot,
+            logicalKeySHA256: self.digest(Data(key.utf8)),
+            targetDescription: bundleID + "/" + relativePath,
+            expectedDigest: digest, reason: reason,
+            digestFile: { try digestFile($0) }, fileManager: fileManager
+        )
+    }
+
+    /// Comprobación al abrir o volver al primer plano, sin modificar el destino.
+    /// Escanea solo rutas que el llamador ya puede resolver legalmente.
+    /// Evita registrar una modificación ACTIVADA como si fuera el original.
+    static func observeAccessibleOriginals(
+        bundleID: String, relativePaths: [String],
+        containerRoot: URL, backupRoot: URL,
+        fileManager: FileManager = .default
+    ) throws -> [String] {
+        transactionLock.lock()
+        defer { transactionLock.unlock() }
+        let bundle = try PatchPathValidator.canonicalBundleIdentifier(bundleID)
+        guard bundle == bundleID else { throw PatchPackageError.invalidProject }
+        let occupied = appliedTargetKeys(backupRoot: backupRoot, fileManager: fileManager)
+        let canonicalRoot = PatchPathValidator.canonicalFileURL(containerRoot)
+        var discovered: [String] = []
+        for path in Set(relativePaths).sorted() {
+            let relative = try PatchPathValidator.canonicalRelativePath(path)
+            let key = bundle + "\0" + relative
+            if occupied.contains(key) { continue }
+            let target = try PatchPathValidator.resolveContainedTargetURL(
+                relativePath: relative, containerRoot: canonicalRoot
+            )
+            guard fileManager.fileExists(atPath: target.path) else { continue }
+            try validateFileTarget(
+                target, relativePath: relative, containerRoot: canonicalRoot,
+                allowMissingParents: false, fileManager: fileManager
+            )
+            let versions = previousOriginalVersions(
+                backupRoot: backupRoot,
+                targetFingerprints: [key: containerFingerprint(canonicalRoot)],
+                fileManager: fileManager
+            )
+            // Una primera observación sin respaldo NO permite afirmar que el
+            // recurso sea el original; esperar a contar con referencia histórica.
+            guard let prior = versions[key] else { continue }
+            let current = try digestFile(target)
+            if current == prior.digest { continue }
+            let inserted = try preserveObservedOriginal(
+                target: target, bundleID: bundle, relativePath: relative,
+                digest: current, reason: .externalChange,
+                backupRoot: backupRoot, fileManager: fileManager
+            )
+            if inserted { discovered.append(bundle + "/" + relative) }
+        }
+        return discovered
     }
 
     /// Busca el último respaldo original válido para cada ruta. Esto permite
@@ -586,8 +520,11 @@ enum PatchTransaction {
                 else { continue }
                 for record in journal.records {
                     let key = record.bundleID + "\0" + record.relativePath
-                    guard let expectedFingerprint = targetFingerprints[key],
-                          expectedFingerprint == record.containerFingerprint,
+                    // El contenedor puede cambiar de ubicación al actualizar
+                    // una app. La versión se compara por bundleID + ruta lógica;
+                    // exigir la antigua huella del contenedor ocultaría cambios.
+                    // Esto NO otorga acceso a otra aplicación ni restaura entre contenedores.
+                    guard targetFingerprints[key] != nil,
                           let backedUpDigest = record.originalDigest,
                           let backupFilename = record.backupFilename
                     else { continue }
@@ -601,17 +538,12 @@ enum PatchTransaction {
                     found[key] = PreviousOriginal(
                         digest: backedUpDigest,
                         byteCount: size,
-                        createdAt: journal.createdAt,
-                        replacementDigest: record.replacementDigest
+                        createdAt: journal.createdAt
                     )
                 }
             }
         }
         return found
-    }
-
-    private static func hexDigest(_ digest: Data) -> String {
-        digest.map { String(format: "%02x", $0) }.joined()
     }
 
     private static func changesSinceLastOriginal(
@@ -657,6 +589,8 @@ enum PatchTransaction {
         containerResolver: (String) throws -> URL,
         fileManager: FileManager = .default
     ) throws -> PatchRestoreInspection {
+        transactionLock.lock()
+        defer { transactionLock.unlock() }
         do {
             let journal = try activeJournal(for: receipt)
             guard journal.status == .applied else {
@@ -692,26 +626,8 @@ enum PatchTransaction {
         beforeWrite: ((Int) throws -> Void)? = nil,
         fileManager: FileManager = .default
     ) throws -> [String] {
-        try withMutationLock {
-            try restoreExclusive(
-                receipt: receipt,
-                allowChangedTargets: allowChangedTargets,
-                preserveExternallyChangedTargets: preserveExternallyChangedTargets,
-                containerResolver: containerResolver,
-                beforeWrite: beforeWrite,
-                fileManager: fileManager
-            )
-        }
-    }
-
-    private static func restoreExclusive(
-        receipt: PatchTransactionReceipt,
-        allowChangedTargets: Bool,
-        preserveExternallyChangedTargets: Bool,
-        containerResolver: (String) throws -> URL,
-        beforeWrite: ((Int) throws -> Void)?,
-        fileManager: FileManager
-    ) throws -> [String] {
+        transactionLock.lock()
+        defer { transactionLock.unlock() }
         do {
             var journal = try activeJournal(for: receipt)
             let transactionDirectory = receipt.journalURL.deletingLastPathComponent()
@@ -726,28 +642,6 @@ enum PatchTransaction {
                 allowMissingParents: journal.status == .prepared,
                 fileManager: fileManager
             )
-            // Una transacción .prepared puede ser una escritura interrumpida.
-            // Nunca suponer que todos sus destinos contienen el reemplazo:
-            // solo es seguro restaurar desde el respaldo cuando vemos
-            // exactamente el original registrado o el payload de NEXORA.
-            if journal.status == .prepared {
-                var unknownPreparedTargets: [String] = []
-                for item in resolved {
-                    let name = item.record.bundleID + "/" + item.record.relativePath
-                    if fileManager.fileExists(atPath: item.target.path) {
-                        let current = try digestFile(item.target)
-                        if current != item.record.replacementDigest
-                            && current != item.record.originalDigest {
-                            unknownPreparedTargets.append(name)
-                        }
-                    } else if item.record.originalExisted {
-                        unknownPreparedTargets.append(name)
-                    }
-                }
-                if !unknownPreparedTargets.isEmpty {
-                    throw PatchPackageError.restoreTargetsChanged(unknownPreparedTargets)
-                }
-            }
             let changes = journal.status == .applied
                 ? try changedTargets(in: resolved, fileManager: fileManager)
                 : []
@@ -770,6 +664,20 @@ enum PatchTransaction {
             for item in resolved where preservedPaths.contains(item.record.bundleID + "/" + item.record.relativePath) {
                 preservedDigests[item.target.path] = try digestFile(item.target)
             }
+            // Si otra aplicación sustituyó nuestro recurso mientras estaba
+            // activo, conservar primero la revisión observada. La restauración
+            // conservadora NO deberá escribir el respaldo anterior sobre ella.
+            for item in resolved where preservedDigests[item.target.path] != nil {
+                guard let observed = preservedDigests[item.target.path] else { continue }
+                try preserveObservedOriginal(
+                    target: item.target, bundleID: item.record.bundleID,
+                    relativePath: item.record.relativePath, digest: observed,
+                    reason: .restorePreservedExternalChange,
+                    backupRoot: receipt.journalURL.deletingLastPathComponent()
+                        .deletingLastPathComponent().deletingLastPathComponent(),
+                    fileManager: fileManager
+                )
+            }
             let createdDirectoryURLs = try resolvedCreatedDirectories(
                 journal.createdDirectories ?? [],
                 roots: roots,
@@ -780,7 +688,7 @@ enum PatchTransaction {
                 resolved,
                 transactionDirectory: transactionDirectory,
                 fileManager: fileManager
-            ) { markWritten in
+            ) {
                 for (index, item) in resolved.reversed().enumerated() {
                     try beforeWrite?(index)
                     if let expected = preservedDigests[item.target.path] {
@@ -792,31 +700,13 @@ enum PatchTransaction {
                         }
                         continue
                     }
-                    // Evitar sobrescribir un reemplazo modificado después de
-                    // inspeccionarlo y antes de restaurarlo.
-                    if !allowChangedTargets {
-                        let exists = fileManager.fileExists(atPath: item.target.path)
-                        let now = exists ? try digestFile(item.target) : nil
-                        let isPatched = now == item.record.replacementDigest
-                        let isPreparedOriginal = journal.status == .prepared
-                            && ((item.record.originalExisted && now == item.record.originalDigest)
-                                || (!item.record.originalExisted && !exists))
-                        guard isPatched || isPreparedOriginal else {
-                            throw PatchPackageError.restoreTargetsChanged([
-                                item.record.bundleID + "/" + item.record.relativePath
-                            ])
-                        }
-                        if isPreparedOriginal { continue }
-                    }
                     if item.record.originalExisted {
                         let backup = transactionDirectory.appendingPathComponent(
                             item.record.backupFilename!
                         )
                         try atomicCopy(backup, to: item.target, fileManager: fileManager)
-                        markWritten(item.target, item.record.originalDigest)
                     } else if fileManager.fileExists(atPath: item.target.path) {
                         try fileManager.removeItem(at: item.target)
-                        markWritten(item.target, nil)
                     }
                 }
                 // Confirmar la restauración ANTES de marcar la transacción como cerrada.
@@ -852,24 +742,8 @@ enum PatchTransaction {
         beforeWrite: ((Int) throws -> Void)? = nil,
         fileManager: FileManager = .default
     ) throws {
-        try withMutationLock {
-            try resetExclusive(
-                receipt: receipt,
-                fallbackProject: fallbackProject,
-                containerResolver: containerResolver,
-                beforeWrite: beforeWrite,
-                fileManager: fileManager
-            )
-        }
-    }
-
-    private static func resetExclusive(
-        receipt: PatchTransactionReceipt,
-        fallbackProject: PatchProject?,
-        containerResolver: (String) throws -> URL,
-        beforeWrite: ((Int) throws -> Void)?,
-        fileManager: FileManager
-    ) throws {
+        transactionLock.lock()
+        defer { transactionLock.unlock() }
         do {
             let journal = try activeJournal(for: receipt)
             guard journal.status == .applied else {
@@ -911,7 +785,7 @@ enum PatchTransaction {
                 resolved,
                 transactionDirectory: transactionDirectory,
                 fileManager: fileManager
-            ) { markWritten in
+            ) {
                 for (index, item) in resolved.enumerated() {
                     try beforeWrite?(index)
                     switch sources[index] {
@@ -930,7 +804,6 @@ enum PatchTransaction {
                             fileManager: fileManager
                         )
                     }
-                    markWritten(item.target, item.record.replacementDigest)
                     guard try digestFile(item.target) == item.record.replacementDigest else {
                         throw PatchPackageError.resetFailed
                     }
@@ -1160,7 +1033,7 @@ enum PatchTransaction {
         _ resolved: [ResolvedRecord],
         transactionDirectory: URL,
         fileManager: FileManager,
-        operation: (_ markWritten: (URL, Data?) -> Void) throws -> Void
+        operation: () throws -> Void
     ) throws {
         let recoveryDirectory = transactionDirectory.appendingPathComponent(
             ".recovery-\(UUID().uuidString)",
@@ -1194,47 +1067,23 @@ enum PatchTransaction {
             throw error
         }
 
-        var written: [String: WrittenTargetState] = [:]
         do {
-            try operation { target, digest in
-                written[target.path] = digest.map(WrittenTargetState.present) ?? .absent
-            }
+            try operation()
         } catch {
-            let originalError = error
-            var incomplete = false
-            // El error puede ocurrir ANTES de escribir. Nunca revertir una
-            // ruta que no marcamos como escrita, porque pudo actualizarse.
-            for snapshot in snapshots.reversed() {
-                guard let state = written[snapshot.target.path] else { continue }
-                do {
-                    switch state {
-                    case .present(let digest):
-                        guard fileManager.fileExists(atPath: snapshot.target.path),
-                              try digestFile(snapshot.target) == digest else {
-                            incomplete = true
-                            continue
-                        }
-                    case .absent:
-                        guard !fileManager.fileExists(atPath: snapshot.target.path) else {
-                            incomplete = true
-                            continue
-                        }
-                    }
+            do {
+                for snapshot in snapshots.reversed() {
                     if snapshot.existed, let snapshotURL = snapshot.snapshotURL {
                         try atomicCopy(snapshotURL, to: snapshot.target, fileManager: fileManager)
                     } else if fileManager.fileExists(atPath: snapshot.target.path) {
                         try fileManager.removeItem(at: snapshot.target)
                     }
-                } catch {
-                    incomplete = true
                 }
-            }
-            if incomplete {
-                // Conservar instantáneas por si la recuperación manual es necesaria.
+                try? fileManager.removeItem(at: recoveryDirectory)
+            } catch {
+                // Keep the recovery directory when rollback cannot complete.
                 throw PatchPackageError.restoreFailed
             }
-            try? fileManager.removeItem(at: recoveryDirectory)
-            throw originalError
+            throw error
         }
         try? fileManager.removeItem(at: recoveryDirectory)
     }

@@ -1,0 +1,12 @@
+NEXORA SYSTEM 2026 - PROYECTO COMPLETO
+
+1. Extrae este ZIP en tu nueva PC.
+2. Entra a tu repositorio de GitHub y sube TODOS los archivos y carpetas extraídos a la raíz, especialmente la carpeta oculta .github, el archivo ThreeOneOSFive.xcodeproj (es una carpeta), ThreeOneOSFive, BundledMods, scripts y deploy.
+3. Abre Actions -> Verificar y compilar NEXORA SYSTEM 2026 -> Run workflow.
+4. Si el trabajo finaliza en verde, busca Artifacts y descarga NEXORA_SYSTEM_2026_3105_sin_firmar. Es la IPA sin firmar, no la IPA del ZIP de fuentes.
+5. Firma e instala para probar. Conserva sin reemplazar tu IPA funcional anterior.
+
+La key no espera 35 s por diseño: ese número es un límite de fallo. El acceso se concede cuando el Worker contesta correctamente.
+
+VERIFICACIONES: 27 comprobaciones Python locales pasadas. Fuentes Swift analizadas sintácticamente. Sin compilación real de iOS ni prueba en teléfono todavía.
+Si Actions falla, consulta su log; la entrega no está certificada como libre de errores de compilación.

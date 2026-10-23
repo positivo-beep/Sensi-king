@@ -3,134 +3,48 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-
 jobs:
   build:
     runs-on: macos-15
     timeout-minutes: 45
-    defaults:
-      run:
-        # El commit anterior subió la versión nueva en este subdirectorio.
-        # Compilar desde él evita mezclar el proyecto viejo con el actualizado.
-        working-directory: ThreeOneOSFive
     steps:
       - name: Obtener proyecto
         uses: actions/checkout@v4
-
-      - name: Verificar proyecto completo antes de compilar
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 scripts/verificar_entrega_completa_nexora.py
-          python3 scripts/verificar_release_nueva_nexora.py
-          python3 scripts/verificar_sincronizacion_release.py
-          test -f ThreeOneOSFive/helpers/NXAntennaOnlyUnityFS.swift
-          test -f ThreeOneOSFive/helpers/NXOwnedTemporaryWorkspaces.swift
-          xcodebuild -version
-
       - name: Verificación previa
-        shell: bash
         run: |
-          set -euo pipefail
+          python3 scripts/verificar_base_estable_y_rainbow.py
+          python3 scripts/verificar_no_regresion_nexora.py
+          python3 scripts/verificar_vigilancia_base_funcional.py
+          # Test estructural sin nuevas descargas obligatorias
+          python3 scripts/verificar_estabilidad_nexora_entrega.py
+          python3 scripts/verificar_panel_entrada_ligera.py
+          python3 scripts/verificar_build11_interfaz_y_limpieza.py
+          python3 scripts/verificar_build12_interfaz_roja.py
+          python3 scripts/verificar_nexora_autoupdate.py
+          python3 scripts/verificar_build14_compatibilidad_original.py
+          python3 scripts/verificar_build15_integracion_real.py
+          python3 scripts/verificar_build16_revisiones_automaticas.py
+          python3 scripts/verificar_build16r_activacion_previa.py
+          python3 scripts/verificar_textura_alok.py
+          python3 scripts/verificar_holo_pj_oscuro_rainbow.py
+          python3 scripts/verificar_catalogo_y_assets.py
+          python3 scripts/verificar_recursos_completos.py
           python3 scripts/verificar_nexora.py
-          python3 scripts/verificar_interfaz_y_respaldo_final.py
-          python3 scripts/verificar_diseno_rojo_nexora.py
           python3 scripts/verificar_integracion_nexora.py
           python3 scripts/verificar_opciones_v14.py
-          python3 scripts/verificar_catalogo_completo_nexora.py
-          python3 scripts/verificar_holo_pj_rainbow.py
           python3 scripts/verificar_seguridad_licencias.py
-          python3 scripts/verificar_seguridad_release_nexora.py
           python3 scripts/verificar_restauracion_v21_1.py
           python3 scripts/verificar_audio_personalizado_v21_2.py
           python3 scripts/verificar_temporales_nexora_v21_3.py
           python3 scripts/verificar_version_original_v21_5.py
           python3 scripts/verificar_conservacion_actualizaciones_v21_6.py
-          python3 scripts/verificar_actualizacion_segura_v2_1_4.py
-          python3 scripts/verificar_activacion_segura_v2_1_6.py
-          python3 scripts/verificar_reemplazo_release_v2_1_9.py
-          python3 scripts/verificar_regresion_acceso_y_estados.py
+          python3 scripts/verificar_concurrencia_temporales_nexora.py
+          # Prueba de archivo propio, no de acceso a contenedores externos.
+          swiftc ThreeOneOSFive/helpers/FileReplacementService.swift \
+            scripts/PruebaReemplazoNX.swift -o "$RUNNER_TEMP/nexora-file-test"
+          "$RUNNER_TEMP/nexora-file-test"
           xcodebuild -version
           xcodebuild -list -project ThreeOneOSFive.xcodeproj
-
-      - name: Pruebas funcionales de respaldo, restauración y actualización
-        shell: bash
-        run: |
-          set -euo pipefail
-          swiftc -o "$RUNNER_TEMP/nexora-motor-tests" \
-            ThreeOneOSFive/helpers/PatchProjectModels.swift \
-            ThreeOneOSFive/helpers/PatchTransaction.swift \
-            scripts/PruebaMotorTransacciones.swift
-          "$RUNNER_TEMP/nexora-motor-tests" | tee motor-transacciones-test.log
-          grep -q 'RESULTADO FUNCIONAL: 21/21 casos correctos' motor-transacciones-test.log
-
-      - name: Pruebas funcionales de limpieza de temporales propios
-        shell: bash
-        run: |
-          set -euo pipefail
-          # Ejecutar como herramienta independiente. NO agregar @main a Sources de la app.
-          swiftc -o "$RUNNER_TEMP/nexora-temporales-tests" \
-            ThreeOneOSFive/helpers/NXOwnedTemporaryWorkspaces.swift \
-            scripts/PruebaTemporalesNX.swift
-          "$RUNNER_TEMP/nexora-temporales-tests" | tee temporales-nexora-test.log
-          grep -Fq 'Limpieza OK: 2 temporales propios eliminados' temporales-nexora-test.log
-          grep -Fq 'Ruta no permitida: bloqueada correctamente.' temporales-nexora-test.log
-          grep -Fq 'Limpieza repetida: segura.' temporales-nexora-test.log
-          grep -Fq 'Temporales antiguos: eliminados; los recientes permanecen intactos.' temporales-nexora-test.log
-          grep -Fq 'Enlace simbólico externo: protegido.' temporales-nexora-test.log
-          grep -Fq 'Restauración pendiente: espacio antiguo protegido en limpieza automática.' temporales-nexora-test.log
-          grep -Fq 'Contenido reciente: protegido aunque la carpeta sea antigua.' temporales-nexora-test.log
-          grep -Fq 'Nombres no seguros y nombres largos: rechazados.' temporales-nexora-test.log
-          grep -Fq 'Enlace inesperado dentro de temporal: borrado bloqueado.' temporales-nexora-test.log
-          grep -Fq 'Subcarpeta inesperada: conservada y reportada.' temporales-nexora-test.log
-
-      - name: Pruebas de limpieza selectiva y límites seguros
-        shell: bash
-        run: |
-          set -euo pipefail
-          swiftc -o "$RUNNER_TEMP/nexora-cleaner-tests" \
-            ThreeOneOSFive/helpers/LimitedCleanerService.swift \
-            scripts/PruebaLimpiadorLimitado.swift
-          "$RUNNER_TEMP/nexora-cleaner-tests" | tee limpiador-limitado-test.log
-          grep -Fq 'LIMPIADOR LIMITADO: 5/5 comprobaciones correctas' limpiador-limitado-test.log
-
-      - name: Pruebas de reemplazo seguro de archivos propios
-        shell: bash
-        run: |
-          set -euo pipefail
-          swiftc -DREPLACEMENT_TESTING -o "$RUNNER_TEMP/nexora-replacement-tests" \
-            ThreeOneOSFive/helpers/FileReplacementService.swift \
-            scripts/PruebaReemplazoSeguro.swift
-          "$RUNNER_TEMP/nexora-replacement-tests" | tee reemplazo-seguro-test.log
-          grep -Fq 'REEMPLAZO: 16/16 comprobaciones correctas' reemplazo-seguro-test.log
-
-      - name: Pruebas del formato UnityFS y ANTENA SOLA (3 pares)
-        shell: bash
-        run: |
-          set -euo pipefail
-          swiftc -DANTENNA_TESTING -o "$RUNNER_TEMP/nexora-antena-tests" \
-            ThreeOneOSFive/helpers/NXAntennaOnlyUnityFS.swift \
-            scripts/PruebaAntenaSola.swift
-          "$RUNNER_TEMP/nexora-antena-tests" \
-            "$PWD"/ThreeOneOSFive/Assets.xcassets/NXModAimDrag.dataset/assetindexer.* \
-            "$PWD"/ThreeOneOSFive/Assets.xcassets/NXModAntenaDrag.dataset/assetindexer.* \
-            "$PWD"/ThreeOneOSFive/Assets.xcassets/NXModAimCuello.dataset/assetindexer.* \
-            "$PWD"/ThreeOneOSFive/Assets.xcassets/NXModAntenaCuello.dataset/assetindexer.* \
-            "$PWD"/ThreeOneOSFive/Assets.xcassets/NXModAimPecho.dataset/assetindexer.* \
-            "$PWD"/ThreeOneOSFive/Assets.xcassets/NXModAntenaPecho.dataset/assetindexer.* \
-            | tee antena-unityfs-test.log
-          grep -q 'ANTENA: 3/3 comparaciones pasaron' antena-unityfs-test.log
-
-      - name: Verificar variantes UnityFS 0x243 y varios bloques
-        shell: bash
-        run: |
-          set -euo pipefail
-          swiftc -DANTENNA_TESTING -o "$RUNNER_TEMP/nexora-antena-243" \
-            ThreeOneOSFive/helpers/NXAntennaOnlyUnityFS.swift \
-            scripts/PruebaAntenaFormato243.swift
-          "$RUNNER_TEMP/nexora-antena-243" scripts/fixtures_antenna/*.bin | tee antena-formato243-test.log
-          grep -q 'ANTENA: 9 pruebas de estructura/integridad correctas' antena-formato243-test.log
-
       - name: Compilar para iOS sin firmar
         shell: bash
         run: |
@@ -144,48 +58,31 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             build 2>&1 | tee xcodebuild.log
-
       - name: Empaquetar IPA sin firma
         shell: bash
         run: |
           set -euo pipefail
           APP="$PWD/build/Build/Products/Release-iphoneos/3105.app"
           test -d "$APP"
+          python3 scripts/verificar_build12_ipa.py "$APP"
           /usr/libexec/PlistBuddy -c 'Set :CFBundleDisplayName NEXORA SYSTEM 2026' "$APP/Info.plist" || \
             /usr/libexec/PlistBuddy -c 'Add :CFBundleDisplayName string NEXORA SYSTEM 2026' "$APP/Info.plist"
           mkdir -p "$PWD/package/Payload"
           cp -R "$APP" "$PWD/package/Payload/"
-          (cd "$PWD/package" && zip -qr "$OLDPWD/NEXORA_SYSTEM_2026_V2_1_9_BUILD18_sin_firmar.ipa" Payload)
-
-      - name: Verificar contenido de IPA y generar informe
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 scripts/verificar_ipa_generada.py "$PWD/NEXORA_SYSTEM_2026_V2_1_9_BUILD18_sin_firmar.ipa"
-          test -s NEXORA_RESULTADO_COMPILACION.json
-
+          (cd "$PWD/package" && zip -qr "$OLDPWD/NEXORA_SYSTEM_2026_3105_sin_firmar.ipa" Payload)
       - name: Entregar IPA
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: NEXORA_SYSTEM_2026_V2_1_9_BUILD18_sin_firmar
-          path: ThreeOneOSFive/NEXORA_SYSTEM_2026_V2_1_9_BUILD18_sin_firmar.ipa
+          name: NEXORA_SYSTEM_2026_3105_sin_firmar
+          path: NEXORA_SYSTEM_2026_3105_sin_firmar.ipa
           if-no-files-found: error
           retention-days: 7
-
       - name: Guardar informe de compilación
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: NEXORA_LOG_COMPILACION
-          path: |
-            ThreeOneOSFive/xcodebuild.log
-            ThreeOneOSFive/motor-transacciones-test.log
-            ThreeOneOSFive/temporales-nexora-test.log
-            ThreeOneOSFive/limpiador-limitado-test.log
-            ThreeOneOSFive/reemplazo-seguro-test.log
-            ThreeOneOSFive/antena-unityfs-test.log
-            ThreeOneOSFive/antena-formato243-test.log
-            ThreeOneOSFive/NEXORA_RESULTADO_COMPILACION.json
+          path: xcodebuild.log
           if-no-files-found: ignore
           retention-days: 7

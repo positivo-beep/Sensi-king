@@ -396,8 +396,6 @@
 "browser.replace_error_same_file" = "Không thể dùng chính tệp này để thay thế nó.";
 "browser.replace_error_symlink" = "Không hỗ trợ liên kết tượng trưng.";
 "browser.replace_error_too_large" = "Tệp đã chọn quá lớn.";
-"browser.replace_error_source_changed" = "Tệp đã chọn đã thay đổi trong khi sao chép. Hãy chọn lại tệp mới.";
-"browser.replace_error_target_changed" = "Tệp đích đã thay đổi. Nội dung mới được giữ nguyên.";
 "browser.replace_error_failed" = "Không thể thay thế tệp một cách an toàn.";
 "browser.search_files" = "Tìm trong thư mục này";
 "browser.search_empty" = "Không có kết quả";

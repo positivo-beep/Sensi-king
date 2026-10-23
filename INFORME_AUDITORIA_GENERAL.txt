@@ -1,0 +1,132 @@
+AUDITORÍA NEXORA (Linux, no compilación iOS)
+[PASS] verificar_audio_personalizado_v21_2.py
+OK: grabacion incorporada, recurso valido y activaciones conectadas
+SHA256: 7fd96930aadebf5576a3e080742d907c646231e3ab3ded2f2c0bcb42cab6d867
+
+[PASS] verificar_base_estable_y_rainbow.py
+OK: catálogo, 3 recursos importados, Rainbow reemplaza Rojo; identidad original conservada.
+PENDIENTE: compilación en macOS y prueba real en iPhone.
+OK: motor original preservado; 2 módulos de limpieza reforzados, 2 archivos UI autorizados con SHA.
+
+[PASS] verificar_base_ipa_recibida.py
+OK: IPA base disponible
+OK: IPA coincide byte por byte con la copia funcional recibida (no modificada)
+OK: IPA es un ZIP íntegro
+OK: Bundle ID del proyecto coincide con la IPA de referencia
+OK: Servidor de keys del proyecto y de la IPA es el mismo
+OK: Servicio Keychain del proyecto y de la IPA es el mismo
+OK: Versión declarada 2.0.5 (16) consistente
+OK: Login condicionado a Cloudflare; panel perezoso, watchdog y descarte de respuesta tardía
+OK: Vigilancia aislada: panel autorizado, 30 segundos después, cada 5 minutos en primer plano
+OK: Archivo actualizado solo admite una nueva pareja exacta y verificada
+
+ESTADO: cotejo estático superado. Este proyecto NO es una IPA compilada ni probada en iPhone.
+
+[PASS] verificar_build11_interfaz_y_limpieza.py
+OK: UI roja con imagen real, activaciones presentes, limpieza protegida y Rainbow incluido.
+
+[PASS] verificar_build12_interfaz_roja.py
+OK: interfaz roja Build 12, dos pantallas y recursos validados.
+
+[PASS] verificar_build14_compatibilidad_original.py
+Catálogo y bytes: original, variante, un byte cambiado, tamper y HTTP 404 OK
+Build 14: comprobaciones de estructura y ejemplos OK
+
+[PASS] verificar_build15_integracion_real.py
+OK: 15 opciones reales conectadas al hash de versión; bloqueo si varió un byte; sin bypass de confirmación.
+
+[PASS] verificar_build16_revisiones_automaticas.py
+OK: respaldo automático, idempotencia, 1 byte, copia antigua, integridad, symlink y procedencia no verificada.
+OK: Build 16, verificación del motor de revisión, 15 opciones, rollback conservador.
+
+[PASS] verificar_build16r_activacion_previa.py
+OK: 15 recursos verificados; firma dañada, original ausente, inválido y enlace rechazados; original legítimamente accesible aceptado.
+OK: Build 16R, preflight registrado en Xcode; no se modificó el motor de transacción.
+
+[PASS] verificar_catalogo_y_assets.py
+Recursos comprobados: 15 | Sin archivos reales: 7
+Opciones no activables por falta de datos: BALAS MÁGICAS, AIM CABEZA ANTENA, WALK HACK, HOLO ARM PERSONALIZADO 2, HOLOGRAMA PERSONAJE VERDE, TEXTURA CLARA, TEXTURA OSCURA
+OK: todos los recursos declarados como incluidos están presentes y coinciden con sus hashes.
+
+[PASS] verificar_concurrencia_temporales_nexora.py
+OK: 48 creaciones concurrentes y limpieza consistente
+OK: espacios protegidos preservados
+OK: concurrencia de temporales propios comprobada
+
+[PASS] verificar_conservacion_actualizaciones_v21_6.py
+OK V21.6: conservación ante cambios externos; archivo ausente detiene operación; sonido conservado.
+Pendiente: compilar en Xcode/GitHub Actions y verificar con archivos de prueba propios.
+
+[PASS] verificar_estabilidad_nexora_entrega.py
+OK: login no bloqueante, auditoría aislada, cambios solo con pareja compatible, firma válida/alterada e inventario.
+
+[PASS] verificar_holo_pj_oscuro_rainbow.py
+OK: holograma oscuro Rainbow — datos UnityFS completos, botón final, opciones previas intactas, SHA-256 verificado.
+
+[PASS] verificar_integracion_nexora.py
+NEXORA: OK comprobaciones estructurales (59 Swift, assets, licencia, archivos, panel, esquema).
+ATENCIÓN: falta compilación Xcode/macOS y pruebas en iPhone.
+
+[PASS] verificar_nexora.py
+PREVERIFICACION OK: 59 fuentes Swift, assets, esquema Xcode, licencia, motor original.
+
+[PASS] verificar_nexora_autoupdate.py
+Worker: manifiesto + descarga + SHA-256 OK
+Build 13: comprobaciones de estructura, aislamiento y catálogo OK
+
+[PASS] verificar_no_regresion_nexora.py
+OK: motor protegido conserva huellas originales; cambios visuales y de limpieza autorizados.
+
+[PASS] verificar_opciones_v14.py
+OK: 22 opciones (15 con recursos, 7 pendientes); motor y UI presentes.
+Pendiente: compilación Xcode, verificación de acceso real y restauración en iPhone.
+
+[PASS] verificar_panel_entrada_ligera.py
+OK: sin recarga duplicada, catálogo diferido, verificación Cloudflare intacta y vigilancia aislada.
+
+[PASS] verificar_recursos_completos.py
+OK: 261 archivos inventariados íntegros.
+
+[PASS] verificar_restauracion_v21_1.py
+OK: verificación SHA-256 antes de registrar restauración y audio V21 presentes
+
+[PASS] verificar_seguridad_licencias.py
+OK: Keychain (nunca UserDefaults para la key)
+OK: Servidor HTTPS
+OK: Sin cache de licencias
+OK: Sin cookies
+OK: Sin redirecciones
+OK: Solo éxito HTTP 2xx autoriza
+OK: Rechazo de expiraciones malformadas
+OK: Revalidación al volver
+OK: Revocación y expiración
+OK: Sin token de administración en cliente
+Auditoría estática correcta. Pendiente: Xcode, Cloudflare, ESign e iPhone.
+
+[PASS] verificar_temporales_nexora_v21_3.py
+Limpieza OK: 2 temporales propios eliminados; cada opción se verificó por separado.
+Ruta no permitida: bloqueada correctamente.
+Limpieza repetida: segura.
+Temporales antiguos: eliminados; los recientes permanecen intactos.
+Archivo actualizado recientemente: conservado.
+Espacio temporal protegido: conservado.
+Enlace simbólico externo: protegido.
+OK: módulo registrado en Xcode, UI de diagnóstico y pruebas reales de temporales
+
+[PASS] verificar_textura_alok.py
+OK: TEXTURA ALOK importada íntegra, antigua fila sustituida, preflight y restauración conservados. Acceso iOS pendiente.
+
+[PASS] verificar_version_original_v21_5.py
+OK: preflight antes de aplicar; compara tamaño + SHA-256; aviso y bloqueo ante cambio; audio intacto
+Pendiente: compilación con Xcode y validación funcional en iPhone
+
+[PASS] verificar_vigilancia_base_funcional.py
+OK: endpoint, Keychain y acceso preservados; watchdog y vigilancia aislada del login.
+
+SWIFT PARSE: sources parsed as a group, PASS
+
+LÍMITES DE COMPILACIÓN:
+- Se analizaron sintácticamente todos los fuentes Swift con swiftc -frontend -parse: OK.
+- No se pudo ejecutar Xcode / compilar una app iOS en Linux. El compilador local carece del módulo Apple Darwin requerido por FileReplacementService.swift.
+- La construcción real para iphoneos y su salida IPA están delegadas al workflow macOS de GitHub Actions.
+- No se han probado Cloudflare en red, comportamiento iOS, permisos reales ni interfaz en dispositivo.

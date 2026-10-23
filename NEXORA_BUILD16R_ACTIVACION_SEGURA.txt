@@ -1,0 +1,12 @@
+NEXORA BUILD 16R — PREVENCIÓN DE ERRORES ANTES DE ACTIVAR
+
+- Valida el envoltorio UnityFS de cada recurso incluido (firma, campos base, tamaños).
+- Antes de activar comprueba existencia, legibilidad, escritura, formato y enlace simbólico del archivo accesible.
+- Si una validación falla, se muestra la causa y NO se escribe ningún archivo.
+- La transacción existente conserva validaciones SHA-256 y rollback; sin cambios en su motor.
+- Conservar Build 12 instalada y compilar Build 16R únicamente para pruebas.
+
+LÍMITES: las comprobaciones locales NO certifican compatibilidad con el juego ni
+el acceso al contenedor de una aplicación ajena. Si iOS deniega permisos o un
+archivo cambió, se cancela en vez de simular éxito. No es posible garantizar
+cero errores antes de probar en un iPhone autorizado.
