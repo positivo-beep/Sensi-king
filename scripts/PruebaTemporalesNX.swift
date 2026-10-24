@@ -99,6 +99,31 @@ struct Main {
         }
         print("Espacio temporal protegido: conservado.")
 
+        // Proteger automáticamente los proyectos con respaldo existente.
+        // Un fallo al enumerar respaldos debe detener el mantenimiento,
+        // nunca provocar una limpieza más agresiva.
+        let backupFixture = fm.temporaryDirectory.appendingPathComponent("nx-backups-\(UUID().uuidString)")
+        try fm.createDirectory(at: backupFixture, withIntermediateDirectories: false)
+        defer { try? fm.removeItem(at: backupFixture) }
+        try fm.createDirectory(
+            at: backupFixture.appendingPathComponent(protectedOption.uuidString),
+            withIntermediateDirectories: false
+        )
+        let detected = try NXOwnedTemporaryWorkspaces.protectedWorkspaceIDs(
+            knownIDs: [protectedOption, UUID()], backupRoot: backupFixture
+        )
+        guard detected == [protectedOption] else {
+            fatalError("No se respetaron los identificadores con respaldo")
+        }
+        _ = try NXOwnedTemporaryWorkspaces.cleanAbandoned(
+            olderThan: 48 * 60 * 60, keeping: detected
+        )
+        guard fm.fileExists(atPath: protectedURL.path) else {
+            fatalError("El mantenimiento borró archivos de un proyecto respaldado")
+        }
+        print("Respaldo existente: se conserva el área temporal de su proyecto.")
+
+
         // No borrar enlaces simbólicos que aparenten ser directorios de opciones.
         let fakeOption = UUID()
         let root = currentFile.deletingLastPathComponent().deletingLastPathComponent()
