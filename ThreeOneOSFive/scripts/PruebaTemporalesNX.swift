@@ -77,6 +77,48 @@ struct Main {
         }
         print("Contenido reciente: protegido aunque la carpeta sea antigua.")
 
+        // Un respaldo conservado por NEXORA debe impedir la eliminación
+        // automática del espacio temporal de su proyecto. La limpieza de
+        // proyectos sin respaldo sí continúa con su antigüedad habitual.
+        let protectedByBackup = UUID()
+        let disposable = UUID()
+        let fileWithBackup = try NXOwnedTemporaryWorkspaces.create(
+            data: Data("temporal respaldado".utf8),
+            optionID: protectedByBackup, filename: "protected.tmp"
+        )
+        let disposableFile = try NXOwnedTemporaryWorkspaces.create(
+            data: Data("temporal desechable".utf8),
+            optionID: disposable, filename: "disposable.tmp"
+        )
+        defer {
+            _ = try? NXOwnedTemporaryWorkspaces.clean(optionID: protectedByBackup)
+            _ = try? NXOwnedTemporaryWorkspaces.clean(optionID: disposable)
+        }
+        for file in [fileWithBackup, disposableFile] {
+            let old = Date(timeIntervalSinceNow: -80 * 60 * 60)
+            try fm.setAttributes([.modificationDate: old], ofItemAtPath: file.path)
+            try fm.setAttributes([.modificationDate: old], ofItemAtPath: file.deletingLastPathComponent().path)
+        }
+        let backupFixture = fm.temporaryDirectory.appendingPathComponent("nexora-backups-test-\(UUID().uuidString)")
+        try fm.createDirectory(at: backupFixture, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: backupFixture) }
+        try fm.createDirectory(
+            at: backupFixture.appendingPathComponent(protectedByBackup.uuidString),
+            withIntermediateDirectories: false
+        )
+        let safeIDs = try NXOwnedTemporaryWorkspaces.protectedWorkspaceIDs(
+            knownIDs: [protectedByBackup, disposable], backupRoot: backupFixture
+        )
+        guard safeIDs == [protectedByBackup] else { fatalError("No se identificó el respaldo") }
+        _ = try NXOwnedTemporaryWorkspaces.cleanAbandoned(
+            olderThan: 48 * 60 * 60, keeping: safeIDs
+        )
+        guard fm.fileExists(atPath: fileWithBackup.path),
+              try NXOwnedTemporaryWorkspaces.isClean(optionID: disposable) else {
+            fatalError("La limpieza no respetó el respaldo o no limpió el temporal desechable")
+        }
+        print("Limpieza automática: respaldos protegidos y temporales propios vencidos retirados.")
+
         // Una restauración pendiente debe prevalecer sobre la antigüedad.
         let pendingRestore = UUID()
         let protectedData = Data("respaldo pendiente: conservar temporal".utf8)

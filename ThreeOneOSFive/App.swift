@@ -19,7 +19,15 @@ struct ThreeOneOSFiveApp: App {
         // abandonados durante al menos 48 horas. Respaldos y diarios intactos.
         DispatchQueue.global(qos: .utility).async {
             do {
-                _ = try NXOwnedTemporaryWorkspaces.cleanAbandoned()
+                // Preservar las áreas temporales que pertenezcan a un proyecto
+                // con respaldo todavía presente, aunque hayan pasado 48 horas.
+                // Si no se pueden leer los respaldos, NO se realiza limpieza.
+                let knownIDs = try NXOwnedTemporaryWorkspaces.knownWorkspaceIDs()
+                let backupRoot = try PatchProjectLibrary.backupRootURL()
+                let protectedIDs = try NXOwnedTemporaryWorkspaces.protectedWorkspaceIDs(
+                    knownIDs: knownIDs, backupRoot: backupRoot
+                )
+                _ = try NXOwnedTemporaryWorkspaces.cleanAbandoned(keeping: protectedIDs)
             } catch {
                 log("nexora: mantenimiento de caché propia pendiente: \(error.localizedDescription)")
             }
@@ -306,10 +314,16 @@ final class NexoraLicenseModel: ObservableObject {
         errorMessage = "La verificación tardó demasiado. Revisa tu conexión e inténtalo de nuevo."
     }
 
-    private var deviceID: String {
-        if let id = NexoraSecureStorage.read(deviceAccount) { return id }
+    // No generar una identidad distinta en cada petición si Keychain falla.
+    // La licencia debe vincularse siempre a una identidad persistida y comprobada.
+    private func persistentDeviceID() -> String? {
+        if let existing = NexoraSecureStorage.read(deviceAccount) {
+            guard UUID(uuidString: existing) != nil else { return nil }
+            return existing
+        }
         let id = UUID().uuidString
-        _ = NexoraSecureStorage.save(id, deviceAccount)
+        guard NexoraSecureStorage.save(id, deviceAccount),
+              NexoraSecureStorage.read(deviceAccount) == id else { return nil }
         return id
     }
 
@@ -325,6 +339,7 @@ final class NexoraLicenseModel: ObservableObject {
             state = .locked
             expiration = nil
             planDurationDays = nil
+            errorMessage = ""
             return
         }
         state = .checking
@@ -337,6 +352,9 @@ final class NexoraLicenseModel: ObservableObject {
     }
 
     func signOut() {
+        // Una respuesta HTTPS pendiente no debe permitir la entrada tras salir.
+        activeRequestNumber += 1
+        isBusy = false
         NexoraSecureStorage.delete(licenseAccount)
         input = ""
         state = .locked
@@ -376,6 +394,11 @@ final class NexoraLicenseModel: ObservableObject {
             if activeRequestNumber == requestNumber { isBusy = false }
         }
         errorMessage = ""
+        guard let stableDeviceID = persistentDeviceID() else {
+            state = .locked
+            errorMessage = "No se pudo guardar la identidad del dispositivo. Revisa el acceso a Keychain."
+            return
+        }
         // La autoridad es Cloudflare, no una bandera local; no incluir secretos de administración.
         // La clave se envía solo al endpoint HTTPS definido por el propietario.
         guard endpoint.scheme == "https", endpoint.host != nil else {
@@ -391,7 +414,7 @@ final class NexoraLicenseModel: ObservableObject {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("no-store", forHTTPHeaderField: "Cache-Control")
         do {
-            request.httpBody = try JSONEncoder().encode(NexoraWirePayload(key: formatted, device_id: deviceID))
+            request.httpBody = try JSONEncoder().encode(NexoraWirePayload(key: formatted, device_id: stableDeviceID))
             let (data, response) = try await licenseSession.data(for: request)
             guard activeRequestNumber == requestNumber else { return }
             // Ni redirecciones a otros hosts, ni respuestas anómalas, ni errores HTTP
@@ -412,8 +435,16 @@ final class NexoraLicenseModel: ObservableObject {
             }
             let result = try JSONDecoder().decode(NexoraWireResult.self, from: data)
             guard (200...299).contains(http.statusCode), result.ok && result.active else {
-                // Ni una respuesta HTTP de error ni una key revocada abre el panel.
-                invalidateAndRequireNewKey(Self.errorText(result.reason ?? result.error))
+                // Una revocación/expiración conocida requiere otra key. Ante errores
+                // de servidor o respuestas ambiguas, bloquear el panel SIN borrar la
+                // key guardada: un fallo temporal no equivale a una revocación.
+                let reason = result.reason ?? result.error
+                if Self.isTerminalLicenseError(reason) {
+                    invalidateAndRequireNewKey(Self.errorText(reason))
+                } else {
+                    state = .locked
+                    errorMessage = "El servidor no pudo confirmar la licencia. Comprueba la conexión e inténtalo otra vez."
+                }
                 return
             }
             // Rechazar fechas de vencimiento inválidas en vez de aceptarlas
@@ -449,6 +480,14 @@ final class NexoraLicenseModel: ObservableObject {
         }
     }
 
+    private static func isTerminalLicenseError(_ reason: String?) -> Bool {
+        switch reason {
+        case "invalid_key", "invalid_key_format", "expired", "revoked", "device_limit":
+            return true
+        default: return false
+        }
+    }
+
     private static func errorText(_ reason: String?) -> String {
         switch reason {
         case "invalid_key", "invalid_key_format": return "La key no existe o no es válida."
@@ -456,7 +495,8 @@ final class NexoraLicenseModel: ObservableObject {
         case "revoked": return "La key fue desactivada."
         case "device_limit": return "Se alcanzó el límite de dispositivos."
         case "device_not_activated": return "El dispositivo aún no está activado."
-        default: return "No se validó la licencia (\(reason ?? "sin información"))."
+        // No reflejar texto arbitrario enviado por un servidor en la pantalla.
+        default: return "No se pudo validar la licencia. Inténtalo de nuevo."
         }
     }
 }

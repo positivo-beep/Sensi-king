@@ -147,6 +147,29 @@ enum NXOwnedTemporaryWorkspaces {
         return true
     }
 
+    /// Protege temporales de cualquier proyecto con un área de respaldo.
+    /// Política conservadora: si una carpeta de respaldo existe, NEXORA no
+    /// elimina automáticamente su área de trabajo temporal. Nunca borra ni
+    /// modifica el respaldo o los diarios de operación.
+    /// Si no se puede consultar el directorio de respaldos, falla cerrada:
+    /// el llamador omite la limpieza automática.
+    static func protectedWorkspaceIDs(
+        knownIDs: Set<UUID>,
+        backupRoot: URL,
+        fileManager: FileManager = .default
+    ) throws -> Set<UUID> {
+        guard backupRoot.isFileURL else { throw CleanupError.unsafeWorkspace }
+        let safeRoot = backupRoot.standardizedFileURL
+        let flags = try safeRoot.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
+        guard flags.isDirectory == true, flags.isSymbolicLink != true else {
+            throw CleanupError.unsafeWorkspace
+        }
+        // Enumerar la raíz, sin seguir carpetas ni inspeccionar los diarios.
+        let backupNames = try fileManager.contentsOfDirectory(atPath: safeRoot.path)
+        let existingBackupIDs = Set(backupNames.compactMap { UUID(uuidString: $0) })
+        return knownIDs.intersection(existingBackupIDs)
+    }
+
     /// Elimina SOLO espacios temporales abandonados dentro del caché propio de NEXORA.
     /// Se usa al arrancar la app, no durante una operación activa. No inspecciona
     /// aplicaciones externas ni respaldos/transacciones. Conserva temporales recientes.
