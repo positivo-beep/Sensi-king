@@ -12,9 +12,14 @@ jobs:
         uses: actions/checkout@v4
       - name: Verificación previa
         run: |
+          python3 scripts/preparar_integridad_ui_nexora.py
+          python3 scripts/verificar_mejora_integral_nexora.py
+          python3 scripts/verificar_refuerzo_integrado_2026.py
+          python3 scripts/verificar_prepublicacion_integraciones_2026.py
           python3 scripts/verificar_base_estable_y_rainbow.py
           python3 scripts/verificar_no_regresion_nexora.py
           python3 scripts/verificar_vigilancia_base_funcional.py
+          python3 scripts/verificar_integracion_final_nexora.py
           # Test estructural sin nuevas descargas obligatorias
           python3 scripts/verificar_estabilidad_nexora_entrega.py
           python3 scripts/verificar_panel_entrada_ligera.py
@@ -39,6 +44,13 @@ jobs:
           python3 scripts/verificar_version_original_v21_5.py
           python3 scripts/verificar_conservacion_actualizaciones_v21_6.py
           python3 scripts/verificar_concurrencia_temporales_nexora.py
+          # Antena Sola: pruebas de formato y rechazo de perfil incompatible,
+          # sin escribir archivos de otras aplicaciones.
+          swiftc -D ANTENNA_TESTING \
+            ThreeOneOSFive/helpers/NXAntennaOnlyUnityFS.swift \
+            ThreeOneOSFive/scripts/PruebaAntenaFormato243.swift \
+            -o "$RUNNER_TEMP/nexora-antena-test"
+          "$RUNNER_TEMP/nexora-antena-test" ThreeOneOSFive/scripts/fixtures_antenna/*.bin
           # Prueba de archivo propio, no de acceso a contenedores externos.
           swiftc ThreeOneOSFive/helpers/FileReplacementService.swift \
             scripts/PruebaReemplazoNX.swift -o "$RUNNER_TEMP/nexora-file-test"
